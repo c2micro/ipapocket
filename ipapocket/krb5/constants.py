@@ -198,3 +198,21 @@ class ChecksumTypes(enum.Enum):
     CMAC_CAMELLIA256 = 18 # https://www.rfc-editor.org/rfc/rfc6803.html
     HMAC_SHA256_128_AES128 = 19 # https://www.rfc-editor.org/rfc/rfc8009
     HMAC_SHA384_192_AES256 = 20 # https://www.rfc-editor.org/rfc/rfc8009
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.4.1
+# without reserved bits
+class KdcOptions(enum.Enum):
+    FORWARDABLE = 1
+    FORWARDED = 2
+    PROXIABLE = 3
+    PROXY = 4
+    ALLOW_POSTDATE = 5
+    POSTDATED = 6
+    RENEWABLE = 8
+    OPT_HARDWARE_AUTH = 11
+    CANONICALIZE = 15
+    DISABLE_TRANSITED_CHECK = 26
+    RENEWABLE_OK = 27
+    ENC_TKT_IN_SKEY = 28
+    RENEW = 30
+    VALIDATE = 31

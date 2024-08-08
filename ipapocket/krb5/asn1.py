@@ -19,12 +19,20 @@ class UInt32Asn1(core.Integer):
     """
     UInt32          ::= INTEGER (0..4294967295) -- unsigned 32 bit values
     """
+    def set(self, value):
+        if value not in range(0, 4294967295):
+            raise Exception("constraint violation")
+        return super().set(value)
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
 class MicrosecondsAsn1(core.Integer):
     """
     Microseconds    ::= INTEGER (0..999999) -- microseconds
     """
+    def set(self, value):
+        if value not in range(0, 999999):
+            raise Exception("constraint violation")
+        return super().set(value)
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class KerberosStringAsn1(core.GeneralString):

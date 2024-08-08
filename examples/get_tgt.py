@@ -9,7 +9,7 @@ sys.path.append('.')
 from ipapocket.krb5.constants import KdcOptionsTypes, PrincipalType, MessageTypes
 from ipapocket.krb5.objects import PrincipalName, KdcOptions, KdcReqBody, Realm, KerberosTime, Int32, UInt32, EncTypes, KdcReq, AsReq, PaData
 from ipapocket.krb5.crypto import supported_enctypes
-from ipapocket.network.krb5 import sendrcv
+from ipapocket.network.krb5 import Krb5Client
 
 class GetTgt():
     def __init__(self, username, password, domain, ipa_host):
@@ -19,6 +19,8 @@ class GetTgt():
         self._ipa_host = ipa_host
 
     def getTgt(self):
+        krb5_client = Krb5Client(self._ipa_host)
+
         # convert domain name to upper case
         domain = self._domain.upper()
         # create UPN
@@ -79,7 +81,8 @@ class GetTgt():
         # create AS-REQ
         as_req = AsReq(kdc_req)
 
-        sendrcv(self._ipa_host, as_req.to_asn1().dump())
+        data = krb5_client.sendrcv(as_req.to_asn1().dump())
+        print(data)
         
 
 if __name__ == '__main__':

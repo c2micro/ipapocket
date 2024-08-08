@@ -244,4 +244,4 @@ class KdcReqAsn1(core.Sequence):
     ]
 
 class AsReqAsn1(KdcReqAsn1):
-    explicit = (APPLICATION, MessageTypes.KRB_AS_REQ)
+    explicit = (APPLICATION, MessageTypes.KRB_AS_REQ.value)

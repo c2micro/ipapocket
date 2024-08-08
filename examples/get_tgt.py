@@ -7,8 +7,9 @@ from datetime import datetime, timezone, timedelta
 sys.path.append('.')
 
 from ipapocket.krb5.constants import KdcOptionsTypes, PrincipalType, MessageTypes
-from ipapocket.krb5.objects import PrincipalName, KdcOptions, KdcReqBody, Realm, KerberosTime, Int32, UInt32, EncTypes, KdcReq, AsReq
+from ipapocket.krb5.objects import PrincipalName, KdcOptions, KdcReqBody, Realm, KerberosTime, Int32, UInt32, EncTypes, KdcReq, AsReq, PaData
 from ipapocket.krb5.crypto import supported_enctypes
+from ipapocket.network.krb5 import sendrcv
 
 class GetTgt():
     def __init__(self, username, password, domain, ipa_host):
@@ -21,7 +22,7 @@ class GetTgt():
         # convert domain name to upper case
         domain = self._domain.upper()
         # create UPN
-        username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, self._username)
+        username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, [self._username])
         # create realm
         realm = Realm(domain)
         # create sname
@@ -76,12 +77,14 @@ class GetTgt():
         kdc_req.set_req_body(kdc_req_body)
         # add message type
         kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ.value))
+        # add padata
+        #kdc_req.set_padata(PaData())
 
         # create AS-REQ
         as_req = AsReq()
         as_req.set_req(kdc_req)
 
-        print(as_req.to_asn1().debug())
+        sendrcv(self._ipa_host, as_req.to_asn1().dump())
         
 
 if __name__ == '__main__':

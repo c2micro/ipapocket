@@ -115,6 +115,15 @@ class KdcReqBody():
             }
         )
 
+class PaData():
+    def __init__(self):
+        self._padata = None
+    
+    def to_asn1(self):
+        return asn1.PaDatasAsn1(
+            {},
+        )
+
 class KdcReq():
     def __init__(self):
         self._pvno = None
@@ -130,6 +139,9 @@ class KdcReq():
     
     def set_req_body(self, req_body):
         self._req_body = req_body
+    
+    def set_padata(self, padata):
+        self._padata = padata
     
     def to_asn1(self):
         return asn1.KdcReqAsn1(
@@ -149,4 +161,4 @@ class AsReq():
         self._req = req
     
     def to_asn1(self):
-        return asn1.AsReqAsn1(self._req.to_asn1())
+        return asn1.AsReqAsn1(self._req.to_asn1().native)

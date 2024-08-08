@@ -1,9 +1,25 @@
 import argparse
 import sys
 
+# hack to import from ipapocket
+sys.path.append('.')
+
+from ipapocket.krb5.types import PrincipalName
+from ipapocket.krb5.constants import PrincipalType
+
 class GetTgt():
-    def __init__(self):
-        pass
+    def __init__(self, username, password, domain, ipa_host):
+        self._username = username
+        self._password = password
+        self._domain = domain
+        self._ipa_host = ipa_host
+
+    def getTgt(self):
+        # convert domain name to upper case
+        domain = self._domain.upper()
+        username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, self._username)
+        username = PrincipalName(99999999999999999999999, self._username)
+        print(username.to_asn1().debug())
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Get TGT from FreeIPA server")
@@ -17,4 +33,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
+    
+    tgt = GetTgt(options.username, options.password, options.domain, options.ipa_host)
+    tgt.getTgt()
 

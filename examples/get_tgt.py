@@ -1,12 +1,14 @@
 import argparse
 import sys
-from datetime import datetime, timezone
+import secrets
+from datetime import datetime, timezone, timedelta
 
 # hack to import from ipapocket
 sys.path.append('.')
 
-from ipapocket.krb5.constants import KdcOptionsTypes, PrincipalType
-from ipapocket.krb5.objects import PrincipalName, KdcOptions, KdcReqBody
+from ipapocket.krb5.constants import KdcOptionsTypes, PrincipalType, MessageTypes
+from ipapocket.krb5.objects import PrincipalName, KdcOptions, KdcReqBody, Realm, KerberosTime, Int32, UInt32, EncTypes, KdcReq, AsReq
+from ipapocket.krb5.crypto import supported_enctypes
 
 class GetTgt():
     def __init__(self, username, password, domain, ipa_host):
@@ -20,20 +22,66 @@ class GetTgt():
         domain = self._domain.upper()
         # create UPN
         username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, self._username)
-        
+        # create realm
+        realm = Realm(domain)
+        # create sname
+        server_name = PrincipalName(PrincipalType.NT_PRINCIPAL.value, ['krbtgt', domain])
+
         current_timestamp = datetime.now(timezone.utc)
 
         # create KDC request body
-        kdcReqBody = KdcReqBody()
+        kdc_req_body = KdcReqBody()
 
         # create KDC options
-        kdcOptions = KdcOptions()
-        kdcOptions.add(KdcOptionsTypes.FORWARDABLE)
-        kdcOptions.add(KdcOptionsTypes.CANONICALIZE)
-        kdcOptions.add(KdcOptionsTypes.RENEWABLE_OK)
-        kdcReqBody.setKdcOptions(kdcOptions)
+        kdc_options = KdcOptions()
+        kdc_options.add(KdcOptionsTypes.FORWARDABLE)
+        kdc_options.add(KdcOptionsTypes.CANONICALIZE)
+        kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
 
-        print(kdcReqBody.to_asn1().debug())
+        # generate timestamps for validatity of TGT
+        till = KerberosTime(current_timestamp + timedelta(days=1))
+        rtime = KerberosTime(current_timestamp + timedelta(days=1))
+
+        # generate nonce
+        nonce = UInt32(secrets.randbits(31))
+
+        # set options in request
+        kdc_req_body.set_kdc_options(kdc_options)
+        # set cname in request
+        kdc_req_body.set_cname(username)
+        # set realm in request
+        kdc_req_body.set_realm(realm)
+        # set sname in request
+        kdc_req_body.set_sname(server_name)
+        # set till in request
+        kdc_req_body.set_till(till)
+        # set rtime in request
+        kdc_req_body.set_rtime(rtime)
+        # set nonce in request
+        kdc_req_body.set_nonce(nonce)
+
+        # create object with supported encryption types
+        etypes = EncTypes(supported_enctypes())
+        # set etype in request
+        kdc_req_body.set_enctypes(etypes)
+
+        # TODO - PAC
+
+        # create KDC request
+        kdc_req = KdcReq()
+
+        # add version of kerberos
+        kdc_req.set_pvno(Int32(5))
+        # add KDC requst body
+        kdc_req.set_req_body(kdc_req_body)
+        # add message type
+        kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ.value))
+
+        # create AS-REQ
+        as_req = AsReq()
+        as_req.set_req(kdc_req)
+
+        print(as_req.to_asn1().debug())
         
 
 if __name__ == '__main__':

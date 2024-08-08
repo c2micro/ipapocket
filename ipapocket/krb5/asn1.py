@@ -1,7 +1,7 @@
 from asn1crypto import core
 import ctypes
 from ipapocket.exceptions.exceptions import Asn1ConstrainedViolation
-from ipapocket.krb5.constants import KdcOptionsTypes
+from ipapocket.krb5.constants import KdcOptionsTypes, MessageTypes
 
 # explicit tag for ASN1
 EXPLICIT = 'explicit'
@@ -115,7 +115,7 @@ class KerberosTimeAsn1(core.GeneralizedTime):
     KerberosTime ::= GeneralizedTime
     """
 
-class EncTypes(core.SequenceOf):
+class EncTypesAsn1(core.SequenceOf):
     _child_spec = core.Integer
 
 class HostAddressAsn1(core.Sequence):
@@ -150,7 +150,7 @@ class EncryptedDataAsn1(core.Sequence):
         ('cipher', core.OctetString, {'tag_type': EXPLICIT, 'tag': 2}),
     ]
 
-class Ticket(core.Sequence):
+class TicketAsn1(core.Sequence):
     """
     Ticket          ::= [APPLICATION 1] SEQUENCE {
            tkt-vno         [0] INTEGER (5),
@@ -169,8 +169,8 @@ class Ticket(core.Sequence):
     ]
 
 
-class Tickets(core.SequenceOf):
-    _child_spec = Ticket
+class TicketsAsn1(core.SequenceOf):
+    _child_spec = TicketAsn1
 
 class KdcReqBodyAsn1(core.Sequence):
     """
@@ -203,8 +203,45 @@ class KdcReqBodyAsn1(core.Sequence):
         ('till', KerberosTimeAsn1, {'tag_type': EXPLICIT, 'tag': 5}),
         ('rtime', KerberosTimeAsn1, {'tag_type': EXPLICIT, 'tag': 6, 'optional': True}),
         ('nonce', UInt32Asn1, {'tag_type': EXPLICIT, 'tag': 7}),
-        ('etype', EncTypes, {'tag_type': EXPLICIT, 'tag': 8}),
+        ('etype', EncTypesAsn1, {'tag_type': EXPLICIT, 'tag': 8}),
         ('addresses', HostAddressesAsn1, {'tag_type': EXPLICIT, 'tag': 9, 'optional': True}),
         ('enc-authorization-data', EncryptedDataAsn1, {'tag_type': EXPLICIT, 'tag': 10, 'optional': True}),
-        ('additional-tickets', Tickets, {'tag_type': EXPLICIT, 'tag': 11, 'optional': True}),
+        ('additional-tickets', TicketsAsn1, {'tag_type': EXPLICIT, 'tag': 11, 'optional': True}),
     ]
+
+class PaDataAsn1(core.Sequence):
+    """
+    PA-DATA         ::= SEQUENCE {
+        -- NOTE: first tag is [1], not [0]
+        padata-type     [1] Int32,
+        padata-value    [2] OCTET STRING -- might be encoded AP-REQ
+    }
+    """
+    _fields = [
+        ('padata-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 1}),
+        ('padata-value', core.OctetString, {'tag_type': EXPLICIT, 'tag': 2}),
+    ]
+
+class PaDatasAsn1(core.SequenceOf):
+    _child_spec = PaDataAsn1
+
+class KdcReqAsn1(core.Sequence):
+    """
+    KDC-REQ         ::= SEQUENCE {
+        -- NOTE: first tag is [1], not [0]
+        pvno            [1] INTEGER (5) ,
+        msg-type        [2] INTEGER (10 -- AS -- | 12 -- TGS --),
+        padata          [3] SEQUENCE OF PA-DATA OPTIONAL
+                            -- NOTE: not empty --,
+        req-body        [4] KDC-REQ-BODY
+    }
+    """
+    _fields = [
+        ('pvno', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 1}),
+        ('msg-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 2}),
+        ('padata', PaDatasAsn1, {'tag_type': EXPLICIT, 'tag': 3, 'optional': True}),
+        ('req-body', KdcReqBodyAsn1, {'tag_type': EXPLICIT, 'tag': 4}),
+    ]
+
+class AsReqAsn1(KdcReqAsn1):
+    explicit = (APPLICATION, MessageTypes.KRB_AS_REQ)

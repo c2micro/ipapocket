@@ -17,7 +17,7 @@ class GetTgt():
     def getTgt(self):
         # convert domain name to upper case
         domain = self._domain.upper()
-        username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, self._username)
+        # username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, self._username)
         username = PrincipalName(99999999999999999999999, self._username)
         print(username.to_asn1().debug())
 

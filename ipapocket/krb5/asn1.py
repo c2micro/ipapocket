@@ -1,4 +1,5 @@
 from asn1crypto import core
+import ctypes
 
 # explicit tag for ASN1
 EXPLICIT = 'explicit'
@@ -8,6 +9,10 @@ class Int32Asn1(core.Integer):
     """
     Int32           ::= INTEGER (-2147483648..2147483647) -- signed values representable in 32 bits
     """
+    def set(self, value):
+        if value not in range(-2147483648, 2147483647):
+            raise Exception("constraint violation")
+        return super().set(value)
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
 class UInt32Asn1(core.Integer):

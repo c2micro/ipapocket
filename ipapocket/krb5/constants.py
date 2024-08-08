@@ -1,5 +1,11 @@
 import enum
 
+# https://www.rfc-editor.org/rfc/rfc4120#section-6.2
+class PrincipalType(enum.Enum):
+    NT_UNKNOWN = 0 # Name type not known
+    NT_PRINCIPAL = 1 # Just the name of the principal as in DCE, or for users
+    NT_SRV_INST = 2 # Service and other unique instance (krbtgt)
+
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.1
 class KeyUsageTypes(enum.Enum):
     AS_REQ_PA_ENC_TIMESTAMP = 1

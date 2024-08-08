@@ -1,11 +1,12 @@
 import argparse
 import sys
+from datetime import datetime, timezone
 
 # hack to import from ipapocket
 sys.path.append('.')
 
-from ipapocket.krb5.types import PrincipalName
-from ipapocket.krb5.constants import PrincipalType
+from ipapocket.krb5.constants import KdcOptionsTypes, PrincipalType
+from ipapocket.krb5.objects import PrincipalName, KdcOptions
 
 class GetTgt():
     def __init__(self, username, password, domain, ipa_host):
@@ -17,9 +18,18 @@ class GetTgt():
     def getTgt(self):
         # convert domain name to upper case
         domain = self._domain.upper()
-        # username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, self._username)
-        username = PrincipalName(99999999999999999999999, self._username)
-        print(username.to_asn1().debug())
+        # create UPN
+        username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, self._username)
+        
+        current_timestamp = datetime.now(timezone.utc)
+
+        # create list of kdc options
+        options = list()
+        options.append(KdcOptionsTypes.FORWARDABLE.value)
+        options.append(KdcOptionsTypes.CANONICALIZE.value)
+        options.append(KdcOptionsTypes.RENEWABLE_OK.value)
+        kdcOptions = KdcOptions(options)
+        print(kdcOptions.to_asn1().dump())
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Get TGT from FreeIPA server")

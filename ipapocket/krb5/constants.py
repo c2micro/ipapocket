@@ -230,7 +230,7 @@ class ChecksumTypes(enum.Enum):
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.1
 # without reserved bits
-class KdcOptions(enum.Enum):
+class KdcOptionsTypes(enum.Enum):
     FORWARDABLE = 1
     FORWARDED = 2
     PROXIABLE = 3

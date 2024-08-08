@@ -13,3 +13,16 @@ class PrincipalName():
                 'name-string': self._value,
             }
         )
+
+class KdcOptions():
+    def __init__(self, options):
+        self._options = options
+
+    def to_asn1(self):
+        flags = list()
+        for i in range(0, 32):
+            flags.append(0,)
+        for f in self._options:
+            flags[f] = 1
+        print(flags)
+        return asn1.KdcOptionsAsn1(flags)

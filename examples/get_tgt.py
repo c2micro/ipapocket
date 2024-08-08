@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 sys.path.append('.')
 
 from ipapocket.krb5.constants import KdcOptionsTypes, PrincipalType
-from ipapocket.krb5.objects import PrincipalName, KdcOptions
+from ipapocket.krb5.objects import PrincipalName, KdcOptions, KdcReqBody
 
 class GetTgt():
     def __init__(self, username, password, domain, ipa_host):
@@ -23,13 +23,18 @@ class GetTgt():
         
         current_timestamp = datetime.now(timezone.utc)
 
-        # create list of kdc options
-        options = list()
-        options.append(KdcOptionsTypes.FORWARDABLE.value)
-        options.append(KdcOptionsTypes.CANONICALIZE.value)
-        options.append(KdcOptionsTypes.RENEWABLE_OK.value)
-        kdcOptions = KdcOptions(options)
-        print(kdcOptions.to_asn1().dump())
+        # create KDC request body
+        kdcReqBody = KdcReqBody()
+
+        # create KDC options
+        kdcOptions = KdcOptions()
+        kdcOptions.add(KdcOptionsTypes.FORWARDABLE)
+        kdcOptions.add(KdcOptionsTypes.CANONICALIZE)
+        kdcOptions.add(KdcOptionsTypes.RENEWABLE_OK)
+        kdcReqBody.setKdcOptions(kdcOptions)
+
+        print(kdcReqBody.to_asn1().debug())
+        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=True, description="Get TGT from FreeIPA server")

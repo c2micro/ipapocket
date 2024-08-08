@@ -1,5 +1,6 @@
 import ipapocket.krb5.constants
 import ipapocket.krb5.asn1 as asn1
+from bitarray import bitarray
 
 class PrincipalName():
     def __init__(self, type=None, value=None):
@@ -15,14 +16,28 @@ class PrincipalName():
         )
 
 class KdcOptions():
-    def __init__(self, options):
-        self._options = options
+    def __init__(self):
+        self._options = list()
+
+    def add(self, option):
+        self._options.append(option)
 
     def to_asn1(self):
-        flags = list()
-        for i in range(0, 32):
-            flags.append(0,)
-        for f in self._options:
-            flags[f] = 1
-        print(flags)
-        return asn1.KdcOptionsAsn1(flags)
+        b_arr = bitarray(32)
+        for option in self._options:
+            b_arr[option.value] = 1
+        return asn1.KdcOptionsAsn1(tuple(b_arr.tolist()))
+
+
+class KdcReqBody():
+    def __init__(self):
+        self._kdcOptions = None
+
+    def setKdcOptions(self, options):
+        self._kdcOptions = options
+
+    def to_asn1(self):
+        kdcReqBody = asn1.KdcReqBodyAsn1()
+        if self._kdcOptions is not None:
+            kdcReqBody['kdc-options'] = self._kdcOptions.to_asn1(),
+        return kdcReqBody

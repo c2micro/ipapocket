@@ -40,8 +40,8 @@ class GetTgt():
         kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
 
         # generate timestamps for validatity of TGT
-        till = KerberosTime(current_timestamp + timedelta(days=1))
-        rtime = KerberosTime(current_timestamp + timedelta(days=1))
+        till = KerberosTime((current_timestamp + timedelta(days=1)).replace(microsecond=0))
+        rtime = KerberosTime((current_timestamp + timedelta(days=1)).replace(microsecond=0))
 
         # generate nonce
         nonce = UInt32(secrets.randbits(31))

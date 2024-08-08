@@ -5,6 +5,7 @@ from ipapocket.krb5.constants import KdcOptionsTypes, MessageTypes
 
 # explicit tag for ASN1
 EXPLICIT = 'explicit'
+
 UNIVERSAL = 0
 APPLICATION = 1
 CONTEXT = 2
@@ -14,37 +15,54 @@ class Int32Asn1(core.Integer):
     """
     Int32           ::= INTEGER (-2147483648..2147483647) -- signed values representable in 32 bits
     """
+
     def set(self, value):
+        """
+            Validate that value in specified range
+        """
         if value not in range(-2147483648, 2147483647):
             raise Asn1ConstrainedViolation("Invalid value {} for Int32 ASN1 type".format(value))
         return super().set(value)
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
 class UInt32Asn1(core.Integer):
     """
     UInt32          ::= INTEGER (0..4294967295) -- unsigned 32 bit values
     """
+
     def set(self, value):
+        """
+            Validate that value in specified range
+        """
         if value not in range(0, 4294967295):
             raise Asn1ConstrainedViolation("Invalid value {} for UInt32 ASN1 type".format(value))
         return super().set(value)
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
 class MicrosecondsAsn1(core.Integer):
     """
     Microseconds    ::= INTEGER (0..999999) -- microseconds
     """
+
     def set(self, value):
+        """
+            Validate that value in specified range
+        """
         if value not in range(0, 999999):
             raise Asn1ConstrainedViolation("Invalid value {} for Microseconds ASN1 type".format(value))
         return super().set(value)
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class KerberosStringAsn1(core.GeneralString):
     """
     KerberosString  ::= GeneralString (IA5String)
     """
+
     _child_spec = core.IA5String
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class RealmAsn1(KerberosStringAsn1):
@@ -52,8 +70,12 @@ class RealmAsn1(KerberosStringAsn1):
     Realm           ::= KerberosString
     """
 
+    pass
+
+# type to store sequence of strings
 class KerberosStringsAsn1(core.SequenceOf):
     _child_spec = KerberosStringAsn1
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.2
 class PrincipalNameAsn1(core.Sequence):
@@ -65,10 +87,12 @@ class PrincipalNameAsn1(core.Sequence):
            name-string     [1] SEQUENCE OF KerberosString
     }
     """
+
     _fields = [
         ('name-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
         ('name-string', KerberosStringsAsn1, {'tag_type': EXPLICIT, 'tag': 1}),
     ]
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.8
 class KerberosFlagsAsn1(core.BitString):
@@ -78,6 +102,10 @@ class KerberosFlagsAsn1(core.BitString):
                        -- but no fewer than 32
     """
 
+    pass
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.4.1
 class KdcOptionsAsn1(KerberosFlagsAsn1):
     """
     KDCOptions      ::= KerberosFlags
@@ -105,19 +133,33 @@ class KdcOptionsAsn1(KerberosFlagsAsn1):
         -- validate(31)
     """
 
+    pass
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class RealmAsn1(KerberosStringAsn1):
     """
     Realm           ::= KerberosString
     """
 
+    pass
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.2.3
 class KerberosTimeAsn1(core.GeneralizedTime):
     """
-    KerberosTime ::= GeneralizedTime
+    KerberosTime ::= GeneralizedTime -- with no fractional seconds
     """
 
+    pass
+
+
+# sequence of integers to store types of encryption algos
 class EncTypesAsn1(core.SequenceOf):
     _child_spec = core.Integer
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.2.5
 class HostAddressAsn1(core.Sequence):
     """
     HostAddress     ::= SEQUENCE  {
@@ -125,17 +167,27 @@ class HostAddressAsn1(core.Sequence):
         address         [1] OCTET STRING
     }
     """
+
     _fields = [
         ('addr-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
         ('address', core.OctetString, {'tag_type': EXPLICIT, 'tag': 1}),
     ]
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.2.5
 class HostAddressesAsn1(core.SequenceOf):
     """
-    HostAddresses   ::= SEQUENCE OF HostAddress
+    -- NOTE: HostAddresses is always used as an OPTIONAL field and
+    -- should not be empty.
+    HostAddresses   -- NOTE: subtly different from rfc1510,
+                   -- but has a value mapping and encodes the same
+           ::= SEQUENCE OF HostAddress
     """
+
     _child_spec = HostAddressAsn1
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.2.9
 class EncryptedDataAsn1(core.Sequence):
     """
     EncryptedData   ::= SEQUENCE {
@@ -144,12 +196,15 @@ class EncryptedDataAsn1(core.Sequence):
            cipher  [2] OCTET STRING -- ciphertext
     }
     """
+
     _fields = [
         ('etype', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
         ('kvno', UInt32Asn1, {'tag_type': EXPLICIT, 'tag': 1, 'optional': True}),
         ('cipher', core.OctetString, {'tag_type': EXPLICIT, 'tag': 2}),
     ]
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class TicketAsn1(core.Sequence):
     """
     Ticket          ::= [APPLICATION 1] SEQUENCE {
@@ -159,6 +214,7 @@ class TicketAsn1(core.Sequence):
            enc-part        [3] EncryptedData -- EncTicketPart
     }
     """
+
     explicit = (APPLICATION, 1)
 
     _fields = [
@@ -169,9 +225,12 @@ class TicketAsn1(core.Sequence):
     ]
 
 
+# sequence of tickets
 class TicketsAsn1(core.SequenceOf):
     _child_spec = TicketAsn1
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class KdcReqBodyAsn1(core.Sequence):
     """
     KDC-REQ-BODY    ::= SEQUENCE {
@@ -194,6 +253,7 @@ class KdcReqBodyAsn1(core.Sequence):
         additional-tickets      [11] SEQUENCE OF Ticket OPTIONAL
                                         -- NOTE: not empty
     """
+    
     _fields = [
         ('kdc-options', KdcOptionsAsn1, {'tag_type': EXPLICIT, 'tag': 0}),
         ('cname', PrincipalNameAsn1, {'tag_type': EXPLICIT, 'tag': 1, 'optional': True}),
@@ -209,6 +269,8 @@ class KdcReqBodyAsn1(core.Sequence):
         ('additional-tickets', TicketsAsn1, {'tag_type': EXPLICIT, 'tag': 11, 'optional': True}),
     ]
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class PaDataAsn1(core.Sequence):
     """
     PA-DATA         ::= SEQUENCE {
@@ -217,14 +279,19 @@ class PaDataAsn1(core.Sequence):
         padata-value    [2] OCTET STRING -- might be encoded AP-REQ
     }
     """
+
     _fields = [
         ('padata-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 1}),
         ('padata-value', core.OctetString, {'tag_type': EXPLICIT, 'tag': 2}),
     ]
 
+
+# sequence of preauthentication data sets
 class PaDatasAsn1(core.SequenceOf):
     _child_spec = PaDataAsn1
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class KdcReqAsn1(core.Sequence):
     """
     KDC-REQ         ::= SEQUENCE {
@@ -236,6 +303,7 @@ class KdcReqAsn1(core.Sequence):
         req-body        [4] KDC-REQ-BODY
     }
     """
+
     _fields = [
         ('pvno', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 1}),
         ('msg-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 2}),
@@ -243,5 +311,7 @@ class KdcReqAsn1(core.Sequence):
         ('req-body', KdcReqBodyAsn1, {'tag_type': EXPLICIT, 'tag': 4}),
     ]
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class AsReqAsn1(KdcReqAsn1):
     explicit = (APPLICATION, MessageTypes.KRB_AS_REQ.value)

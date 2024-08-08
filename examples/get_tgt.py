@@ -17,10 +17,9 @@ class GetTgt():
         self._password = password
         self._domain = domain
         self._ipa_host = ipa_host
+        self._krb5_client = Krb5Client(ipa_host)
 
     def getTgt(self):
-        krb5_client = Krb5Client(self._ipa_host)
-
         # convert domain name to upper case
         domain = self._domain.upper()
         # create UPN
@@ -81,7 +80,7 @@ class GetTgt():
         # create AS-REQ
         as_req = AsReq(kdc_req)
 
-        data = krb5_client.sendrcv(as_req.to_asn1().dump())
+        data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
         print(data)
         
 

@@ -2,9 +2,15 @@ import enum
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-6.2
 class PrincipalType(enum.Enum):
-    NT_UNKNOWN = 0 # Name type not known
-    NT_PRINCIPAL = 1 # Just the name of the principal as in DCE, or for users
-    NT_SRV_INST = 2 # Service and other unique instance (krbtgt)
+    NT_UNKNOWN = 0
+    NT_PRINCIPAL = 1
+    NT_SRV_INST = 2
+    NT_SRV_HST = 3
+    NT_SRV_XHST = 4
+    NT_UID = 5
+    NT_X500_PRINCIPAL = 6
+    NT_SMTP_NAME = 7
+    NT_ENTERPRISE = 10
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.1
 class KeyUsageTypes(enum.Enum):

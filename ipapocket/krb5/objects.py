@@ -8,12 +8,12 @@ class PrincipalName():
         self._value = value
 
     def to_asn1(self):
-        return asn1.PrincipalNameAsn1(
-            {
-                'name-type': self._type,
-                'name-string': self._value,
-            }
-        )
+        principal_name = asn1.PrincipalNameAsn1()
+        if self._type is not None:
+            principal_name['name-type'] = self._type
+        if self._value is not None:
+            principal_name['name-string'] = self._value
+        return principal_name
 
 class KdcOptions():
     def __init__(self):
@@ -29,40 +29,40 @@ class KdcOptions():
         return asn1.KdcOptionsAsn1(tuple(b_arr.tolist()))
 
 class Realm():
-    def __init__(self, realm):
+    def __init__(self, realm = None):
         self._realm = realm
     
     def to_asn1(self):
         return asn1.RealmAsn1(self._realm)
 
 class KerberosTime():
-    def __init__(self, krb_time):
+    def __init__(self, krb_time = None):
         self._krb_time = krb_time
 
     def to_asn1(self):
         return asn1.KerberosTimeAsn1(self._krb_time)
 
 class Int32():
-    def __init__(self, value):
+    def __init__(self, value = None):
         self._value = value
     
     def to_asn1(self):
         return asn1.Int32Asn1(self._value)
 
 class UInt32():
-    def __init__(self, value):
+    def __init__(self, value = None):
         self._value = value
     
     def to_asn1(self):
         return asn1.UInt32Asn1(self._value)
 
 class EncTypes():
-    def __init__(self, enctypes):
-        self._enctypes = enctypes
+    def __init__(self, etypes = None):
+        self._etypes = etypes
     
     def to_asn1(self):
         final = list()
-        for t in self._enctypes:
+        for t in self._etypes:
             final.append(t.value)
         return asn1.EncTypesAsn1(final)
 
@@ -75,7 +75,7 @@ class KdcReqBody():
         self._till = None
         self._rtime = None
         self._nonce = None
-        self._enctypes = None
+        self._etype = None
 
     def set_kdc_options(self, options):
         self._kdc_options = options
@@ -98,22 +98,28 @@ class KdcReqBody():
     def set_nonce(self, nonce):
         self._nonce = nonce
     
-    def set_enctypes(self, enctypes):
-        self._enctypes = enctypes
+    def set_etypes(self, etypes):
+        self._etype = etypes
 
     def to_asn1(self):
-        return asn1.KdcReqBodyAsn1(
-            {
-                'kdc-options': self._kdc_options.to_asn1(),
-                'cname': self._cname.to_asn1(),
-                'realm': self._realm.to_asn1(),
-                'sname': self._sname.to_asn1(),
-                'till': self._till.to_asn1(),
-                'rtime': self._rtime.to_asn1(),
-                'nonce': self._nonce.to_asn1(),
-                'etype': self._enctypes.to_asn1(),
-            }
-        )
+        kdc_req_body = asn1.KdcReqBodyAsn1()
+        if self._kdc_options is not None:
+            kdc_req_body['kdc-options'] = self._kdc_options.to_asn1()
+        if self._cname is not None:
+            kdc_req_body['cname'] = self._cname.to_asn1()
+        if self._realm is not None:
+            kdc_req_body['realm'] = self._realm.to_asn1()
+        if self._sname is not None:
+            kdc_req_body['sname'] = self._sname.to_asn1()
+        if self._till is not None:
+            kdc_req_body['till'] = self._till.to_asn1()
+        if self._rtime is not None:
+            kdc_req_body['rtime'] = self._rtime.to_asn1()
+        if self._nonce is not None:
+            kdc_req_body['nonce'] = self._nonce.to_asn1()
+        if self._etype is not None:
+            kdc_req_body['etype'] = self._etype.to_asn1()
+        return kdc_req_body
 
 class PaData():
     def __init__(self):
@@ -144,18 +150,20 @@ class KdcReq():
         self._padata = padata
     
     def to_asn1(self):
-        return asn1.KdcReqAsn1(
-            {
-                'pvno': self._pvno.to_asn1(),
-                'msg-type': self._msg_type.to_asn1(),
-                #'padata': self._padata.to_asn1(),
-                'req-body': self._req_body.to_asn1(),
-            }
-        )
+        kdc_req = asn1.KdcReqAsn1()
+        if self._pvno is not None:
+            kdc_req['pvno'] = self._pvno.to_asn1()
+        if self._msg_type is not None:
+            kdc_req['msg-type'] = self._msg_type.to_asn1()
+        if self._req_body is not None:
+            kdc_req['req-body'] = self._req_body.to_asn1()
+        if self._padata is not None:
+            kdc_req['padata'] = self._padata.to_asn1()
+        return kdc_req
 
 class AsReq():
-    def __init__(self):
-        self._req = None
+    def __init__(self, req):
+        self._req = req
     
     def set_req(self, req):
         self._req = req

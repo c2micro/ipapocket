@@ -64,10 +64,8 @@ class GetTgt():
         # create object with supported encryption types
         etypes = EncTypes(supported_enctypes())
         # set etype in request
-        kdc_req_body.set_enctypes(etypes)
-
-        # TODO - PAC
-
+        kdc_req_body.set_etypes(etypes)
+        
         # create KDC request
         kdc_req = KdcReq()
 
@@ -77,12 +75,9 @@ class GetTgt():
         kdc_req.set_req_body(kdc_req_body)
         # add message type
         kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ.value))
-        # add padata
-        #kdc_req.set_padata(PaData())
 
         # create AS-REQ
-        as_req = AsReq()
-        as_req.set_req(kdc_req)
+        as_req = AsReq(kdc_req)
 
         sendrcv(self._ipa_host, as_req.to_asn1().dump())
         

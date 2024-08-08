@@ -1,11 +1,29 @@
 import enum
 
+# https://www.rfc-editor.org/rfc/rfc4120#section-7.5.1
+class KeyUsageTypes(enum.Enum):
+    AS_REQ_PA_ENC_TIMESTAMP = 1
+    AS_TGS_REP = 2
+    AS_REP_ENCPART = 3
+    TGS_REQ_AD_SESSKEY = 4
+    TGS_REQ_AD_SUBKEY = 5
+    TGS_REQ_AUTH_CKSUM = 6
+    TGS_REQ_AUTH = 7
+    TGS_REP_ENCPART_SESSKEY = 8
+    TGS_REP_ENCPART_SUBKEY = 9
+    AP_REQ_AUTH_CKSUM = 10
+    AP_REQ_AUTH = 11
+    AP_REP_ENCPART = 12
+    KRB_PRIV_ENCPART = 13
+    KRB_CRED_ENCPART = 14
+    KRB_SAFE_CHKSUM = 15
+    AD_KDC_ISSUED_CHKSUM = 19
+
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.2
 class PreAuthenticationDataTypes(enum.Enum):
     PA_TGS_REQ = 1
     PA_ENC_TIMESTAMP = 2
     PA_PW_SALT = 3
-    # [reserved]                  4
     PA_ENC_UNIX_TIME = 5 # (deprecated)
     PA_SANDIA_SECUREID = 6
     PA_SESAME = 7
@@ -61,7 +79,6 @@ class AuthorizationDataTypes(enum.Enum):
     AD_MANDATORY_TICKET_EXTENSIONS = 6
     AD_IN_TICKET_EXTENSIONS = 7
     AD_MANDATORY_FOR_KDC = 8
-    # Reserved values = 9_63
     OSF_DCE = 64
     SESAME = 65
     AD_OSF_DCE_PKI_CERTID = 66
@@ -70,7 +87,7 @@ class AuthorizationDataTypes(enum.Enum):
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.5
 class TransitedEncodingTypes(enum.Enum):
-    DOMAIN_X500_COMPRESS = 1 # 
+    DOMAIN_X500_COMPRESS = 1
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.6
 class ProtocolVersionNumber(enum.Enum):

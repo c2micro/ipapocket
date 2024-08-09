@@ -4,11 +4,12 @@ from ipapocket.exceptions.exceptions import Asn1ConstrainedViolation
 from ipapocket.krb5.constants import KdcOptionsTypes, MessageTypes
 
 # explicit tag for ASN1
-EXPLICIT = 'explicit'
+EXPLICIT = "explicit"
 
 UNIVERSAL = 0
 APPLICATION = 1
 CONTEXT = 2
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
 class Int32Asn1(core.Integer):
@@ -18,10 +19,12 @@ class Int32Asn1(core.Integer):
 
     def set(self, value):
         """
-            Validate that value in specified range
+        Validate that value in specified range
         """
         if value not in range(-2147483648, 2147483647):
-            raise Asn1ConstrainedViolation("Invalid value {} for Int32 ASN1 type".format(value))
+            raise Asn1ConstrainedViolation(
+                "Invalid value {} for Int32 ASN1 type".format(value)
+            )
         return super().set(value)
 
 
@@ -33,10 +36,12 @@ class UInt32Asn1(core.Integer):
 
     def set(self, value):
         """
-            Validate that value in specified range
+        Validate that value in specified range
         """
         if value not in range(0, 4294967295):
-            raise Asn1ConstrainedViolation("Invalid value {} for UInt32 ASN1 type".format(value))
+            raise Asn1ConstrainedViolation(
+                "Invalid value {} for UInt32 ASN1 type".format(value)
+            )
         return super().set(value)
 
 
@@ -48,10 +53,12 @@ class MicrosecondsAsn1(core.Integer):
 
     def set(self, value):
         """
-            Validate that value in specified range
+        Validate that value in specified range
         """
         if value not in range(0, 999999):
-            raise Asn1ConstrainedViolation("Invalid value {} for Microseconds ASN1 type".format(value))
+            raise Asn1ConstrainedViolation(
+                "Invalid value {} for Microseconds ASN1 type".format(value)
+            )
         return super().set(value)
 
 
@@ -72,6 +79,7 @@ class RealmAsn1(KerberosStringAsn1):
 
     pass
 
+
 # type to store sequence of strings
 class KerberosStringsAsn1(core.SequenceOf):
     _child_spec = KerberosStringAsn1
@@ -89,8 +97,8 @@ class PrincipalNameAsn1(core.Sequence):
     """
 
     _fields = [
-        ('name-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
-        ('name-string', KerberosStringsAsn1, {'tag_type': EXPLICIT, 'tag': 1}),
+        ("name-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("name-string", KerberosStringsAsn1, {"tag_type": EXPLICIT, "tag": 1}),
     ]
 
 
@@ -169,8 +177,8 @@ class HostAddressAsn1(core.Sequence):
     """
 
     _fields = [
-        ('addr-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
-        ('address', core.OctetString, {'tag_type': EXPLICIT, 'tag': 1}),
+        ("addr-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("address", core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
     ]
 
 
@@ -198,9 +206,9 @@ class EncryptedDataAsn1(core.Sequence):
     """
 
     _fields = [
-        ('etype', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
-        ('kvno', UInt32Asn1, {'tag_type': EXPLICIT, 'tag': 1, 'optional': True}),
-        ('cipher', core.OctetString, {'tag_type': EXPLICIT, 'tag': 2}),
+        ("etype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("kvno", UInt32Asn1, {"tag_type": EXPLICIT, "tag": 1, "optional": True}),
+        ("cipher", core.OctetString, {"tag_type": EXPLICIT, "tag": 2}),
     ]
 
 
@@ -218,10 +226,10 @@ class TicketAsn1(core.Sequence):
     explicit = (APPLICATION, 1)
 
     _fields = [
-        ('tkt-vno', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
-        ('realm', RealmAsn1, {'tag_type': EXPLICIT, 'tag': 1}),
-        ('sname', PrincipalNameAsn1, {'tag_type': EXPLICIT, 'tag': 2}),
-        ('enc-part', EncryptedDataAsn1, {'tag_type': EXPLICIT, 'tag': 3}),
+        ("tkt-vno", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("realm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        ("sname", PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 2}),
+        ("enc-part", EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 3}),
     ]
 
 
@@ -253,20 +261,40 @@ class KdcReqBodyAsn1(core.Sequence):
         additional-tickets      [11] SEQUENCE OF Ticket OPTIONAL
                                         -- NOTE: not empty
     """
-    
+
     _fields = [
-        ('kdc-options', KdcOptionsAsn1, {'tag_type': EXPLICIT, 'tag': 0}),
-        ('cname', PrincipalNameAsn1, {'tag_type': EXPLICIT, 'tag': 1, 'optional': True}),
-        ('realm', RealmAsn1, {'tag_type': EXPLICIT, 'tag': 2}),
-        ('sname', PrincipalNameAsn1, {'tag_type': EXPLICIT, 'tag': 3, 'optional': True}),
-        ('from', KerberosTimeAsn1, {'tag_type': EXPLICIT, 'tag': 4, 'optional': True}),
-        ('till', KerberosTimeAsn1, {'tag_type': EXPLICIT, 'tag': 5}),
-        ('rtime', KerberosTimeAsn1, {'tag_type': EXPLICIT, 'tag': 6, 'optional': True}),
-        ('nonce', UInt32Asn1, {'tag_type': EXPLICIT, 'tag': 7}),
-        ('etype', EncTypesAsn1, {'tag_type': EXPLICIT, 'tag': 8}),
-        ('addresses', HostAddressesAsn1, {'tag_type': EXPLICIT, 'tag': 9, 'optional': True}),
-        ('enc-authorization-data', EncryptedDataAsn1, {'tag_type': EXPLICIT, 'tag': 10, 'optional': True}),
-        ('additional-tickets', TicketsAsn1, {'tag_type': EXPLICIT, 'tag': 11, 'optional': True}),
+        ("kdc-options", KdcOptionsAsn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            "cname",
+            PrincipalNameAsn1,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+        ("realm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (
+            "sname",
+            PrincipalNameAsn1,
+            {"tag_type": EXPLICIT, "tag": 3, "optional": True},
+        ),
+        ("from", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 4, "optional": True}),
+        ("till", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 5}),
+        ("rtime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 6, "optional": True}),
+        ("nonce", UInt32Asn1, {"tag_type": EXPLICIT, "tag": 7}),
+        ("etype", EncTypesAsn1, {"tag_type": EXPLICIT, "tag": 8}),
+        (
+            "addresses",
+            HostAddressesAsn1,
+            {"tag_type": EXPLICIT, "tag": 9, "optional": True},
+        ),
+        (
+            "enc-authorization-data",
+            EncryptedDataAsn1,
+            {"tag_type": EXPLICIT, "tag": 10, "optional": True},
+        ),
+        (
+            "additional-tickets",
+            TicketsAsn1,
+            {"tag_type": EXPLICIT, "tag": 11, "optional": True},
+        ),
     ]
 
 
@@ -281,8 +309,8 @@ class PaDataAsn1(core.Sequence):
     """
 
     _fields = [
-        ('padata-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 1}),
-        ('padata-value', core.OctetString, {'tag_type': EXPLICIT, 'tag': 2}),
+        ("padata-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        ("padata-value", core.OctetString, {"tag_type": EXPLICIT, "tag": 2}),
     ]
 
 
@@ -305,16 +333,46 @@ class KdcReqAsn1(core.Sequence):
     """
 
     _fields = [
-        ('pvno', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 1}),
-        ('msg-type', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 2}),
-        ('padata', PaDatasAsn1, {'tag_type': EXPLICIT, 'tag': 3, 'optional': True}),
-        ('req-body', KdcReqBodyAsn1, {'tag_type': EXPLICIT, 'tag': 4}),
+        ("pvno", Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        ("msg-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 2}),
+        ("padata", PaDatasAsn1, {"tag_type": EXPLICIT, "tag": 3, "optional": True}),
+        ("req-body", KdcReqBodyAsn1, {"tag_type": EXPLICIT, "tag": 4}),
     ]
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class AsReqAsn1(KdcReqAsn1):
     explicit = (APPLICATION, MessageTypes.KRB_AS_REQ.value)
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
+class KdcRepAsn1(core.Sequence):
+    """
+    KDC-REP         ::= SEQUENCE {
+        pvno            [0] INTEGER (5),
+        msg-type        [1] INTEGER (11 -- AS -- | 13 -- TGS --),
+        padata          [2] SEQUENCE OF PA-DATA OPTIONAL
+                                -- NOTE: not empty --,
+        crealm          [3] Realm,
+        cname           [4] PrincipalName,
+        ticket          [5] Ticket,
+        enc-part        [6] EncryptedData
+                                -- EncASRepPart or EncTGSRepPart,
+                                -- as appropriate
+    }
+    """
+
+    _fields = [
+        ("pvno", core.Integer, {"tag_type": EXPLICIT, "tag": 0}),
+        ("msg-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        ("padata", PaDatasAsn1, {"tag_type": EXPLICIT, "tag": 2, "optional": True}),
+        ("crealm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 3}),
+        ("cname", PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+        ("ticket", TicketAsn1, {"tag_type": EXPLICIT, "tag": 5}),
+        ("enc-part", EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 6}),
+    ]
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.9.1
 class KrbErrorAsn1(core.Sequence):
@@ -339,18 +397,68 @@ class KrbErrorAsn1(core.Sequence):
     explicit = (APPLICATION, MessageTypes.KRB_ERROR.value)
 
     _fields = [
-        ('pvno', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
-		('msg-type',Int32Asn1 , {'tag_type': EXPLICIT, 'tag': 1}),
-		('ctime', KerberosTimeAsn1 , {'tag_type': EXPLICIT, 'tag': 2, 'optional': True}),
-		('cusec', Int32Asn1 , {'tag_type': EXPLICIT, 'tag': 3, 'optional': True}),
-		('stime', KerberosTimeAsn1 , {'tag_type': EXPLICIT, 'tag': 4}),
-		('susec', Int32Asn1 , {'tag_type': EXPLICIT, 'tag': 5}),
-		('error-code', Int32Asn1 , {'tag_type': EXPLICIT, 'tag': 6}),
-		('crealm', RealmAsn1 , {'tag_type': EXPLICIT, 'tag': 7, 'optional': True}),
-		('cname', PrincipalNameAsn1 , {'tag_type': EXPLICIT, 'tag': 8, 'optional': True}),
-		('realm', RealmAsn1 , {'tag_type': EXPLICIT, 'tag': 9}),
-		('sname', PrincipalNameAsn1 , {'tag_type': EXPLICIT, 'tag': 10}),
-		('e-text', core.GeneralString , {'tag_type': EXPLICIT, 'tag': 11, 'optional': True}),
-		('e-data', core.OctetString , {'tag_type': EXPLICIT, 'tag': 12, 'optional': True}),
+        ("pvno", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("msg-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        ("ctime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 2, "optional": True}),
+        ("cusec", Int32Asn1, {"tag_type": EXPLICIT, "tag": 3, "optional": True}),
+        ("stime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+        ("susec", Int32Asn1, {"tag_type": EXPLICIT, "tag": 5}),
+        ("error-code", Int32Asn1, {"tag_type": EXPLICIT, "tag": 6}),
+        ("crealm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 7, "optional": True}),
+        (
+            "cname",
+            PrincipalNameAsn1,
+            {"tag_type": EXPLICIT, "tag": 8, "optional": True},
+        ),
+        ("realm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 9}),
+        ("sname", PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 10}),
+        (
+            "e-text",
+            core.GeneralString,
+            {"tag_type": EXPLICIT, "tag": 11, "optional": True},
+        ),
+        (
+            "e-data",
+            core.OctetString,
+            {"tag_type": EXPLICIT, "tag": 12, "optional": True},
+        ),
     ]
 
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
+class AsRepAsn1(KdcRepAsn1):
+    """
+    AS-REP          ::= [APPLICATION 11] KDC-REP
+    """
+
+    explicit = (APPLICATION, MessageTypes.KRB_AS_REP.value)
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
+class TgsRepAsn1(KdcRepAsn1):
+    """
+    TGS-REP         ::= [APPLICATION 13] KDC-REP
+    """
+
+    explicit = (APPLICATION, MessageTypes.KRB_TGS_REP.value)
+
+
+# class to handle different types of returned response
+class KerberosResponseAsn1(core.Choice):
+    _alternatives = [
+        (
+            "AS-REP",
+            AsRepAsn1,
+            {"implicit": (APPLICATION, MessageTypes.KRB_AS_REP.value)},
+        ),
+        (
+            "TGS-REP",
+            TgsRepAsn1,
+            {"implicit": (APPLICATION, MessageTypes.KRB_TGS_REP.value)},
+        ),
+        (
+            "KRB-ERROR",
+            KrbErrorAsn1,
+            {"implicit": (APPLICATION, MessageTypes.KRB_ERROR.value)},
+        ),
+    ]

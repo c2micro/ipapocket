@@ -4,9 +4,10 @@ from ipapocket.krb5.objects import *
 from ipapocket.krb5.constants import *
 from ipapocket.krb5.crypto import *
 
+
 def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     """
-        Create AS-REQ packet without Preauthentication data
+    Create AS-REQ packet without Preauthentication data
     """
     # we need uppercase domain
     domain = domain.upper()
@@ -15,7 +16,7 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     # create realm
     realm = Realm(domain)
     # create sname
-    server_name = PrincipalName(PrincipalType.NT_PRINCIPAL.value, ['krbtgt', domain])
+    server_name = PrincipalName(PrincipalType.NT_PRINCIPAL.value, ["krbtgt", domain])
 
     current_timestamp = datetime.now(timezone.utc)
 
@@ -54,7 +55,7 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     etypes = EncTypes(supported_enctypes())
     # set etype in request
     kdc_req_body.set_etypes(etypes)
-    
+
     # create KDC request
     kdc_req = KdcReq()
 

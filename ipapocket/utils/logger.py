@@ -35,3 +35,7 @@ def init(ts=False):
         handler.setFormatter(LoggerFormatterTimeStamp())
     logging.getLogger().addHandler(handler)
     logging.getLogger().setLevel(logging.INFO)
+
+def save_output(path):
+    fh = logging.FileHandler(filename=path, mode='w')
+    logging.getLogger().addHandler(fh)

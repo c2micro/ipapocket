@@ -1,7 +1,6 @@
 from asn1crypto import core
-import ctypes
 from ipapocket.exceptions.exceptions import Asn1ConstrainedViolation
-from ipapocket.krb5.constants import KdcOptionsTypes, MessageTypes
+from ipapocket.krb5.constants import MessageTypes
 
 # explicit tag for ASN1
 EXPLICIT = "explicit"
@@ -475,7 +474,7 @@ class EtypeInfoEntryAsn1(core.Sequence):
 
     _fields = [
         ("etype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("salt", core.OctetString, {"tag_type": EXPLICIT, "tag": 1, 'optional': True}),
+        ("salt", core.OctetString, {"tag_type": EXPLICIT, "tag": 1, "optional": True}),
     ]
 
 
@@ -500,8 +499,16 @@ class EtypeInfo2EntryAsn1(core.Sequence):
 
     _fields = [
         ("etype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("salt", KerberosStringAsn1, {"tag_type": EXPLICIT, "tag": 1, 'optional': True}),
-        ("s2kparams", core.OctetString, {"tag_type": EXPLICIT, "tag": 2, 'optional': True}),
+        (
+            "salt",
+            KerberosStringAsn1,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+        (
+            "s2kparams",
+            core.OctetString,
+            {"tag_type": EXPLICIT, "tag": 2, "optional": True},
+        ),
     ]
 
 
@@ -512,3 +519,22 @@ class EtypeInfo2Asn1(core.SequenceOf):
     """
 
     _child_spec = EtypeInfo2EntryAsn1
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class PaEncTsEncAsn1(core.Sequence):
+    """
+    PA-ENC-TS-ENC           ::= SEQUENCE {
+        patimestamp     [0] KerberosTime -- client's time --,
+        pausec          [1] Microseconds OPTIONAL
+    }
+    """
+
+    _fields = [
+        ("patimestamp", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            "pausec",
+            MicrosecondsAsn1,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+    ]

@@ -26,3 +26,36 @@ class NoSupportedEtypes(Exception):
     """
 
     pass
+
+
+class UnknownEtype(Exception):
+    """
+    Searching for unknown etype
+    """
+
+    def __init__(self, etype: str):
+        super(Exception, self).__init__("Unknown etype {} for crypto".format(etype))
+
+
+class InvalidKeyLength(Exception):
+    """
+    Invalid length of key
+    """
+
+    def __init__(self, actual: int):
+        super(Exception, self).__init__("Invalid key size {} bytes".format(actual))
+
+
+class InvalidSeedSize(Exception):
+    """
+    Invalid seed size in crypto
+    """
+
+    def __init__(self, actual: int, needed: int):
+        super(Exception, self).__init__(
+            "Invalid seed size: expected {} bytes, got {} bytes".format(actual, needed)
+        )
+
+
+class InvalidChecksum(Exception):
+    pass

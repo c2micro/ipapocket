@@ -1,19 +1,83 @@
 import ipapocket.krb5.asn1 as asn1
+from ipapocket.krb5.constants import *
 from bitarray import bitarray
+from ipapocket.krb5.fields import *
+from ipapocket.exceptions.krb5 import *
 
 
 class PrincipalName:
-    def __init__(self, type=None, value=None):
+    def __init__(self, type: PrincipalType = None, value=None):
         self._type = type
-        self._value = value
+        self._value = self._validate_value(value)
 
-    def to_asn1(self):
+    @classmethod
+    def load(cls, data: asn1.PrincipalNameAsn1):
+        return cls(
+            type=PrincipalType(data.native[PRINCIPAL_NAME_NAME_TYPE]),
+            value=data.native[PRINCIPAL_NAME_NAME_STRING],
+        )
+
+    def __str__(self):
+        return "{{'{}' = {}, '{}' = {}}}".format(
+            PRINCIPAL_NAME_NAME_TYPE,
+            self._type.name,
+            PRINCIPAL_NAME_NAME_STRING,
+            self._value,
+        )
+
+    @property
+    def name_type(self) -> PrincipalType:
+        return self._type
+
+    @property
+    def name_value(self):
+        return self._value
+
+    @name_type.setter
+    def name_type(self, type: PrincipalType) -> None:
+        self._type = type
+
+    @name_value.setter
+    def name_value(self, value) -> None:
+        self._value = self._validate_value(value)
+
+    def _validate_value(self, value):
+        if isinstance(value, str):
+            return [value]
+        if isinstance(value, list):
+            return value
+        raise InvalidPrincipalSyntax(value)
+
+    def to_asn1(self) -> asn1.PrincipalNameAsn1:
         principal_name = asn1.PrincipalNameAsn1()
         if self._type is not None:
-            principal_name["name-type"] = self._type
+            principal_name[PRINCIPAL_NAME_NAME_TYPE] = self._type.value
         if self._value is not None:
-            principal_name["name-string"] = self._value
+            principal_name[PRINCIPAL_NAME_NAME_STRING] = self._value
         return principal_name
+
+
+class Realm:
+    def __init__(self, realm: str = None):
+        self._realm = realm
+
+    @classmethod
+    def load(cls, data: asn1.RealmAsn1):
+        return cls(realm=data.native)
+    
+    def __str__(self) -> str:
+        return "{}".format(self._realm)
+
+    @property
+    def realm(self) -> str:
+        return self._realm
+
+    @realm.setter
+    def realm(self, realm) -> None:
+        self._realm = realm
+
+    def to_asn1(self) -> asn1.RealmAsn1:
+        return asn1.RealmAsn1(self._realm)
 
 
 class KdcOptions:
@@ -28,14 +92,6 @@ class KdcOptions:
         for option in self._options:
             b_arr[option.value] = 1
         return asn1.KdcOptionsAsn1(tuple(b_arr.tolist()))
-
-
-class Realm:
-    def __init__(self, realm=None):
-        self._realm = realm
-
-    def to_asn1(self):
-        return asn1.RealmAsn1(self._realm)
 
 
 class KerberosTime:

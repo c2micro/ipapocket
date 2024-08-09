@@ -1,6 +1,7 @@
 from asn1crypto import core
 from ipapocket.exceptions.exceptions import Asn1ConstrainedViolation
 from ipapocket.krb5.constants import MessageTypes
+from ipapocket.krb5.fields import *
 
 # explicit tag for ASN1
 EXPLICIT = "explicit"
@@ -96,8 +97,8 @@ class PrincipalNameAsn1(core.Sequence):
     """
 
     _fields = [
-        ("name-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("name-string", KerberosStringsAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (PRINCIPAL_NAME_NAME_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (PRINCIPAL_NAME_NAME_STRING, KerberosStringsAsn1, {"tag_type": EXPLICIT, "tag": 1}),
     ]
 
 

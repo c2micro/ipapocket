@@ -1,0 +1,2 @@
+PRINCIPAL_NAME_NAME_TYPE = "name-type"
+PRINCIPAL_NAME_NAME_STRING = "name-string"

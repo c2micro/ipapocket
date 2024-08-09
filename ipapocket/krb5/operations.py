@@ -17,11 +17,11 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     # we need uppercase domain
     domain = domain.upper()
     # create UPN
-    username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, [username])
+    upn = PrincipalName(PrincipalType.NT_PRINCIPAL, username)
     # create realm
     realm = Realm(domain)
     # create sname
-    server_name = PrincipalName(PrincipalType.NT_PRINCIPAL.value, ["krbtgt", domain])
+    server_name = PrincipalName(PrincipalType.NT_PRINCIPAL, ["krbtgt", domain])
 
     current_timestamp = datetime.now(timezone.utc)
 
@@ -44,7 +44,7 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     # set options in request
     kdc_req_body.set_kdc_options(kdc_options)
     # set cname in request
-    kdc_req_body.set_cname(username)
+    kdc_req_body.set_cname(upn)
     # set realm in request
     kdc_req_body.set_realm(realm)
     # set sname in request
@@ -88,11 +88,11 @@ def as_req_with_pa(
     # we need uppercase domain
     domain = domain.upper()
     # create UPN
-    username = PrincipalName(PrincipalType.NT_PRINCIPAL.value, [username])
+    username = PrincipalName(PrincipalType.NT_PRINCIPAL, username)
     # create realm
     realm = Realm(domain)
     # create sname
-    server_name = PrincipalName(PrincipalType.NT_PRINCIPAL.value, ["krbtgt", domain])
+    server_name = PrincipalName(PrincipalType.NT_PRINCIPAL, ["krbtgt", domain])
 
     current_timestamp = datetime.now(timezone.utc)
 

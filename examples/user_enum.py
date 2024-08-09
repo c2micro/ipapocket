@@ -1,5 +1,6 @@
 import argparse
 import sys
+import logging
 
 # hack to import from ipapocket
 sys.path.append(".")
@@ -8,7 +9,7 @@ from ipapocket.network.krb5 import Krb5Client
 from ipapocket.krb5.operations import as_req_wihtout_pa
 from ipapocket.krb5.asn1 import *
 from ipapocket.krb5.constants import ErrorCodes
-from ipapocket.exceptions.exceptions import UnexpectedKerberosError
+from ipapocket.utils import logger
 
 
 class UserEnum:
@@ -19,13 +20,14 @@ class UserEnum:
         self._krb5_client = Krb5Client(ipa_host)
 
     def printer(self, username: str, options: str):
-        temp = "[+] " + username
+        temp = username
         if options != "":
             temp += " (%s)" % options
-        print(temp)
+        logging.info(temp)
 
     def enumerate(self):
         for username in self._usernames:
+            logging.debug("try username: {}".format(username))
             as_req = as_req_wihtout_pa(self._domain, username)
             data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
             # convert to response type
@@ -54,13 +56,17 @@ class UserEnum:
                     self.printer(username, "client locked out")
 
 
-if __name__ == "__main__":
+def main():
     """
     Example of usage:
     python3 ./examples/user_enum.py -U ~/users.list -d ipa.test -H ipa.test
     """
+    logger.init()
     parser = argparse.ArgumentParser(
         add_help=True, description="Enumerate users and state via kerberos"
+    )
+    parser.add_argument(
+        "-v", "--verbose", required=False, action="store_true", help="Verbose mode"
     )
     parser.add_argument(
         "-U",
@@ -90,8 +96,16 @@ if __name__ == "__main__":
         parser.print_help()
         sys.exit(1)
 
+    if options.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
     with open(options.username_file, "r") as f:
+        logging.debug("read file with usernames")
         usernames = f.read().splitlines()
 
     user_enum = UserEnum(usernames, options.domain, options.ipa_host)
     user_enum.enumerate()
+
+
+if __name__ == "__main__":
+    main()

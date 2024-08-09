@@ -5,7 +5,7 @@ import collections
 from ipapocket.krb5.objects import *
 from ipapocket.krb5.constants import *
 from ipapocket.krb5.crypto import crypto
-from ipapocket.krb5.crypto.base import _get_etype_profile
+from ipapocket.krb5.crypto.base import _get_etype_profile, Key
 from ipapocket.exceptions.exceptions import NoSupportedEtypes
 from ipapocket.krb5.asn1 import KrbErrorAsn1, PaDatasAsn1, EtypeInfo2Asn1, EtypeInfoAsn1
 
@@ -75,8 +75,12 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     return AsReq(kdc_req)
 
 
+def _krb_key(etype: EncryptionTypes, password, salt) -> Key:
+    return crypto.string_to_key(etype, password, salt)
+
+
 def as_req_with_pa(
-    domain: str, username: str, password: str, etype: collections.OrderedDict
+    domain: str, username: str, password: str, etype: collections.OrderedDict, salt
 ) -> AsReq:
     """
     Create AS-REQ packet with Preauthentication data
@@ -139,17 +143,14 @@ def as_req_with_pa(
     )
     enc_ts = None
     enc_data = None
-    for k, v in etype.items():
-        # TODO - refactor this shit from dict
-        krb_key = crypto.string_to_key(k, password, v)
-        enc_ts = _get_etype_profile(k).encrypt(
-            krb_key,
-            KeyUsageTypes.AS_REQ_PA_ENC_TIMESTAMP.value,
-            pa_enc_ts.to_asn1().dump(),
-            None,
-        )
-        enc_data = EncryptedData(Int32(k.value), None, enc_ts)
-        break
+    krb_key = _krb_key(etype, password, salt)
+    enc_ts = _get_etype_profile(etype).encrypt(
+        krb_key,
+        KeyUsageTypes.AS_REQ_PA_ENC_TIMESTAMP.value,
+        pa_enc_ts.to_asn1().dump(),
+        None,
+    )
+    enc_data = EncryptedData(Int32(etype.value), None, enc_ts)
     pa_data = PaData(Int32(PreAuthenticationDataTypes.PA_ENC_TIMESTAMP.value), enc_data)
     pa_datas.add_padata(pa_data)
 
@@ -166,7 +167,7 @@ def as_req_with_pa(
     return AsReq(kdc_req)
 
 
-def get_preferred_etypes(krb_err: KrbErrorAsn1):
+def get_preferred_etype(krb_err: KrbErrorAsn1):
     # make it native
     krb_err = krb_err.native
     enc_methods = collections.OrderedDict()
@@ -194,5 +195,5 @@ def get_preferred_etypes(krb_err: KrbErrorAsn1):
             if salt is not None:
                 salt = salt.native.encode()
             supported_etype[algo] = salt
-            return supported_etype
+            return algo, salt
         raise NoSupportedEtypes("no supported client etypes exists")

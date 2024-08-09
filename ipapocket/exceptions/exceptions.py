@@ -59,3 +59,14 @@ class InvalidSeedSize(Exception):
 
 class InvalidChecksum(Exception):
     pass
+
+
+class UnknownEncPartType(Exception):
+    """
+    Unknown encrypted part type
+    """
+
+    def __init__(self, name: str):
+        super(Exception, self).__init__(
+            "Unknown encrypted part type {} of AS-REP".format(name)
+        )

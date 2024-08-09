@@ -144,6 +144,30 @@ class KdcOptionsAsn1(KerberosFlagsAsn1):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class TicketFlagsAsn1(core.BitString):
+    """
+    TicketFlags     ::= KerberosFlags
+        -- reserved(0),
+        -- forwardable(1),
+        -- forwarded(2),
+        -- proxiable(3),
+        -- proxy(4),
+        -- may-postdate(5),
+        -- postdated(6),
+        -- invalid(7),
+        -- renewable(8),
+        -- initial(9),
+        -- pre-authent(10),
+        -- hw-authent(11),
+        -- the following are new since 1510
+        -- transited-policy-checked(12),
+        -- ok-as-delegate(13)
+    """
+
+    pass
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 class RealmAsn1(KerberosStringAsn1):
     """
     Realm           ::= KerberosString
@@ -344,6 +368,91 @@ class AsReqAsn1(KdcReqAsn1):
     explicit = (APPLICATION, MessageTypes.KRB_AS_REQ.value)
 
 
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.2.9
+class EncryptionKeyAsn1(core.Sequence):
+    """
+    EncryptionKey   ::= SEQUENCE {
+           keytype         [0] Int32 -- actually encryption type --,
+           keyvalue        [1] OCTET STRING
+    }
+    """
+
+    _fields = [
+        ("keytype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("keyvalue", core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
+    ]
+
+
+class LastReqAsn1(core.Sequence):
+    """
+    LastReq         ::=     SEQUENCE OF SEQUENCE {
+           lr-type         [0] Int32,
+           lr-value        [1] KerberosTime
+    }
+    """
+
+    _fields = [
+        ("lr-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("lr-value", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+    ]
+
+
+# type to hold sequences of LastReq
+class LastReqsAsn1(core.SequenceOf):
+    _child_spec = LastReqAsn1
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class EncKdcRepPartAsn1(core.Sequence):
+    """
+    EncKDCRepPart   ::= SEQUENCE {
+        key             [0] EncryptionKey,
+        last-req        [1] LastReq,
+        nonce           [2] UInt32,
+        key-expiration  [3] KerberosTime OPTIONAL,
+        flags           [4] TicketFlags,
+        authtime        [5] KerberosTime,
+        starttime       [6] KerberosTime OPTIONAL,
+        endtime         [7] KerberosTime,
+        renew-till      [8] KerberosTime OPTIONAL,
+        srealm          [9] Realm,
+        sname           [10] PrincipalName,
+        caddr           [11] HostAddresses OPTIONAL
+    }
+    """
+
+    _fields = [
+        ("key", EncryptionKeyAsn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("last-req", LastReqsAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        ("nonce", Int32Asn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (
+            "key-expiration",
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 3, "optional": True},
+        ),
+        ("flags", TicketFlagsAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+        ("authtime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 5}),
+        (
+            "starttime",
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 6, "optional": True},
+        ),
+        ("endtime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 7}),
+        (
+            "renew-till",
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 8, "optional": True},
+        ),
+        ("srealm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 9}),
+        ("sname", PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 10}),
+        (
+            "caddr",
+            HostAddressesAsn1,
+            {"tag_type": EXPLICIT, "tag": 11, "optional": True},
+        ),
+    ]
+
+
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
 class KdcRepAsn1(core.Sequence):
@@ -536,5 +645,31 @@ class PaEncTsEncAsn1(core.Sequence):
             "pausec",
             MicrosecondsAsn1,
             {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+    ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class EncAsRepPartAsn1(EncKdcRepPartAsn1):
+    explicit = (APPLICATION, 25)
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class EncTGSRepPartAsn1(EncKdcRepPartAsn1):
+    explicit = (APPLICATION, 26)
+
+
+# class to handle different type of response's encrypted part
+class EncRepPartAsn1(core.Choice):
+    _alternatives = [
+        (
+            "ENC-AS-REP-PART",
+            EncAsRepPartAsn1,
+            {"implicit": (APPLICATION, 25)},
+        ),
+        (
+            "ENC-TGS-REP-PART",
+            EncTGSRepPartAsn1,
+            {"implicit": (APPLICATION, 26)},
         ),
     ]

@@ -339,6 +339,18 @@ class KrbErrorAsn1(core.Sequence):
     explicit = (APPLICATION, MessageTypes.KRB_ERROR.value)
 
     _fields = [
-        
+        ('pvno', Int32Asn1, {'tag_type': EXPLICIT, 'tag': 0}),
+		('msg-type',Int32Asn1 , {'tag_type': EXPLICIT, 'tag': 1}),
+		('ctime', KerberosTimeAsn1 , {'tag_type': EXPLICIT, 'tag': 2, 'optional': True}),
+		('cusec', Int32Asn1 , {'tag_type': EXPLICIT, 'tag': 3, 'optional': True}),
+		('stime', KerberosTimeAsn1 , {'tag_type': EXPLICIT, 'tag': 4}),
+		('susec', Int32Asn1 , {'tag_type': EXPLICIT, 'tag': 5}),
+		('error-code', Int32Asn1 , {'tag_type': EXPLICIT, 'tag': 6}),
+		('crealm', RealmAsn1 , {'tag_type': EXPLICIT, 'tag': 7, 'optional': True}),
+		('cname', PrincipalNameAsn1 , {'tag_type': EXPLICIT, 'tag': 8, 'optional': True}),
+		('realm', RealmAsn1 , {'tag_type': EXPLICIT, 'tag': 9}),
+		('sname', PrincipalNameAsn1 , {'tag_type': EXPLICIT, 'tag': 10}),
+		('e-text', core.GeneralString , {'tag_type': EXPLICIT, 'tag': 11, 'optional': True}),
+		('e-data', core.OctetString , {'tag_type': EXPLICIT, 'tag': 12, 'optional': True}),
     ]
 

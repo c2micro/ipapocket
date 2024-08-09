@@ -462,3 +462,53 @@ class KerberosResponseAsn1(core.Choice):
             {"implicit": (APPLICATION, MessageTypes.KRB_ERROR.value)},
         ),
     ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class EtypeInfoEntryAsn1(core.Sequence):
+    """
+    ETYPE-INFO-ENTRY        ::= SEQUENCE {
+        etype           [0] Int32,
+        salt            [1] OCTET STRING OPTIONAL
+    }
+    """
+
+    _fields = [
+        ("etype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("salt", core.OctetString, {"tag_type": EXPLICIT, "tag": 1, 'optional': True}),
+    ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class EtypeInfoAsn1(core.SequenceOf):
+    """
+    ETYPE-INFO              ::= SEQUENCE OF ETYPE-INFO-ENTRY
+    """
+
+    _child_spec = EtypeInfoEntryAsn1
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class EtypeInfo2EntryAsn1(core.Sequence):
+    """
+    ETYPE-INFO2-ENTRY       ::= SEQUENCE {
+        etype           [0] Int32,
+        salt            [1] KerberosString OPTIONAL,
+        s2kparams       [2] OCTET STRING OPTIONAL
+    }
+    """
+
+    _fields = [
+        ("etype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        ("salt", KerberosStringAsn1, {"tag_type": EXPLICIT, "tag": 1, 'optional': True}),
+        ("s2kparams", core.OctetString, {"tag_type": EXPLICIT, "tag": 2, 'optional': True}),
+    ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+class EtypeInfo2Asn1(core.SequenceOf):
+    """
+    ETYPE-INFO2             ::= SEQUENCE SIZE (1..MAX) OF ETYPE-INFO2-ENTRY
+    """
+
+    _child_spec = EtypeInfo2EntryAsn1

@@ -5,7 +5,7 @@ import sys
 sys.path.append(".")
 
 from ipapocket.network.krb5 import Krb5Client
-from ipapocket.krb5.operations import as_req_wihtout_pa
+from ipapocket.krb5.operations import as_req_wihtout_pa, get_preferred_etypes
 from ipapocket.krb5.asn1 import *
 from ipapocket.krb5.constants import ErrorCodes
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError
@@ -34,6 +34,10 @@ class GetTgt:
                 != ErrorCodes.KDC_ERR_PREAUTH_REQUIRED.value
             ):
                 raise UnexpectedKerberosError(krb_msg)
+            else:
+                # get preferred etypes + salt
+                etype = get_preferred_etypes(krb_msg)
+                print(etype)
 
 
 if __name__ == "__main__":

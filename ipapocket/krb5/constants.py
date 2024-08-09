@@ -30,8 +30,15 @@ class KeyUsageTypes(enum.Enum):
     KRB_CRED_ENCPART = 14
     KRB_SAFE_CHKSUM = 15
     AD_KDC_ISSUED_CHKSUM = 19
+    KEY_USAGE_FAST_REQ_CHKSUM  = 50 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.2
+    KEY_USAGE_FAST_ENC = 51 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.2
+    KEY_USAGE_FAST_REP = 52 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.2
+    KEY_USAGE_FAST_FINISHED = 53 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.2
+    KEY_USAGE_ENC_CHALLENGE_CLIENT = 54 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.2
+    KEY_USAGE_ENC_CHALLENGE_KDC = 55 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.2
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.2
+# https://github.com/krb5/krb5/blob/784c38f50e70a739400cdd3f2620bac2e2788e6c/src/include/krb5/krb5.hin#L1791
 class PreAuthenticationDataTypes(enum.Enum):
     PA_TGS_REQ = 1
     PA_ENC_TIMESTAMP = 2
@@ -68,6 +75,25 @@ class PreAuthenticationDataTypes(enum.Enum):
     TD_REQ_NONCE = 107 # INTEGER
     TD_REQ_SEQ = 108 # INTEGER
     PA_PAC_REQUEST = 128
+    FOR_USER = 129
+    S4U_X509_USER = 130
+    AS_CHECKSUM  = 132
+    PA_FX_COOKIE = 133 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.4
+    PA_AUTHENTICATION_SET = 134 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.4
+    PA_AUTH_SET_SELECTED = 135 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.4
+    PA_FX_FAST = 136 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.4
+    PA_FX_ERROR = 137 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.4
+    PA_ENCRYPTED_CHALLENGE = 138 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.4
+    OTP_CHALLENGE = 141
+    OTP_REQUEST = 142
+    OTP_PIN_CHANGE = 144
+    PKINIT_KX = 147
+    REQ_ENC_PA_REP = 149
+    AS_FRESHNESS = 150
+    SPAKE = 151
+    REDHAT_IDP_OAUTH2 = 152
+    REDHAT_PASSKEY = 153
+    PAC_OPTIONS = 167
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.3
 class AddressTypes(enum.Enum):
@@ -202,6 +228,10 @@ class ErrorCodes(enum.Enum):
     KDC_ERR_REVOCATION_STATUS_UNAVAILABLE = 74 # Reserved for PKINIT
     KDC_ERR_CLIENT_NAME_MISMATCH = 75 # Reserved for PKINIT
     KDC_ERR_KDC_NAME_MISMATCH = 76 # Reserved for PKINIT
+    KDC_ERR_PREAUTH_EXPIRED = 90 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.1
+    KDC_ERR_MORE_PREAUTH_DATA_REQUIRED = 91 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.1
+    KDC_ERR_PREAUTH_BAD_AUTHENTICATION_SET = 92 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.1
+    KDC_ERR_UNKNOWN_CRITICAL_FAST_OPTIONS = 93 # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.1
 
 # https://www.opencore.com/blog/2017/3/kerberos-encryption-types/
 # https://web.mit.edu/kerberos/krb5-devel/doc/admin/enctypes.html

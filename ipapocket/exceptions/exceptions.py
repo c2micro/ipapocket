@@ -18,3 +18,11 @@ class UnexpectedKerberosError(Exception):
         self._krb_msg = krb_msg.native
         self._err_code = ErrorCodes(self._krb_msg["error-code"])
         super(Exception, self).__init__("Kerberos error: %s" % self._err_code.name)
+
+
+class NoSupportedEtypes(Exception):
+    """
+    When client is not support etypes from FreeIPA server
+    """
+
+    pass

@@ -239,6 +239,7 @@ class HostAddressesAsn1(core.SequenceOf):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.9
+# wrapped by ipapocket.krb5.objects.EncryptedData
 class EncryptedDataAsn1(core.Sequence):
     """
     EncryptedData   ::= SEQUENCE {
@@ -249,13 +250,18 @@ class EncryptedDataAsn1(core.Sequence):
     """
 
     _fields = [
-        ("etype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("kvno", UInt32Asn1, {"tag_type": EXPLICIT, "tag": 1, "optional": True}),
-        ("cipher", core.OctetString, {"tag_type": EXPLICIT, "tag": 2}),
+        (ENCRYPTED_DATA_ETYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            ENCRYPTED_DATA_KVNO,
+            UInt32Asn1,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+        (ENCRYPTED_DATA_CIPHER, core.OctetString, {"tag_type": EXPLICIT, "tag": 2}),
     ]
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.kdb5.objects.Ticket
 class TicketAsn1(core.Sequence):
     """
     Ticket          ::= [APPLICATION 1] SEQUENCE {
@@ -277,11 +283,13 @@ class TicketAsn1(core.Sequence):
 
 
 # sequence of tickets
+# wrapped by ipapocket.krb5.objects.Tickets
 class TicketsAsn1(core.SequenceOf):
     _child_spec = TicketAsn1
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.KdcReqBody
 class KdcReqBodyAsn1(core.Sequence):
     """
     KDC-REQ-BODY    ::= SEQUENCE {
@@ -350,6 +358,7 @@ class KdcReqBodyAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.PaData
 class PaDataAsn1(core.Sequence):
     """
     PA-DATA         ::= SEQUENCE {
@@ -360,17 +369,19 @@ class PaDataAsn1(core.Sequence):
     """
 
     _fields = [
-        ("padata-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
-        ("padata-value", core.OctetString, {"tag_type": EXPLICIT, "tag": 2}),
+        (PADATA_PADATA_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (PADATA_PADATA_VALUE, core.OctetString, {"tag_type": EXPLICIT, "tag": 2}),
     ]
 
 
 # sequence of preauthentication data sets
+# wrapped by ipapocket.krb5.objects.PaDatas
 class PaDatasAsn1(core.SequenceOf):
     _child_spec = PaDataAsn1
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.KdcReq
 class KdcReqAsn1(core.Sequence):
     """
     KDC-REQ         ::= SEQUENCE {
@@ -384,10 +395,14 @@ class KdcReqAsn1(core.Sequence):
     """
 
     _fields = [
-        ("pvno", Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
-        ("msg-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 2}),
-        ("padata", PaDatasAsn1, {"tag_type": EXPLICIT, "tag": 3, "optional": True}),
-        ("req-body", KdcReqBodyAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+        (KDC_REQ_PVNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (KDC_REQ_MSG_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (
+            KDC_REQ_PADATA,
+            PaDatasAsn1,
+            {"tag_type": EXPLICIT, "tag": 3, "optional": True},
+        ),
+        (KDC_REQ_REQ_BODY, KdcReqBodyAsn1, {"tag_type": EXPLICIT, "tag": 4}),
     ]
 
 
@@ -659,6 +674,7 @@ class EtypeInfo2Asn1(core.SequenceOf):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.PaEncTsEnc
 class PaEncTsEncAsn1(core.Sequence):
     """
     PA-ENC-TS-ENC           ::= SEQUENCE {
@@ -668,9 +684,13 @@ class PaEncTsEncAsn1(core.Sequence):
     """
 
     _fields = [
-        ("patimestamp", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 0}),
         (
-            "pausec",
+            PA_ENC_TS_ENC_PA_TIMESTAMP,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 0},
+        ),
+        (
+            PA_ENC_TS_ENC_PA_USEC,
             MicrosecondsAsn1,
             {"tag_type": EXPLICIT, "tag": 1, "optional": True},
         ),

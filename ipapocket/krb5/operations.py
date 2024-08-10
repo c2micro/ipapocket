@@ -63,11 +63,11 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     kdc_req = KdcReq()
 
     # add version of kerberos
-    kdc_req.set_pvno(Int32(5))
+    kdc_req.pvno = KRB5_VERSION
     # add KDC requst body
-    kdc_req.set_req_body(kdc_req_body)
+    kdc_req.req_body = kdc_req_body
     # add message type
-    kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ))
+    kdc_req.msg_type = MessageTypes.KRB_AS_REQ
 
     # create AS-REQ
     return AsReq(kdc_req)
@@ -104,8 +104,8 @@ def as_req_with_pa(
     kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
 
     # generate timestamps for validatity of TGT
-    till = KerberosTime((current_timestamp + timedelta(days=1)).replace(microsecond=0))
-    rtime = KerberosTime((current_timestamp + timedelta(days=1)).replace(microsecond=0))
+    till = KerberosTime(current_timestamp + timedelta(days=1))
+    rtime = KerberosTime(current_timestamp + timedelta(days=1))
 
     # generate nonce
     nonce = UInt32(secrets.randbits(31))
@@ -133,12 +133,7 @@ def as_req_with_pa(
 
     # create encrypted PA-DATA
     pa_datas = PaDatas()
-    pa_enc_ts = PaEncTsEnc(
-        KerberosTime(current_timestamp.replace(microsecond=0)),
-        Microseconds(current_timestamp.microsecond),
-    )
-    enc_ts = None
-    enc_data = None
+    pa_enc_ts = PaEncTsEnc(current_timestamp, current_timestamp.microsecond)
     krb_key = _krb_key(etype, password, salt)
     enc_ts = _get_etype_profile(etype).encrypt(
         krb_key,
@@ -146,18 +141,21 @@ def as_req_with_pa(
         pa_enc_ts.to_asn1().dump(),
         None,
     )
-    enc_data = EncryptedData(Int32(etype.value), None, enc_ts)
-    pa_data = PaData(Int32(PreAuthenticationDataTypes.PA_ENC_TIMESTAMP.value), enc_data)
-    pa_datas.add_padata(pa_data)
+    pa_datas.add(
+        PaData(
+            PreAuthenticationDataTypes.PA_ENC_TIMESTAMP,
+            EncryptedData(etype, KRB5_VERSION, enc_ts),
+        )
+    )
 
     # add version of kerberos
-    kdc_req.set_pvno(Int32(5))
+    kdc_req.pvno = KRB5_VERSION
     # add KDC requst body
-    kdc_req.set_req_body(kdc_req_body)
+    kdc_req.req_body = kdc_req_body
     # add message type
-    kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ))
+    kdc_req.msg_type = MessageTypes.KRB_AS_REQ
     # add pa data
-    kdc_req.set_padatas(pa_datas)
+    kdc_req.padata = pa_datas
 
     # create AS-REQ
     return AsReq(kdc_req)

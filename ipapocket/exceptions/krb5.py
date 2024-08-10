@@ -97,3 +97,32 @@ class InvalidTypeInKdcReqBody(Exception):
                 field, type(value).__name__
             )
         )
+
+
+class InvalidTypeInKdcReq(Exception):
+    def __init__(self, field, value):
+        super(Exception, self).__init__(
+            "Invalid type of value for {} field - {}".format(
+                field, type(value).__name__
+            )
+        )
+
+
+class InvalidPaDataValueType(Exception):
+    pass
+
+
+class InvalidPaDataType(Exception):
+    pass
+
+
+class InvalidAsReqRequest(Exception):
+    pass
+
+
+class InvalidPaEncTsEncPatimestamp(Exception):
+    pass
+
+
+class InvalidPaEncTsEncPausec(Exception):
+    pass

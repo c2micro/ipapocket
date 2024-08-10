@@ -18,10 +18,11 @@ class Int32:
             data = data.to_asn1()
         return cls(data.native)
 
-    def __str__(self) -> str:
-        return "{}".format(self._value)
-
     def _validate_value(self, value) -> int:
+        if value is None:
+            return None
+        if isinstance(value, Int32):
+            return value.value
         if isinstance(value, enum.Enum):
             value = value.value
         if not isinstance(value, int):
@@ -54,10 +55,11 @@ class UInt32:
             data = data.to_asn1()
         return cls(data.native)
 
-    def __str__(self) -> str:
-        return "{}".format(self._value)
-
     def _validate_value(self, value) -> int:
+        if value is None:
+            return None
+        if isinstance(value, UInt32):
+            return value.value
         if isinstance(value, enum.Enum):
             value = value.value
         if not isinstance(value, int):
@@ -89,9 +91,6 @@ class Microseconds:
         if isinstance(data, Microseconds):
             data = data.to_asn1()
         return cls(data.native)
-
-    def __str__(self) -> str:
-        return "{}".format(self._value)
 
     def _validate_value(self, value) -> int:
         if not isinstance(value, int):
@@ -132,9 +131,6 @@ class KerberosString:
             data = data.to_asn1()
         return cls(data.native)
 
-    def __str__(self) -> str:
-        return "{}".format(self._value)
-
     @property
     def value(self) -> str:
         return self._value
@@ -158,15 +154,6 @@ class KerberosStrings:
         if isinstance(data, KerberosStrings):
             data = data.to_asn1()
         return cls(data.native)
-
-    def __str__(self) -> str:
-        tmp = "["
-        for i in range(len(self._value)):
-            if i == len(self._value) - 1:
-                tmp += "'{}']".format(self._value[i])
-            else:
-                tmp += "'{}', ".format(self._value[i])
-        return tmp
 
     def _validate_value(self, value) -> list:
         if isinstance(value, str):
@@ -210,14 +197,6 @@ class PrincipalName:
             value=data.native[PRINCIPAL_NAME_NAME_STRING],
         )
 
-    def __str__(self):
-        return "{{'{}' = {}, '{}' = {}}}".format(
-            PRINCIPAL_NAME_NAME_TYPE,
-            self._type.name,
-            PRINCIPAL_NAME_NAME_STRING,
-            self._value,
-        )
-
     @property
     def name_type(self) -> PrincipalType:
         return self._type
@@ -257,9 +236,6 @@ class Realm:
         if isinstance(data, Realm):
             data = data.to_asn1()
         return cls(realm=data.native)
-
-    def __str__(self) -> str:
-        return "{}".format(self._realm)
 
     def _validate_realm(self, realm) -> KerberosString:
         if isinstance(realm, str):
@@ -325,16 +301,6 @@ class KdcOptions:
     def options(self):
         return self._options.flags
 
-    def __str__(self) -> str:
-        options = self._options.flags
-        tmp = "["
-        for i in range(len(options)):
-            if i == len(options) - 1:
-                tmp += "'{}']".format(options[i].name)
-            else:
-                tmp += "'{}', ".format(options[i].name)
-        return tmp
-
     @classmethod
     def load(cls, value: asn1.KdcOptionsAsn1):
         if isinstance(value, KdcOptions):
@@ -369,16 +335,6 @@ class TicketFlags:
     @property
     def flags(self):
         return self._flags.flags
-
-    def __str__(self) -> str:
-        flags = self._flags.flags
-        tmp = "["
-        for i in range(len(flags)):
-            if i == len(flags) - 1:
-                tmp += "'{}']".format(flags[i].name)
-            else:
-                tmp += "'{}', ".format(flags[i].name)
-        return tmp
 
     @classmethod
     def load(cls, value: asn1.TicketFlagsAsn1):
@@ -419,9 +375,6 @@ class KerberosTime:
     def time(self, value) -> None:
         self._time = self._validate_time(value)
 
-    def __str__(self) -> str:
-        return "{}".format(self._time)
-
     @classmethod
     def load(cls, data: asn1.KerberosTimeAsn1):
         if isinstance(data, KerberosTime):
@@ -447,15 +400,6 @@ class EncTypes:
             return [value]
         else:
             raise InvalidEncTypesValueType(value)
-
-    def __str__(self) -> str:
-        tmp = "["
-        for i in range(len(self._etypes)):
-            if i == len(self._etypes) - 1:
-                tmp += "'{}']".format(self._etypes[i].name)
-            else:
-                tmp += "'{}', ".format(self._etypes[i].name)
-        return tmp
 
     @classmethod
     def load(cls, data: asn1.EncTypesAsn1):
@@ -514,19 +458,68 @@ class HostAddresses:
 
 
 class EncryptedData:
-    def __init__(self, etype: Int32, kvno: UInt32, cipher):
-        self._etype = etype
-        self._kvno = kvno
+    _etype: Int32 = None
+    _kvno: UInt32 = None
+    _cipher = None
+
+    def __init__(self, etype=None, kvno=None, cipher=None):
+        self._etype = self._validate_etype(etype)
+        self._kvno = self._validate_kvno(kvno)
         self._cipher = cipher
 
-    def to_asn1(self):
+    def _validate_etype(self, value):
+        return Int32(value)
+
+    def _validate_kvno(self, value):
+        return UInt32(value)
+
+    @classmethod
+    def load(cls, data: asn1.EncryptedDataAsn1):
+        if isinstance(data, EncryptedData):
+            data = data.to_asn1()
+        tmp = cls()
+        if ENCRYPTED_DATA_ETYPE in data:
+            if data[ENCRYPTED_DATA_ETYPE].native is not None:
+                tmp.etype = Int32.load(data[ENCRYPTED_DATA_ETYPE])
+        if ENCRYPTED_DATA_KVNO in data:
+            if data[ENCRYPTED_DATA_KVNO].native is not None:
+                tmp.kvno = UInt32.load(data[ENCRYPTED_DATA_KVNO])
+        if ENCRYPTED_DATA_CIPHER in data:
+            tmp.cipher = data[ENCRYPTED_DATA_CIPHER].native
+        return tmp
+
+    @property
+    def etype(self) -> Int32:
+        return self._etype
+
+    @etype.setter
+    def etype(self, value) -> None:
+        self._etype = self._validate_etype(value)
+
+    @property
+    def kvno(self) -> UInt32:
+        return self._kvno
+
+    @kvno.setter
+    def kvno(self, value) -> None:
+        self._kvno = self._validate_kvno(value)
+
+    @property
+    def cipher(self):
+        return self._cipher
+
+    @cipher.setter
+    def cipher(self, value) -> None:
+        self._cipher = value
+
+    def to_asn1(self) -> asn1.EncryptedDataAsn1:
         enc_data = asn1.EncryptedDataAsn1()
         if self._etype is not None:
-            enc_data["etype"] = self._etype.to_asn1()
+            enc_data[ENCRYPTED_DATA_ETYPE] = self._etype.to_asn1()
         if self._kvno is not None:
-            enc_data["kvno"] = self._kvno.to_asn1()
+            enc_data[ENCRYPTED_DATA_KVNO] = self._kvno.to_asn1()
         if self._cipher is not None:
-            enc_data["cipher"] = self._cipher
+            enc_data[ENCRYPTED_DATA_CIPHER] = self._cipher
         return enc_data
 
 
@@ -677,34 +670,6 @@ class KdcReqBody:
             raise InvalidTypeInKdcReqBody("additional_tickets", value)
         self._additional_tickets = value
 
-    def __str__(self) -> str:
-        return "{{{} = {}, {} = {}, {} = {}, {} = {}, {} = {}, {} = {}, {} = {}, {} = {}, {} = {}, {} = {}, {} = {}, {} = {}}}".format(
-            KDC_REQ_BODY_KDC_OPTIONS,
-            self._kdc_options,
-            KDC_REQ_BODY_CNAME,
-            self._cname,
-            KDC_REQ_BODY_REALM,
-            self._realm,
-            KDC_REQ_BODY_SNAME,
-            self._sname,
-            KDC_REQ_BODY_FROM,
-            self._from,
-            KDC_REQ_BODY_TILL,
-            self._till,
-            KDC_REQ_BODY_RTIME,
-            self._rtime,
-            KDC_REQ_BODY_NONCE,
-            self._nonce,
-            KDC_REQ_BODY_ETYPE,
-            self._etype,
-            KDC_REQ_BODY_ADDRESSES,
-            self._addresses,
-            KDC_REQ_BODY_ENC_AUTH_DATA,
-            self._enc_authorization_data,
-            KDC_REQ_BODY_ADDITIONAL_TICKETS,
-            self._additional_tickets,
-        )
-
     @classmethod
     def load(cls, data: asn1.KdcReqBodyAsn1):
         if isinstance(data, KdcReqBody):
@@ -786,85 +751,267 @@ class KdcReqBody:
 
 
 class PaEncTsEnc:
-    def __init__(self, krb_time: KerberosTime, micros: Microseconds):
-        self._timestamp = krb_time
-        self._micros = micros
+    _patimestamp: KerberosTime = None
+    _pausec: Microseconds = None
+
+    def __init__(self, timestamp=None, micros=None):
+        self._patimestamp = self._validate_patimestamp(timestamp)
+        self._pausec = self._validate_pausec(micros)
+
+    def _validate_patimestamp(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return KerberosTime(value)
+        elif isinstance(value, KerberosTime):
+            return value
+        else:
+            raise InvalidPaEncTsEncPatimestamp()
+
+    def _validate_pausec(self, value):
+        if value is None:
+            return None
+        if isinstance(value, int):
+            return Microseconds(value)
+        elif isinstance(value, Microseconds):
+            return value
+        else:
+            raise InvalidPaEncTsEncPausec()
+
+    @property
+    def patimestamp(self) -> KerberosTime:
+        return self._patimestamp
+
+    @patimestamp.setter
+    def patimestamp(self, value) -> None:
+        self._patimestamp = self._validate_patimestamp(value)
+
+    @property
+    def pausec(self) -> Microseconds:
+        return self._pausec
+
+    @pausec.setter
+    def pausec(self, value) -> None:
+        self._pausec = self._validate_pausec(value)
+
+    @classmethod
+    def load(cls, data: asn1.PaEncTsEncAsn1):
+        if isinstance(data, PaEncTsEnc):
+            data = data.to_asn1()
+        tmp = cls()
+        if PA_ENC_TS_ENC_PA_TIMESTAMP in data:
+            if data[PA_ENC_TS_ENC_PA_TIMESTAMP].native is not None:
+                tmp.patimestamp = KerberosTime.load(data[PA_ENC_TS_ENC_PA_TIMESTAMP])
+        if PA_ENC_TS_ENC_PA_USEC in data:
+            if data[PA_ENC_TS_ENC_PA_USEC].native is not None:
+                tmp.pausec = Microseconds.load(data[PA_ENC_TS_ENC_PA_USEC])
+        return tmp
 
     def to_asn1(self):
         pa_enc_ts_enc = asn1.PaEncTsEncAsn1()
-        if self._timestamp is not None:
-            pa_enc_ts_enc["patimestamp"] = self._timestamp.to_asn1()
-        if self._micros is not None:
-            pa_enc_ts_enc["pausec"] = self._micros.to_asn1()
+        if self._patimestamp is not None:
+            pa_enc_ts_enc[PA_ENC_TS_ENC_PA_TIMESTAMP] = self._patimestamp.to_asn1()
+        if self._pausec is not None:
+            pa_enc_ts_enc[PA_ENC_TS_ENC_PA_USEC] = self._pausec.to_asn1()
         return pa_enc_ts_enc
 
 
 class PaData:
+    _type: PreAuthenticationDataTypes = None
+    _value = None
+
     def __init__(self, type=None, value=None):
         self._type = type
-        self._value = value
+        self._value = self._validate_value(value)
 
-    def to_asn1(self):
+    @property
+    def type(self) -> PreAuthenticationDataTypes:
+        return self._type
+
+    @type.setter
+    def type(self, value) -> None:
+        if not isinstance(value, PreAuthenticationDataTypes):
+            raise InvalidPaDataType()
+        self._type = value
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = self._validate_value(value)
+
+    def _validate_value(self, value):
+        if isinstance(value, EncryptedData):
+            return value.to_asn1().dump()
+        else:
+            return value
+
+    @classmethod
+    def load(cls, data: asn1.PaDataAsn1):
+        if isinstance(data, PaData):
+            data = data.to_asn1()
+        tmp = cls()
+        if PADATA_PADATA_TYPE in data:
+            if data[PADATA_PADATA_TYPE] is not None:
+                tmp.type = PreAuthenticationDataTypes(data[PADATA_PADATA_TYPE])
+        if PADATA_PADATA_VALUE in data:
+            if data[PADATA_PADATA_VALUE] is not None:
+                tmp.value = data[PADATA_PADATA_VALUE]
+        return tmp
+
+    def to_asn1(self) -> asn1.PaDataAsn1:
         pa_data = asn1.PaDataAsn1()
         if self._type is not None:
-            pa_data["padata-type"] = self._type.to_asn1()
+            pa_data[PADATA_PADATA_TYPE] = self._type.value
         if self._value is not None:
-            pa_data["padata-value"] = self._value.to_asn1().dump()
+            pa_data[PADATA_PADATA_VALUE] = self._value
         return pa_data
 
 
 class PaDatas:
-    def __init__(self):
-        self._pa_datas = list()
+    _padatas: list = None
 
-    def add_padata(self, padata: PaData):
-        self._pa_datas.append(padata)
+    def __init__(self):
+        self._padatas = list()
+
+    def add(self, padata):
+        if not isinstance(padata, PaData):
+            raise InvalidEncTypesValueType()
+        self._padatas.append(padata)
+
+    def clear(self):
+        self._padatas = list()
+
+    @classmethod
+    def load(cls, data: asn1.PaDatasAsn1):
+        if isinstance(data, PaDatas):
+            data = data.to_asn1()
+        tmp = cls()
+        for v in data.native:
+            tmp.add(PaData.load(v))
+        return tmp
 
     def to_asn1(self):
         tmp = list()
-        for pa_data in self._pa_datas:
+        for pa_data in self._padatas:
             tmp.append(pa_data.to_asn1())
         return asn1.PaDatasAsn1(tuple(tmp))
 
 
 class KdcReq:
+    _pvno: Int32 = None
+    _msg_type: MessageTypes = None
+    _padata: PaDatas = None
+    _req_body: KdcReqBody = None
+
     def __init__(self):
-        self._pvno = None
-        self._msg_type = None
-        self._padatas = None
-        self._req_body = None
+        pass
 
-    def set_pvno(self, pvno):
-        self._pvno = pvno
+    @property
+    def pvno(self) -> Int32:
+        return self._pvno
 
-    def set_msg_type(self, msg_type):
-        self._msg_type = msg_type
+    @pvno.setter
+    def pvno(self, value) -> None:
+        if isinstance(value, int):
+            self._pvno = Int32(value)
+        elif isinstance(value, Int32):
+            self._pvno = value
+        else:
+            raise InvalidTypeInKdcReq(KDC_REQ_PVNO, value)
 
-    def set_req_body(self, req_body):
-        self._req_body = req_body
+    @property
+    def msg_type(self) -> Int32:
+        return self._msg_type
 
-    def set_padatas(self, padatas: PaDatas):
-        self._padatas = padatas
+    @msg_type.setter
+    def msg_type(self, value) -> None:
+        if isinstance(value, MessageTypes):
+            self._msg_type = value
+        elif isinstance(value, int):
+            self._msg_type = MessageTypes(value)
+        else:
+            raise InvalidTypeInKdcReq(KDC_REQ_MSG_TYPE, value)
+
+    @property
+    def padata(self) -> PaDatas:
+        return self._padata
+
+    @padata.setter
+    def padata(self, value) -> None:
+        if not isinstance(value, PaDatas):
+            raise InvalidTypeInKdcReq(KDC_REQ_PADATA, value)
+        self._padata = value
+
+    @property
+    def req_body(self) -> KdcReqBody:
+        return self._req_body
+
+    @req_body.setter
+    def req_body(self, value) -> None:
+        if not isinstance(value, KdcReqBody):
+            raise InvalidEncTypesValueType(KDC_REQ_REQ_BODY, value)
+        self._req_body = value
+
+    @classmethod
+    def load(cls, data: asn1.KdcReqAsn1):
+        if isinstance(data, KdcReq):
+            data = data.to_asn1()
+        tmp = cls()
+        if KDC_REQ_PVNO in data:
+            if data[KDC_REQ_PVNO].native is not None:
+                tmp.pvno = Int32.load(data[KDC_REQ_PVNO])
+        if KDC_REQ_MSG_TYPE in data:
+            if data[KDC_REQ_MSG_TYPE].native is not None:
+                tmp.msg_type = MessageTypes(data[KDC_REQ_MSG_TYPE].native)
+        if KDC_REQ_PADATA in data:
+            if data[KDC_REQ_PADATA].native is not None:
+                tmp.padata = PaDatas.load(data[KDC_REQ_PADATA])
+        if KDC_REQ_REQ_BODY in data:
+            if data[KDC_REQ_REQ_BODY].native is not None:
+                tmp.req_body = KdcReqBody.load(data[KDC_REQ_REQ_BODY])
+        return tmp
 
     def to_asn1(self):
         kdc_req = asn1.KdcReqAsn1()
         if self._pvno is not None:
-            kdc_req["pvno"] = self._pvno.to_asn1()
+            kdc_req[KDC_REQ_PVNO] = self._pvno.to_asn1()
         if self._msg_type is not None:
-            kdc_req["msg-type"] = self._msg_type.to_asn1()
+            kdc_req[KDC_REQ_MSG_TYPE] = self._msg_type.value
         if self._req_body is not None:
-            kdc_req["req-body"] = self._req_body.to_asn1()
-        if self._padatas is not None:
-            kdc_req["padata"] = self._padatas.to_asn1()
+            kdc_req[KDC_REQ_REQ_BODY] = self._req_body.to_asn1()
+        if self._padata is not None:
+            kdc_req[KDC_REQ_PADATA] = self._padata.to_asn1()
         return kdc_req
 
 
 class AsReq:
-    def __init__(self, req):
-        self._req = req
+    _req: KdcReq = None
 
-    def set_req(self, req):
-        self._req = req
+    def __init__(self, req=None):
+        self._req = self._validate_req(req)
+
+    @property
+    def req(self) -> KdcReq:
+        return self._req
+
+    @req.setter
+    def req(self, value) -> None:
+        self._req = self._validate_req(value)
+
+    def _validate_req(self, req):
+        if isinstance(req, KdcReq):
+            return req
+        else:
+            raise InvalidAsReqRequest()
+
+    @classmethod
+    def load(cls, data: asn1.AsReqAsn1):
+        if isinstance(data, AsReq):
+            data = data.to_asn1()
+        return cls(KdcReq.load(data))
 
     def to_asn1(self):
         return asn1.AsReqAsn1(self._req.to_asn1().native)

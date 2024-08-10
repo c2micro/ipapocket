@@ -1,5 +1,6 @@
 import enum
 
+KRB5_VERSION = 5
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-6.2
 class PrincipalType(enum.Enum):

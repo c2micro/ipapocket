@@ -3,9 +3,186 @@ from ipapocket.krb5.constants import *
 from bitarray import bitarray
 from ipapocket.krb5.fields import *
 from ipapocket.exceptions.krb5 import *
+from datetime import datetime
+
+
+class Int32:
+    _value: int = None
+
+    def __init__(self, value: int):
+        self._value = self._validate_value(value)
+
+    @classmethod
+    def load(cls, data: asn1.Int32Asn1):
+        return cls(data.native)
+
+    def __str__(self) -> str:
+        return "{}".format(self._value)
+
+    def _validate_value(self, value) -> int:
+        if not isinstance(value, int):
+            raise InvalidInt32Value(value)
+        if value not in range(-2147483648, 2147483647):
+            raise InvalidInt32Value(value)
+        return value
+
+    @property
+    def value(self) -> int:
+        return self._value
+
+    @value.setter
+    def value(self, value: int) -> None:
+        self._value = self._validate_value(value)
+
+    def to_asn1(self) -> asn1.Int32Asn1:
+        return asn1.Int32Asn1(self._value)
+
+
+class UInt32:
+    _value: int = None
+
+    def __init__(self, value: int):
+        self._value = self._validate_value(value)
+
+    @classmethod
+    def load(cls, data: asn1.UInt32Asn1):
+        return cls(data.native)
+
+    def __str__(self) -> str:
+        return "{}".format(self._value)
+
+    def _validate_value(self, value) -> int:
+        if not isinstance(value, int):
+            raise InvalidUInt32Value(value)
+        if value not in range(0, 4294967295):
+            raise InvalidUInt32Value(value)
+        return value
+
+    @property
+    def value(self) -> int:
+        return self._value
+
+    @value.setter
+    def value(self, value: int) -> None:
+        self._value = self._validate_value(value)
+
+    def to_asn1(self) -> asn1.UInt32Asn1:
+        return asn1.UInt32Asn1(self._value)
+
+
+class Microseconds:
+    _value: int = None
+
+    def __init__(self, value: int):
+        self._value = self._validate_value(value)
+
+    @classmethod
+    def load(cls, data: asn1.MicrosecondsAsn1):
+        return cls(data.native)
+
+    def __str__(self) -> str:
+        return "{}".format(self._value)
+
+    def _validate_value(self, value) -> int:
+        if not isinstance(value, int):
+            raise InvalidMicrosecondsValue(value)
+        if value not in range(0, 999999):
+            raise InvalidMicrosecondsValue(value)
+        return value
+
+    @property
+    def value(self) -> int:
+        return self._value
+
+    @value.setter
+    def value(self, value: int) -> None:
+        self._value = self._validate_value(value)
+
+    def to_asn1(self) -> asn1.MicrosecondsAsn1:
+        return asn1.MicrosecondsAsn1(self._value)
+
+
+class KerberosString:
+    _value: str = None
+
+    def __init__(self, value: str = None):
+        self._value = self._validate_value(value)
+
+    def _validate_value(self, value) -> str:
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, KerberosString):
+            return value.to_asn1().native
+        else:
+            raise InvalidKerberosStringValue(value)
+
+    @classmethod
+    def load(cls, data: asn1.KerberosStringAsn1):
+        return cls(data.native)
+
+    def __str__(self) -> str:
+        return "{}".format(self._value)
+
+    @property
+    def value(self) -> str:
+        return self._value
+
+    @value.setter
+    def value(self, value) -> None:
+        self._value = self._validate_value(value)
+
+    def to_asn1(self) -> asn1.KerberosStringAsn1:
+        return asn1.KerberosStringAsn1(self._value)
+
+
+class KerberosStrings:
+    _value: list = None
+
+    def __init__(self, value=None):
+        self._value = self._validate_value(value)
+
+    @classmethod
+    def load(cls, data: asn1.KerberosStringsAsn1):
+        return cls(data.native)
+
+    def __str__(self) -> str:
+        tmp = "["
+        for i in range(len(self._value)):
+            if i == len(self._value) - 1:
+                tmp += "'{}']".format(self._value[i])
+            else:
+                tmp += "'{}', ".format(self._value[i])
+        return tmp
+
+    def _validate_value(self, value) -> list:
+        if isinstance(value, str):
+            return [KerberosString(value)]
+        elif isinstance(value, list):
+            tmp = list()
+            for v in value:
+                tmp.append(KerberosString(v))
+            return tmp
+        elif isinstance(value, KerberosString):
+            return [value]
+        elif isinstance(value, KerberosStrings):
+            tmp = list()
+            for v in value.to_asn1().native:
+                tmp.append(KerberosString(v))
+            return tmp
+        else:
+            raise InvalidKerberosStringsValue(value)
+
+    def to_asn1(self) -> asn1.KerberosStringsAsn1:
+        tmp = list()
+        for v in self._value:
+            tmp.append(v.to_asn1())
+        return asn1.KerberosStringsAsn1(tmp)
 
 
 class PrincipalName:
+    _type: PrincipalType = None
+    _value: KerberosStrings = None
+
     def __init__(self, type: PrincipalType = None, value=None):
         self._type = type
         self._value = self._validate_value(value)
@@ -41,32 +218,38 @@ class PrincipalName:
     def name_value(self, value) -> None:
         self._value = self._validate_value(value)
 
-    def _validate_value(self, value):
-        if isinstance(value, str):
-            return [value]
-        if isinstance(value, list):
-            return value
-        raise InvalidPrincipalSyntax(value)
+    def _validate_value(self, value) -> KerberosStrings:
+        return KerberosStrings(value)
 
     def to_asn1(self) -> asn1.PrincipalNameAsn1:
         principal_name = asn1.PrincipalNameAsn1()
         if self._type is not None:
             principal_name[PRINCIPAL_NAME_NAME_TYPE] = self._type.value
         if self._value is not None:
-            principal_name[PRINCIPAL_NAME_NAME_STRING] = self._value
+            principal_name[PRINCIPAL_NAME_NAME_STRING] = self._value.to_asn1()
         return principal_name
 
 
 class Realm:
-    def __init__(self, realm: str = None):
-        self._realm = realm
+    _realm: KerberosString = None
+
+    def __init__(self, realm: str | KerberosString = None):
+        self._realm = self._validate_realm(realm)
 
     @classmethod
     def load(cls, data: asn1.RealmAsn1):
         return cls(realm=data.native)
-    
+
     def __str__(self) -> str:
         return "{}".format(self._realm)
+
+    def _validate_realm(self, realm) -> KerberosString:
+        if isinstance(realm, str):
+            return KerberosString(realm)
+        elif isinstance(realm, KerberosString):
+            return realm
+        else:
+            raise InvalidRealmValue(realm)
 
     @property
     def realm(self) -> str:
@@ -74,56 +257,155 @@ class Realm:
 
     @realm.setter
     def realm(self, realm) -> None:
-        self._realm = realm
+        self._realm = self._validate_realm(realm)
 
     def to_asn1(self) -> asn1.RealmAsn1:
-        return asn1.RealmAsn1(self._realm)
+        return asn1.RealmAsn1(self._realm.to_asn1().native)
 
 
-class KdcOptions:
+class KerberosFlags:
+    _flags: list = None
+
     def __init__(self):
-        self._options = list()
+        self._flags = list()
 
-    def add(self, option):
-        self._options.append(option)
+    @property
+    def flags(self) -> list:
+        return self._flags
+
+    def add(self, flag):
+        self._flags.append(self._validate_flag(flag))
+
+    def clear(self):
+        self._flags = list()
+
+    def _validate_flag(self, flag):
+        if not isinstance(flag, enum.Enum):
+            raise InvalidKerberosFlagsValueType(flag)
+        return flag
 
     def to_asn1(self):
         b_arr = bitarray(32)
-        for option in self._options:
-            b_arr[option.value] = 1
-        return asn1.KdcOptionsAsn1(tuple(b_arr.tolist()))
+        for flag in self._flags:
+            b_arr[flag.value] = 1
+        return asn1.KerberosFlagsAsn1(tuple(b_arr.tolist()))
+
+
+class KdcOptions:
+    _options: KerberosFlags = None
+
+    def __init__(self):
+        self._options = KerberosFlags()
+
+    def add(self, option):
+        self._options.add(self._validate_option(option))
+
+    def clear(self):
+        self._options.clear()
+
+    @property
+    def options(self):
+        return self._options.flags
+
+    def __str__(self) -> str:
+        options = self._options.flags
+        tmp = "["
+        for i in range(len(options)):
+            if i == len(options) - 1:
+                tmp += "'{}']".format(options[i].name)
+            else:
+                tmp += "'{}', ".format(options[i].name)
+        return tmp
+
+    @classmethod
+    def load(cls, value: asn1.KdcOptionsAsn1):
+        tmp = cls()
+        for v in value.native:
+            if v == 1:
+                tmp.add(KdcOptionsTypes(v))
+        return tmp
+
+    def _validate_option(self, value) -> KdcOptionsTypes:
+        if not isinstance(value, KdcOptionsTypes):
+            raise InvalidKdcOptionsValueType(value)
+        return value
+
+    def to_asn1(self) -> asn1.KdcOptionsAsn1:
+        return asn1.KdcOptionsAsn1(self._options.to_asn1().native)
+
+
+class TicketFlags:
+    _flags: KerberosFlags = None
+
+    def __init__(self):
+        self._flags = KerberosFlags()
+
+    def add(self, flag):
+        self._flags.add(self._validate_option(flag))
+
+    def clear(self):
+        self._flags.clear()
+
+    @property
+    def flags(self):
+        return self._flags.flags
+
+    def __str__(self) -> str:
+        flags = self._flags.flags
+        tmp = "["
+        for i in range(len(flags)):
+            if i == len(flags) - 1:
+                tmp += "'{}']".format(flags[i].name)
+            else:
+                tmp += "'{}', ".format(flags[i].name)
+        return tmp
+
+    @classmethod
+    def load(cls, value: asn1.TicketFlagsAsn1):
+        tmp = cls()
+        for v in value.native:
+            if v == 1:
+                tmp.add(TicketFlagsTypes(v))
+        return tmp
+
+    def _validate_option(self, value) -> TicketFlagsTypes:
+        if not isinstance(value, TicketFlagsTypes):
+            raise InvalidTicketFlagsValueType(value)
+        return value
+
+    def to_asn1(self) -> asn1.TicketFlagsAsn1:
+        return asn1.TicketFlagsAsn1(self._flags.to_asn1().native)
 
 
 class KerberosTime:
-    def __init__(self, krb_time=None):
-        self._krb_time = krb_time
+    _time: datetime = None
+
+    def __init__(self, ktime: datetime):
+        self._time = self._validate_time(ktime)
+
+    def _validate_time(self, ktime):
+        if not isinstance(ktime, datetime):
+            raise InvalidKerberosTimeValueType(ktime)
+        # we must remove microseconds from time (RFC note)
+        return ktime.replace(microsecond=0)
+
+    @property
+    def time(self) -> datetime:
+        return self._time
+
+    @time.setter
+    def time(self, value) -> None:
+        self._time = self._validate_time(value)
+
+    def __str__(self) -> str:
+        return "{}".format(self._time)
+
+    @classmethod
+    def load(cls, data: asn1.KerberosTimeAsn1):
+        return cls(data.native)
 
     def to_asn1(self):
-        return asn1.KerberosTimeAsn1(self._krb_time)
-
-
-class Int32:
-    def __init__(self, value=None):
-        self._value = value
-
-    def to_asn1(self):
-        return asn1.Int32Asn1(self._value)
-
-
-class UInt32:
-    def __init__(self, value=None):
-        self._value = value
-
-    def to_asn1(self):
-        return asn1.UInt32Asn1(self._value)
-
-
-class Microseconds:
-    def __init__(self, value=None):
-        self._value = value
-
-    def to_asn1(self):
-        return asn1.MicrosecondsAsn1(self._value)
+        return asn1.KerberosTimeAsn1(self._time)
 
 
 class EncTypes:

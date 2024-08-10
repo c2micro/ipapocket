@@ -12,6 +12,7 @@ CONTEXT = 2
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
+# wrapped by ipapocket.krb5.objects.Int32
 class Int32Asn1(core.Integer):
     """
     Int32           ::= INTEGER (-2147483648..2147483647) -- signed values representable in 32 bits
@@ -29,6 +30,7 @@ class Int32Asn1(core.Integer):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
+# wrapped by ipapocket.krb5.objects.UInt32
 class UInt32Asn1(core.Integer):
     """
     UInt32          ::= INTEGER (0..4294967295) -- unsigned 32 bit values
@@ -46,6 +48,7 @@ class UInt32Asn1(core.Integer):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
+# wrapped by ipapocket.krb5.objects.Microseconds
 class MicrosecondsAsn1(core.Integer):
     """
     Microseconds    ::= INTEGER (0..999999) -- microseconds
@@ -63,6 +66,7 @@ class MicrosecondsAsn1(core.Integer):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.KerberosString
 class KerberosStringAsn1(core.GeneralString):
     """
     KerberosString  ::= GeneralString (IA5String)
@@ -72,6 +76,7 @@ class KerberosStringAsn1(core.GeneralString):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.Realm
 class RealmAsn1(KerberosStringAsn1):
     """
     Realm           ::= KerberosString
@@ -81,11 +86,13 @@ class RealmAsn1(KerberosStringAsn1):
 
 
 # type to store sequence of strings
+# wrapped by ipapocket.krb5.objects.KerberosStrings
 class KerberosStringsAsn1(core.SequenceOf):
     _child_spec = KerberosStringAsn1
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.2
+# wrapped by ipapocket.krb5.objects.Principalname
 class PrincipalNameAsn1(core.Sequence):
     """
     Realm           ::= KerberosString
@@ -103,6 +110,7 @@ class PrincipalNameAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.8
+# wrapped by ipapocket.krb5.objects.KerberosFlags
 class KerberosFlagsAsn1(core.BitString):
     """
     KerberosFlags   ::= BIT STRING (SIZE (32..MAX))
@@ -114,6 +122,7 @@ class KerberosFlagsAsn1(core.BitString):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.1
+# wrapped by ipapocket.krb5.objects.KdcOptions
 class KdcOptionsAsn1(KerberosFlagsAsn1):
     """
     KDCOptions      ::= KerberosFlags
@@ -145,6 +154,7 @@ class KdcOptionsAsn1(KerberosFlagsAsn1):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.TicketFlags
 class TicketFlagsAsn1(core.BitString):
     """
     TicketFlags     ::= KerberosFlags
@@ -169,6 +179,7 @@ class TicketFlagsAsn1(core.BitString):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.Realm
 class RealmAsn1(KerberosStringAsn1):
     """
     Realm           ::= KerberosString
@@ -178,6 +189,7 @@ class RealmAsn1(KerberosStringAsn1):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.3
+# wrapped by ipapocket.krb5.objects.KerberosTime
 class KerberosTimeAsn1(core.GeneralizedTime):
     """
     KerberosTime ::= GeneralizedTime -- with no fractional seconds

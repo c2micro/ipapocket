@@ -34,9 +34,9 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     kdc_options.add(KdcOptionsTypes.CANONICALIZE)
     kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
 
-    # generate timestamps for validatity of TGT
-    till = KerberosTime((current_timestamp + timedelta(days=1)).replace(microsecond=0))
-    rtime = KerberosTime((current_timestamp + timedelta(days=1)).replace(microsecond=0))
+    # generate timestamps for validatity of TGT (+1 day)
+    till = KerberosTime(current_timestamp + timedelta(days=1))
+    rtime = KerberosTime(current_timestamp + timedelta(days=1))
 
     # generate nonce
     nonce = UInt32(secrets.randbits(31))

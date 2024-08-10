@@ -105,7 +105,11 @@ class PrincipalNameAsn1(core.Sequence):
 
     _fields = [
         (PRINCIPAL_NAME_NAME_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        (PRINCIPAL_NAME_NAME_STRING, KerberosStringsAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (
+            PRINCIPAL_NAME_NAME_STRING,
+            KerberosStringsAsn1,
+            {"tag_type": EXPLICIT, "tag": 1},
+        ),
     ]
 
 
@@ -199,11 +203,13 @@ class KerberosTimeAsn1(core.GeneralizedTime):
 
 
 # sequence of integers to store types of encryption algos
+# wrapped by ipapocket.krb5.objects.EncTypes
 class EncTypesAsn1(core.SequenceOf):
     _child_spec = core.Integer
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.5
+# wrapped by ipapocket.krb5.objects.HostAddress
 class HostAddressAsn1(core.Sequence):
     """
     HostAddress     ::= SEQUENCE  {
@@ -213,12 +219,13 @@ class HostAddressAsn1(core.Sequence):
     """
 
     _fields = [
-        ("addr-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("address", core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
+        (HOST_ADDRESS_ADDR_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (HOST_ADDRESS_ADDRESS, core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
     ]
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.5
+# wrapped by ipapocket.krb5.objects.HostAddresses
 class HostAddressesAsn1(core.SequenceOf):
     """
     -- NOTE: HostAddresses is always used as an OPTIONAL field and
@@ -299,35 +306,43 @@ class KdcReqBodyAsn1(core.Sequence):
     """
 
     _fields = [
-        ("kdc-options", KdcOptionsAsn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (KDC_REQ_BODY_KDC_OPTIONS, KdcOptionsAsn1, {"tag_type": EXPLICIT, "tag": 0}),
         (
-            "cname",
+            KDC_REQ_BODY_CNAME,
             PrincipalNameAsn1,
             {"tag_type": EXPLICIT, "tag": 1, "optional": True},
         ),
-        ("realm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (KDC_REQ_BODY_REALM, RealmAsn1, {"tag_type": EXPLICIT, "tag": 2}),
         (
-            "sname",
+            KDC_REQ_BODY_SNAME,
             PrincipalNameAsn1,
             {"tag_type": EXPLICIT, "tag": 3, "optional": True},
         ),
-        ("from", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 4, "optional": True}),
-        ("till", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 5}),
-        ("rtime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 6, "optional": True}),
-        ("nonce", UInt32Asn1, {"tag_type": EXPLICIT, "tag": 7}),
-        ("etype", EncTypesAsn1, {"tag_type": EXPLICIT, "tag": 8}),
         (
-            "addresses",
+            KDC_REQ_BODY_FROM,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 4, "optional": True},
+        ),
+        (KDC_REQ_BODY_TILL, KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 5}),
+        (
+            KDC_REQ_BODY_RTIME,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 6, "optional": True},
+        ),
+        (KDC_REQ_BODY_NONCE, UInt32Asn1, {"tag_type": EXPLICIT, "tag": 7}),
+        (KDC_REQ_BODY_ETYPE, EncTypesAsn1, {"tag_type": EXPLICIT, "tag": 8}),
+        (
+            KDC_REQ_BODY_ADDRESSES,
             HostAddressesAsn1,
             {"tag_type": EXPLICIT, "tag": 9, "optional": True},
         ),
         (
-            "enc-authorization-data",
+            KDC_REQ_BODY_ENC_AUTH_DATA,
             EncryptedDataAsn1,
             {"tag_type": EXPLICIT, "tag": 10, "optional": True},
         ),
         (
-            "additional-tickets",
+            KDC_REQ_BODY_ADDITIONAL_TICKETS,
             TicketsAsn1,
             {"tag_type": EXPLICIT, "tag": 11, "optional": True},
         ),

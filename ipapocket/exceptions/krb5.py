@@ -81,3 +81,19 @@ class InvalidKerberosTimeValueType(Exception):
         super(Exception, self).__init__(
             "Invalid KerberosTime value type {}".format(type(value).__name__)
         )
+
+
+class InvalidEncTypesValueType(Exception):
+    def __init__(self, value):
+        super(Exception, self).__init__(
+            "Invalid EncTypes value type {}".format(type(value).__name__)
+        )
+
+
+class InvalidTypeInKdcReqBody(Exception):
+    def __init__(self, field, value):
+        super(Exception, self).__init__(
+            "Invalid type of value for {} field - {}".format(
+                field, type(value).__name__
+            )
+        )

@@ -42,24 +42,22 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     nonce = UInt32(secrets.randbits(31))
 
     # set options in request
-    kdc_req_body.set_kdc_options(kdc_options)
+    kdc_req_body.kdc_options = kdc_options
     # set cname in request
-    kdc_req_body.set_cname(upn)
+    kdc_req_body.cname = upn
     # set realm in request
-    kdc_req_body.set_realm(realm)
+    kdc_req_body.realm = realm
     # set sname in request
-    kdc_req_body.set_sname(server_name)
+    kdc_req_body.sname = server_name
     # set till in request
-    kdc_req_body.set_till(till)
+    kdc_req_body.till = till
     # set rtime in request
-    kdc_req_body.set_rtime(rtime)
+    kdc_req_body.rtime = rtime
     # set nonce in request
-    kdc_req_body.set_nonce(nonce)
+    kdc_req_body.nonce = nonce
 
-    # create object with supported encryption types
-    etypes = EncTypes(crypto.supported_enctypes())
     # set etype in request
-    kdc_req_body.set_etypes(etypes)
+    kdc_req_body.etype = EncTypes(crypto.supported_enctypes())
 
     # create KDC request
     kdc_req = KdcReq()
@@ -69,7 +67,7 @@ def as_req_wihtout_pa(domain: str, username: str) -> AsReq:
     # add KDC requst body
     kdc_req.set_req_body(kdc_req_body)
     # add message type
-    kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ.value))
+    kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ))
 
     # create AS-REQ
     return AsReq(kdc_req)
@@ -113,24 +111,22 @@ def as_req_with_pa(
     nonce = UInt32(secrets.randbits(31))
 
     # set options in request
-    kdc_req_body.set_kdc_options(kdc_options)
+    kdc_req_body.kdc_options = kdc_options
     # set cname in request
-    kdc_req_body.set_cname(username)
+    kdc_req_body.cname = username
     # set realm in request
-    kdc_req_body.set_realm(realm)
+    kdc_req_body.realm = realm
     # set sname in request
-    kdc_req_body.set_sname(server_name)
+    kdc_req_body.sname = server_name
     # set till in request
-    kdc_req_body.set_till(till)
+    kdc_req_body.till = till
     # set rtime in request
-    kdc_req_body.set_rtime(rtime)
+    kdc_req_body.rtime = rtime
     # set nonce in request
-    kdc_req_body.set_nonce(nonce)
+    kdc_req_body.nonce = nonce
 
-    # create object with supported encryption types
-    etypes = EncTypes(crypto.supported_enctypes())
     # set etype in request
-    kdc_req_body.set_etypes(etypes)
+    kdc_req_body.etype = EncTypes(crypto.supported_enctypes())
 
     # create KDC request
     kdc_req = KdcReq()
@@ -159,7 +155,7 @@ def as_req_with_pa(
     # add KDC requst body
     kdc_req.set_req_body(kdc_req_body)
     # add message type
-    kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ.value))
+    kdc_req.set_msg_type(Int32(MessageTypes.KRB_AS_REQ))
     # add pa data
     kdc_req.set_padatas(pa_datas)
 

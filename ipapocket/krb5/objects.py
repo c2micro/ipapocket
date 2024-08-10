@@ -16,6 +16,8 @@ class Int32:
     def load(cls, data: asn1.Int32Asn1):
         if isinstance(data, Int32):
             data = data.to_asn1()
+        if isinstance(data, int):
+            return cls(data)
         return cls(data.native)
 
     def _validate_value(self, value) -> int:
@@ -523,9 +525,77 @@ class EncryptedData:
         return enc_data
 
 
-# TODO
 class Ticket:
-    pass
+    _tkt_vno: Int32 = None
+    _realm: Realm = None
+    _sname: PrincipalName = None
+    _enc_part: EncryptedData = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def tkt_vno(self) -> Int32:
+        return self._tkt_vno
+
+    @tkt_vno.setter
+    def tkt_vno(self, value) -> None:
+        self._tkt_vno = value
+
+    @property
+    def realm(self) -> Realm:
+        return self._realm
+
+    @realm.setter
+    def realm(self, value) -> None:
+        self._realm = value
+
+    @property
+    def sname(self) -> PrincipalName:
+        return self._sname
+
+    @sname.setter
+    def sname(self, value) -> None:
+        self._sname = value
+
+    @property
+    def enc_part(self) -> EncryptedData:
+        return self._enc_part
+
+    @enc_part.setter
+    def enc_part(self, value) -> None:
+        self._enc_part = value
+    
+    @classmethod
+    def load(cls, data:asn1.TicketAsn1):
+        if isinstance(data, Ticket):
+            data = data.to_asn1()
+        tmp = cls()
+        if TICKET_TKT_VNO in data:
+            if data[TICKET_TKT_VNO].native is not None:
+                tmp.tkt_vno = Int32.load(data[TICKET_TKT_VNO])
+        if TICKET_REALM in data:
+            if data[TICKET_REALM].native is not None:
+                tmp.realm = Realm.load(data[TICKET_REALM])
+        if TICKET_SNAME in data:
+            if data[TICKET_SNAME].native is not None:
+                tmp.sname = PrincipalName.load(data[TICKET_SNAME])
+        if TICKET_ENC_PART in data:
+            if data[TICKET_ENC_PART].native is not None:
+                tmp.enc_part = EncryptedData.load(data[TICKET_ENC_PART])
+        return tmp
+
+    def to_asn1(self) -> asn1.TicketAsn1:
+        ticket = asn1.TicketAsn1()
+        if self._tkt_vno is not None:
+            ticket[TICKET_TKT_VNO] = self._tkt_vno.to_asn1()
+        if self._realm is not None:
+            ticket[TICKET_REALM] = self._realm.to_asn1()
+        if self._sname is not None:
+            ticket[TICKET_SNAME] = self._sname.to_asn1()
+        if self._enc_part is not None:
+            ticket[TICKET_ENC_PART] = self._enc_part.to_asn1()
+        return ticket
 
 
 # TODO
@@ -816,6 +886,168 @@ class PaEncTsEnc:
         return pa_enc_ts_enc
 
 
+class EtypeInfoEntry:
+    _etype: EncryptionTypes = None
+    _salt: str = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def etype(self) -> EncryptionTypes:
+        return self._etype
+
+    @etype.setter
+    def etype(self, value) -> None:
+        self._etype = value
+
+    @property
+    def salt(self) -> str:
+        return self._salt
+
+    @salt.setter
+    def salt(self, value) -> None:
+        self._salt = value
+
+    @classmethod
+    def load(cls, data: asn1.EtypeInfoEntryAsn1):
+        if isinstance(data, bytes):
+            data = asn1.EtypeInfoEntryAsn1.load(data)
+        if isinstance(data, EtypeInfoEntry):
+            data = data.to_asn1()
+        tmp = cls()
+        if ETYPE_INFO2_ETYPE in data:
+            if data[ETYPE_INFO2_ETYPE].native is not None:
+                tmp.etype = EncryptionTypes(data[ETYPE_INFO2_ETYPE].native)
+        if ETYPE_INFO2_SALT in data:
+            if data[ETYPE_INFO2_SALT].native is not None:
+                tmp.salt = data[ETYPE_INFO2_SALT].native
+        return tmp
+
+    def to_asn1(self) -> asn1.EtypeInfoEntryAsn1:
+        etype_info = asn1.EtypeInfoEntryAsn1()
+        if self._etype is not None:
+            etype_info[ETYPE_INFO_ETYPE] = self._etype.value
+        if self._salt is not None:
+            etype_info[ETYPE_INFO_SALT] = self._salt
+        return etype_info
+
+
+class EtypeInfo:
+    _entries: list[EtypeInfoEntry] = None
+
+    def __init__(self):
+        self._entries = list()
+
+    def add(self, value):
+        self._entries.append(value)
+
+    @classmethod
+    def load(cls, data: asn1.EtypeInfoAsn1):
+        if isinstance(data, bytes):
+            data = asn1.EtypeInfoAsn1.load(data)
+        if isinstance(data, EtypeInfo):
+            data = data.to_asn1()
+        tmp = cls()
+        for v in data:
+            tmp.add(EtypeInfoEntry.load(v))
+        return tmp
+
+    def to_asn1(self) -> asn1.EtypeInfoAsn1:
+        tmp = list()
+        for v in self._entries:
+            tmp.append(v.to_asn1())
+        return asn1.EtypeInfoAsn1(tmp)
+
+
+class EtypeInfo2Entry:
+    _etype: EncryptionTypes = None
+    _salt: KerberosString = None
+    _s2kparams: str = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def etype(self) -> EncryptionTypes:
+        return self._etype
+
+    @etype.setter
+    def etype(self, value) -> None:
+        self._etype = value
+
+    @property
+    def salt(self) -> KerberosString:
+        return self._salt
+
+    @salt.setter
+    def salt(self, value) -> None:
+        self._salt = value
+
+    @property
+    def s2kparams(self) -> str:
+        return self._s2kparams
+
+    @s2kparams.setter
+    def s2kparams(self, value) -> None:
+        self._s2kparams = value
+
+    @classmethod
+    def load(cls, data: asn1.EtypeInfo2EntryAsn1):
+        if isinstance(data, bytes):
+            data = asn1.EtypeInfo2EntryAsn1.load(data)
+        if isinstance(data, EtypeInfo2Entry):
+            data = data.to_asn1()
+        tmp = cls()
+        if ETYPE_INFO2_ETYPE in data:
+            if data[ETYPE_INFO2_ETYPE].native is not None:
+                tmp.etype = EncryptionTypes(data[ETYPE_INFO2_ETYPE].native)
+        if ETYPE_INFO2_SALT in data:
+            if data[ETYPE_INFO2_SALT].native is not None:
+                tmp.salt = KerberosString.load(data[ETYPE_INFO2_SALT])
+        if ETYPE_INFO2_S2KPARAMS in data:
+            if data[ETYPE_INFO2_S2KPARAMS] is not None:
+                tmp.s2kparams = data[ETYPE_INFO2_S2KPARAMS].native
+        return tmp
+
+    def to_asn1(self) -> asn1.EtypeInfo2EntryAsn1:
+        etype_info2_entry = asn1.EtypeInfo2EntryAsn1()
+        if self._etype is not None:
+            etype_info2_entry[ETYPE_INFO2_ETYPE] = self._etype.value
+        if self._salt is not None:
+            etype_info2_entry[ETYPE_INFO2_SALT] = self._salt.to_asn1()
+        if self._s2kparams is not None:
+            etype_info2_entry[ETYPE_INFO2_S2KPARAMS] = self._s2kparams
+        return etype_info2_entry
+
+
+class EtypeInfo2:
+    _entries: list[EtypeInfo2Entry] = None
+
+    def __init__(self):
+        self._entries = list()
+
+    def add(self, value):
+        self._entries.append(value)
+
+    @classmethod
+    def load(cls, data: asn1.EtypeInfo2Asn1):
+        if isinstance(data, bytes):
+            data = asn1.EtypeInfo2Asn1.load(data)
+        if isinstance(data, EtypeInfo2):
+            data = data.to_asn1()
+        tmp = cls()
+        for v in data:
+            tmp.add(EtypeInfo2Entry.load(v))
+        return tmp
+
+    def to_asn1(self) -> asn1.EtypeInfo2Asn1:
+        tmp = list()
+        for v in self._entries:
+            tmp.append(v.to_asn1())
+        return asn1.EtypeInfo2Asn1(tmp)
+
+
 class PaData:
     _type: PreAuthenticationDataTypes = None
     _value = None
@@ -884,8 +1116,14 @@ class PaDatas:
     def clear(self):
         self._padatas = list()
 
+    @property
+    def padatas(self) -> list:
+        return self._padatas
+
     @classmethod
     def load(cls, data: asn1.PaDatasAsn1):
+        if isinstance(data, bytes):
+            data = asn1.PaDatasAsn1.load(data)
         if isinstance(data, PaDatas):
             data = data.to_asn1()
         tmp = cls()
@@ -1015,3 +1253,393 @@ class AsReq:
 
     def to_asn1(self):
         return asn1.AsReqAsn1(self._req.to_asn1().native)
+
+
+class KrbError:
+    _pvno: Int32 = None
+    _msg_type: Int32 = None
+    _ctime: KerberosTime = None
+    _cusec: Int32 = None
+    _stime: KerberosTime = None
+    _susec: Int32 = None
+    _error_code: ErrorCodes = None
+    _crealm: Realm = None
+    _cname: PrincipalName = None
+    _realm: Realm = None
+    _sname: PrincipalName = None
+    _e_text: str = None
+    _e_data: str = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def pvno(self) -> Int32:
+        return self._pvno
+
+    @pvno.setter
+    def pvno(self, value) -> None:
+        self._pvno = value
+
+    @property
+    def msg_type(self) -> Int32:
+        return self._msg_type
+
+    @msg_type.setter
+    def msg_type(self, value) -> None:
+        self._msg_type = value
+
+    @property
+    def ctime(self) -> KerberosTime:
+        return self._ctime
+
+    @ctime.setter
+    def ctime(self, value) -> None:
+        self._ctime = value
+
+    @property
+    def cusec(self) -> Int32:
+        return self._cusec
+
+    @cusec.setter
+    def cusec(self, value) -> None:
+        self._cusec = value
+
+    @property
+    def stime(self) -> KerberosTime:
+        return self._stime
+
+    @stime.setter
+    def stime(self, value) -> None:
+        self._stime = value
+
+    @property
+    def susec(self) -> Int32:
+        return self._susec
+
+    @susec.setter
+    def susec(self, value) -> None:
+        self._susec = value
+
+    @property
+    def error_code(self) -> ErrorCodes:
+        return self._error_code
+
+    @error_code.setter
+    def error_code(self, value) -> None:
+        self._error_code = value
+
+    @property
+    def crealm(self) -> Realm:
+        return self._crealm
+
+    @crealm.setter
+    def crealm(self, value) -> None:
+        self._crealm = value
+
+    @property
+    def cname(self) -> PrincipalName:
+        return self._cname
+
+    @cname.setter
+    def cname(self, value) -> None:
+        self._cname = value
+
+    @property
+    def realm(self) -> Realm:
+        return self._realm
+
+    @realm.setter
+    def realm(self, value) -> None:
+        self._realm = value
+
+    @property
+    def sname(self) -> PrincipalName:
+        return self._sname
+
+    @sname.setter
+    def sname(self, value) -> None:
+        self._sname = value
+
+    @property
+    def e_text(self):
+        return self._e_text
+
+    @e_text.setter
+    def e_text(self, value):
+        self._e_text = value
+
+    @property
+    def e_data(self):
+        return self._e_data
+
+    @e_data.setter
+    def e_data(self, value):
+        self._e_data = value
+
+    @classmethod
+    def load(cls, data: asn1.KrbErrorAsn1):
+        if isinstance(data, KrbError):
+            data = data.to_asn1()
+        tmp = cls()
+        if KRB_ERROR_PVNO in data:
+            if data[KRB_ERROR_PVNO].native is not None:
+                tmp.pvno = Int32.load(data[KRB_ERROR_PVNO])
+        if KRB_ERROR_MSG_TYPE in data:
+            if data[KRB_ERROR_MSG_TYPE].native is not None:
+                tmp.msg_type = Int32.load(data[KRB_ERROR_MSG_TYPE])
+        if KRB_ERROR_CTIME in data:
+            if data[KRB_ERROR_CTIME].native is not None:
+                tmp.ctime = KerberosTime.load(data[KRB_ERROR_CTIME])
+        if KRB_ERROR_CUSEC in data:
+            if data[KRB_ERROR_CUSEC].native is not None:
+                tmp.cusec = Int32.load(data[KRB_ERROR_CUSEC])
+        if KRB_ERROR_STIME in data:
+            if data[KRB_ERROR_STIME].native is not None:
+                tmp.stime = KerberosTime.load(data[KRB_ERROR_STIME])
+        if KRB_ERROR_SUSEC in data:
+            if data[KRB_ERROR_SUSEC].native is not None:
+                tmp.susec = Int32.load(data[KRB_ERROR_SUSEC])
+        if KRB_ERROR_ERROR_CODE in data:
+            if data[KRB_ERROR_ERROR_CODE].native is not None:
+                tmp.error_code = ErrorCodes(data[KRB_ERROR_ERROR_CODE].native)
+        if KRB_ERROR_CREALM in data:
+            if data[KRB_ERROR_CREALM].native is not None:
+                tmp.crealm = Realm.load(data[KRB_ERROR_CREALM])
+        if KRB_ERROR_CNAME in data:
+            if data[KRB_ERROR_CNAME].native is not None:
+                tmp.cname = PrincipalName.load(data[KRB_ERROR_CNAME])
+        if KRB_ERROR_REALM in data:
+            if data[KRB_ERROR_REALM].native is not None:
+                tmp.realm = Realm.load(data[KRB_ERROR_REALM])
+        if KRB_ERROR_SNAME in data:
+            if data[KRB_ERROR_SNAME].native is not None:
+                tmp.sname = PrincipalName.load(data[KRB_ERROR_SNAME])
+        if KRB_ERROR_E_TEXT in data:
+            if data[KRB_ERROR_E_TEXT].native is not None:
+                tmp.e_text = data[KRB_ERROR_E_TEXT].native
+        if KRB_ERROR_E_DATA in data:
+            if data[KRB_ERROR_E_DATA].native is not None:
+                tmp.e_data = data[KRB_ERROR_E_DATA].native
+        return tmp
+
+    def to_asn1(self) -> asn1.KrbErrorAsn1:
+        krb_err = asn1.KrbErrorAsn1()
+        if self._pvno is not None:
+            krb_err[KRB_ERROR_PVNO] = self._pvno.to_asn1()
+        if self._ctime is not None:
+            krb_err[KRB_ERROR_CTIME] = self._ctime.to_asn1()
+        if self._cusec is not None:
+            krb_err[KRB_ERROR_CUSEC] = self._cusec.to_asn1()
+        if self._stime is not None:
+            krb_err[KRB_ERROR_STIME] = self._stime.to_asn1()
+        if self._susec is not None:
+            krb_err[KRB_ERROR_SUSEC] = self._susec.to_asn1()
+        if self._error_code is not None:
+            krb_err[KRB_ERROR_ERROR_CODE] = self._error_code.value
+        if self._crealm is not None:
+            krb_err[KRB_ERROR_CREALM] = self._crealm.to_asn1()
+        if self._cname is not None:
+            krb_err[KRB_ERROR_CNAME] = self._cname.to_asn1()
+        if self._realm is not None:
+            krb_err[KRB_ERROR_REALM] = self._realm.to_asn1()
+        if self._sname is not None:
+            krb_err[KRB_ERROR_SNAME] = self._sname.to_asn1()
+        if self._e_text is not None:
+            krb_err[KRB_ERROR_E_TEXT] = self._e_text
+        if self._e_data is not None:
+            krb_err[KRB_ERROR_E_DATA] = self._e_data
+        return krb_err
+
+
+class KdcRep:
+    _pvno: Int32 = None
+    _msg_type: MessageTypes = None
+    _pdata: PaDatas = None
+    _crealm: Realm = None
+    _cname: PrincipalName = None
+    _ticket: Ticket = None
+    _enc_part: EncryptedData = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def pvno(self) -> Int32:
+        return self._pvno
+
+    @pvno.setter
+    def pvno(self, value) -> None:
+        self._pvno = value
+
+    @property
+    def msg_type(self) -> MessageTypes:
+        return self._msg_type
+
+    @msg_type.setter
+    def msg_type(self, value) -> None:
+        self._msg_type = value
+
+    @property
+    def padata(self) -> PaDatas:
+        return self._pdata
+
+    @padata.setter
+    def padata(self, value) -> None:
+        self._pdata = value
+
+    @property
+    def crealm(self) -> Realm:
+        return self._crealm
+
+    @crealm.setter
+    def crealm(self, value) -> None:
+        self._crealm = value
+
+    @property
+    def cname(self) -> PrincipalName:
+        return self._cname
+
+    @cname.setter
+    def cname(self, value) -> None:
+        self._cname = value
+
+    @property
+    def ticket(self) -> Ticket:
+        return self._ticket
+
+    @ticket.setter
+    def ticket(self, value) -> None:
+        self._ticket = value
+
+    @property
+    def enc_part(self) -> EncryptedData:
+        return self._enc_part
+
+    @enc_part.setter
+    def enc_part(self, value) -> None:
+        self._enc_part = value
+
+    @classmethod
+    def load(cls, data):
+        if isinstance(data, KdcRep):
+            data = data.to_asn1()
+        tmp = cls()
+        if KDC_REP_PVNO in data:
+            if data[KDC_REP_PVNO].native is not None:
+                tmp.pvno = Int32.load(data[KDC_REP_PVNO])
+        if KDC_REP_MSG_TYPE in data:
+            if data[KDC_REP_MSG_TYPE].native is not None:
+                tmp.msg_type = MessageTypes(data[KDC_REP_MSG_TYPE].native)
+        if KDC_REP_PADATA in data:
+            if data[KDC_REP_PADATA].native is not None:
+                tmp.padata = PaDatas.load(data[KDC_REP_PADATA])
+        if KDC_REP_CREALM in data:
+            if data[KDC_REP_CREALM].native is not None:
+                tmp.crealm = Realm.load(data[KDC_REP_CREALM])
+        if KDC_REP_CNAME in data:
+            if data[KDC_REP_CNAME].native is not None:
+                tmp.cname = PrincipalName.load(data[KDC_REP_CNAME])
+        if KDC_REP_TICKET in data:
+            if data[KDC_REP_TICKET].native is not None:
+                tmp.ticket = Ticket.load(data[KDC_REP_TICKET])
+        if KDC_REP_ENC_PART in data:
+            if data[KDC_REP_ENC_PART].native is not None:
+                tmp.enc_part = EncryptedData.load(data[KDC_REP_ENC_PART])
+        return tmp
+
+    def to_asn1(self) -> asn1.KdcRepAsn1:
+        return asn1.KdcRepAsn1()
+
+
+# TODO
+class AsRep:
+    _kdc_rep: KdcRep = None
+
+    def __init__(self, kdc_rep: KdcRep = None):
+        self._kdc_rep = kdc_rep
+
+    @property
+    def kdc_rep(self) -> KdcRep:
+        return self._kdc_rep
+
+    @kdc_rep.setter
+    def kdc_rep(self, value) -> None:
+        self._kdc_rep = value
+
+    @classmethod
+    def load(cls, data: asn1.AsRepAsn1):
+        if isinstance(data, AsRep):
+            data = data.to_asn1()
+        return cls(KdcRep.load(data))
+
+    def to_asn1(self) -> asn1.AsRepAsn1:
+        return asn1.AsRepAsn1(self._kdc_rep)
+
+
+# TODO
+class TgsRep:
+    def __init__(self):
+        pass
+
+
+class KerberosResponse:
+    _krb_error: KrbError = None
+    _as_rep: AsRep = None
+    _tgs_rep: TgsRep = None
+
+    def __init__(self):
+        pass
+
+    def is_krb_error(self) -> bool:
+        return self._krb_error is not None
+
+    def is_as_rep(self) -> bool:
+        return self._as_rep is not None
+
+    def is_tgs_rep(self) -> bool:
+        return self._tgs_rep is not None
+
+    @property
+    def krb_error(self) -> KrbError:
+        return self._krb_error
+
+    @krb_error.setter
+    def krb_error(self, value) -> None:
+        self._krb_error = value
+
+    @property
+    def as_rep(self) -> AsRep:
+        return self._as_rep
+
+    @as_rep.setter
+    def as_rep(self, value) -> None:
+        self._as_rep = value
+
+    @property
+    def tgs_rep(self) -> TgsRep:
+        return self._tgs_rep
+
+    @tgs_rep.setter
+    def tgs_rep(self, value) -> None:
+        self._tgs_rep = value
+
+    @classmethod
+    def load(cls, data):
+        if isinstance(data, bytes):
+            response = asn1.KerberosResponseAsn1.load(data)
+        if response.name == KERBEROS_RESPONSE_KRB_ERROR:
+            tmp = cls()
+            tmp.krb_error = KrbError.load(asn1.KrbErrorAsn1.load(data))
+            return tmp
+        elif response.name == KERBEROS_RESPONSE_AS_REP:
+            tmp = cls()
+            tmp.as_rep = AsRep.load(asn1.AsRepAsn1.load(data))
+            return tmp
+        elif response.name == KERBEROS_RESPONSE_TGS_REP:
+            tmp = cls()
+            tmp.tgs_rep = TgsRep.load(asn1.TgsRepAsn1.load(data))
+            return tmp
+        else:
+            # unexpected response type
+            raise UnexpectedResponseType(response.name)

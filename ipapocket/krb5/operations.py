@@ -134,6 +134,7 @@ def as_req_with_pa(
     # create encrypted PA-DATA
     pa_datas = PaDatas()
     pa_enc_ts = PaEncTsEnc(current_timestamp, current_timestamp.microsecond)
+
     krb_key = _krb_key(etype, password, salt)
     enc_ts = _get_etype_profile(etype).encrypt(
         krb_key,
@@ -160,34 +161,24 @@ def as_req_with_pa(
     # create AS-REQ
     return AsReq(kdc_req)
 
-
-def get_preferred_etype(krb_err: KrbErrorAsn1):
-    # make it native
-    krb_err = krb_err.native
-    enc_methods = collections.OrderedDict()
-    for method in PaDatasAsn1.load(krb_err["e-data"]).native:
-        data_type = PreAuthenticationDataTypes(method["padata-type"])
-        enc_list = list()
-        if data_type == PreAuthenticationDataTypes.PA_ETYPE_INFO2:
-            enc_list = EtypeInfo2Asn1.load(method["padata-value"])
-        if data_type == PreAuthenticationDataTypes.PA_ETYPE_INFO:
-            enc_list = EtypeInfoAsn1.load(method["padata-value"])
-        for enc_entry in enc_list:
-            enc_methods[EncryptionTypes(enc_entry["etype"].native)] = enc_entry["salt"]
-            logging.debug(
-                "Server support etype {} with salt {}".format(
-                    EncryptionTypes(enc_entry["etype"].native).name, enc_entry["salt"]
-                )
-            )
-    if len(enc_methods) == 0:
-        raise NoSupportedEtypes("no supported server PA etypes exists in this client")
-    for algo in crypto.supported_enctypes():
-        # first algo will be accept (as it weaker)
-        if algo in enc_methods:
-            supported_etype = collections.OrderedDict()
-            salt = enc_methods[algo]
-            if salt is not None:
-                salt = salt.native.encode()
-            supported_etype[algo] = salt
-            return algo, salt
-        raise NoSupportedEtypes("no supported client etypes exists")
+def as_req_get_preferred_etype(error:KrbError):
+    """
+    Iterate over array of proposed PA types from weak to strong
+    """
+    for padata in PaDatas.load(error.e_data).padatas:
+        # from https://www.rfc-editor.org/rfc/rfc4120#section-5.2.7.5 - might be ONLY ONE ETYPE-ENTRY in sequence of each
+        if padata.type == PreAuthenticationDataTypes.PA_ETYPE_INFO:
+            etypes = EtypeInfo.load(padata.value)
+            for etype in etypes._entries:
+                if etype.etype in crypto.supported_enctypes():
+                    logging.debug("Server support ETYPE-INFO with etype {} and salt {}".format(etype.etype.name, etype.salt))
+                    # suppose that salt can't be null in this case
+                    return etype.etype, etype.salt.encode()
+        if padata.type == PreAuthenticationDataTypes.PA_ETYPE_INFO2:
+            etypes2 = EtypeInfo2.load(padata.value)
+            for etype2 in etypes2._entries:
+                if etype2.etype in crypto.supported_enctypes():
+                    logging.debug("Server support ETYPE-INFO2 with etype {} and salt {}".format(etype2.etype.name, etype2.salt.to_asn1().native))
+                    # suppose that salt can't be null in this case
+                    return etype2.etype, etype2.salt.to_asn1().native.encode()
+    raise NoSupportedEtypes("no supported server PA etypes exists in this client")

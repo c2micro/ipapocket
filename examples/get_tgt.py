@@ -9,7 +9,7 @@ from ipapocket.network.krb5 import Krb5Client
 from ipapocket.krb5.operations import (
     as_req_wihtout_pa,
     as_req_with_pa,
-    get_preferred_etype,
+    as_req_get_preferred_etype,
     _krb_key,
 )
 from ipapocket.krb5.asn1 import *
@@ -17,6 +17,7 @@ from ipapocket.krb5.crypto.base import Key, _get_etype_profile
 from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes, EncryptionTypes
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger
+from ipapocket.krb5.objects import KerberosResponse
 
 
 class GetTgt:
@@ -49,34 +50,36 @@ class GetTgt:
         logging.debug("send AS-REQ without PA")
         data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
         # convert to response type
-        krb_msg = KerberosResponseAsn1.load(data)
-        if krb_msg.name != "KRB-ERROR":
-            # client doesn't need preauth, so we get TGT right now
-            # TODO
-            logging.debug("recieved AS-REP for user without PA needing")
-            pass
-        else:
-            if (
-                krb_msg.native["error-code"]
-                != ErrorCodes.KDC_ERR_PREAUTH_REQUIRED.value
-            ):
-                raise UnexpectedKerberosError(krb_msg)
+        response = KerberosResponse.load(data)
+        if response.is_krb_error():
+            krb_rep = response.krb_error
+            # if error is not NEEDED_PREAUTH
+            if krb_rep.error_code != ErrorCodes.KDC_ERR_PREAUTH_REQUIRED:
+                raise UnexpectedKerberosError(krb_rep.error_code.name)
             else:
                 # get preferred etypes + salt
-                etype, salt = get_preferred_etype(krb_msg)
+                etype, salt = as_req_get_preferred_etype(krb_rep)
                 logging.debug("construct AS-REQ with encrypted PA")
                 as_req = as_req_with_pa(
                     self._domain, self._username, self._password, etype, salt
                 )
                 logging.debug("send AS-REQ with encrypted PA")
                 data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
-                krb_msg = KerberosResponseAsn1.load(data)
-                if krb_msg.name != "KRB-ERROR":
-                    # calculate key one more time (TODO)
-                    krb_key = _krb_key(etype, self._password, salt)
-                    self.asRep(krb_msg.native, krb_key)
+                response = KerberosResponse.load(data)
+                if response.is_krb_error():
+                    raise UnexpectedKerberosError(response.krb_error)
                 else:
-                    raise UnexpectedKerberosError(krb_msg)
+                    print(vars(response.as_rep.kdc_rep))
+                    # got TGT
+                    pass
+                    # calculate key one more time (TODO)
+                    #krb_key = _krb_key(etype, self._password, salt)
+                    #self.asRep(krb_msg.native, krb_key)
+        else:
+            # client doesn't need preauth, so we get TGT right now
+            # TODO
+            logging.debug("recieved AS-REP for user without PA needing")
+            pass
 
 
 if __name__ == "__main__":

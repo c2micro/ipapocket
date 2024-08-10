@@ -126,3 +126,8 @@ class InvalidPaEncTsEncPatimestamp(Exception):
 
 class InvalidPaEncTsEncPausec(Exception):
     pass
+
+
+class UnexpectedResponseType(Exception):
+    def __init__(self, type):
+        super(Exception, self).__init__("Unexpected response type {}".format(type))

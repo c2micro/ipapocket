@@ -275,10 +275,10 @@ class TicketAsn1(core.Sequence):
     explicit = (APPLICATION, 1)
 
     _fields = [
-        ("tkt-vno", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("realm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 1}),
-        ("sname", PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 2}),
-        ("enc-part", EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 3}),
+        (TICKET_TKT_VNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (TICKET_REALM, RealmAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (TICKET_SNAME, PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (TICKET_ENC_PART, EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 3}),
     ]
 
 
@@ -498,6 +498,7 @@ class EncKdcRepPartAsn1(core.Sequence):
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
+# wrapped by ipapocket.krb5.objects.KdcRep
 class KdcRepAsn1(core.Sequence):
     """
     KDC-REP         ::= SEQUENCE {
@@ -515,17 +516,22 @@ class KdcRepAsn1(core.Sequence):
     """
 
     _fields = [
-        ("pvno", core.Integer, {"tag_type": EXPLICIT, "tag": 0}),
-        ("msg-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
-        ("padata", PaDatasAsn1, {"tag_type": EXPLICIT, "tag": 2, "optional": True}),
-        ("crealm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 3}),
-        ("cname", PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 4}),
-        ("ticket", TicketAsn1, {"tag_type": EXPLICIT, "tag": 5}),
-        ("enc-part", EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 6}),
+        (KDC_REP_PVNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (KDC_REP_MSG_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (
+            KDC_REP_PADATA,
+            PaDatasAsn1,
+            {"tag_type": EXPLICIT, "tag": 2, "optional": True},
+        ),
+        (KDC_REP_CREALM, RealmAsn1, {"tag_type": EXPLICIT, "tag": 3}),
+        (KDC_REP_CNAME, PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+        (KDC_REP_TICKET, TicketAsn1, {"tag_type": EXPLICIT, "tag": 5}),
+        (KDC_REP_ENC_PART, EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 6}),
     ]
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.9.1
+# wrapped by ipapocket.krb5.objects.KrbError
 class KrbErrorAsn1(core.Sequence):
     """
     KRB-ERROR       ::= [APPLICATION 30] SEQUENCE {
@@ -548,28 +554,40 @@ class KrbErrorAsn1(core.Sequence):
     explicit = (APPLICATION, MessageTypes.KRB_ERROR.value)
 
     _fields = [
-        ("pvno", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("msg-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
-        ("ctime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 2, "optional": True}),
-        ("cusec", Int32Asn1, {"tag_type": EXPLICIT, "tag": 3, "optional": True}),
-        ("stime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 4}),
-        ("susec", Int32Asn1, {"tag_type": EXPLICIT, "tag": 5}),
-        ("error-code", Int32Asn1, {"tag_type": EXPLICIT, "tag": 6}),
-        ("crealm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 7, "optional": True}),
+        (KRB_ERROR_PVNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (KRB_ERROR_MSG_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
         (
-            "cname",
+            KRB_ERROR_CTIME,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 2, "optional": True},
+        ),
+        (
+            KRB_ERROR_CUSEC,
+            Int32Asn1,
+            {"tag_type": EXPLICIT, "tag": 3, "optional": True},
+        ),
+        (KRB_ERROR_STIME, KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+        (KRB_ERROR_SUSEC, Int32Asn1, {"tag_type": EXPLICIT, "tag": 5}),
+        (KRB_ERROR_ERROR_CODE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 6}),
+        (
+            KRB_ERROR_CREALM,
+            RealmAsn1,
+            {"tag_type": EXPLICIT, "tag": 7, "optional": True},
+        ),
+        (
+            KRB_ERROR_CNAME,
             PrincipalNameAsn1,
             {"tag_type": EXPLICIT, "tag": 8, "optional": True},
         ),
-        ("realm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 9}),
-        ("sname", PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 10}),
+        (KRB_ERROR_REALM, RealmAsn1, {"tag_type": EXPLICIT, "tag": 9}),
+        (KRB_ERROR_SNAME, PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 10}),
         (
-            "e-text",
+            KRB_ERROR_E_TEXT,
             core.GeneralString,
             {"tag_type": EXPLICIT, "tag": 11, "optional": True},
         ),
         (
-            "e-data",
+            KRB_ERROR_E_DATA,
             core.OctetString,
             {"tag_type": EXPLICIT, "tag": 12, "optional": True},
         ),
@@ -577,6 +595,7 @@ class KrbErrorAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
+# wrapped by ipapocket.krb5.objects.AsRep
 class AsRepAsn1(KdcRepAsn1):
     """
     AS-REP          ::= [APPLICATION 11] KDC-REP
@@ -595,20 +614,21 @@ class TgsRepAsn1(KdcRepAsn1):
 
 
 # class to handle different types of returned response
+# wrapped by ipopacket.krb5.objects.KerberosResponse
 class KerberosResponseAsn1(core.Choice):
     _alternatives = [
         (
-            "AS-REP",
+            KERBEROS_RESPONSE_AS_REP,
             AsRepAsn1,
             {"implicit": (APPLICATION, MessageTypes.KRB_AS_REP.value)},
         ),
         (
-            "TGS-REP",
+            KERBEROS_RESPONSE_TGS_REP,
             TgsRepAsn1,
             {"implicit": (APPLICATION, MessageTypes.KRB_TGS_REP.value)},
         ),
         (
-            "KRB-ERROR",
+            KERBEROS_RESPONSE_KRB_ERROR,
             KrbErrorAsn1,
             {"implicit": (APPLICATION, MessageTypes.KRB_ERROR.value)},
         ),
@@ -616,6 +636,7 @@ class KerberosResponseAsn1(core.Choice):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.EtypeInfoEntry
 class EtypeInfoEntryAsn1(core.Sequence):
     """
     ETYPE-INFO-ENTRY        ::= SEQUENCE {
@@ -625,12 +646,17 @@ class EtypeInfoEntryAsn1(core.Sequence):
     """
 
     _fields = [
-        ("etype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("salt", core.OctetString, {"tag_type": EXPLICIT, "tag": 1, "optional": True}),
+        (ETYPE_INFO_ETYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            ETYPE_INFO_SALT,
+            core.OctetString,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
     ]
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.EtypeInfo
 class EtypeInfoAsn1(core.SequenceOf):
     """
     ETYPE-INFO              ::= SEQUENCE OF ETYPE-INFO-ENTRY
@@ -640,6 +666,7 @@ class EtypeInfoAsn1(core.SequenceOf):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.EtypeInfo2Entry
 class EtypeInfo2EntryAsn1(core.Sequence):
     """
     ETYPE-INFO2-ENTRY       ::= SEQUENCE {
@@ -650,14 +677,14 @@ class EtypeInfo2EntryAsn1(core.Sequence):
     """
 
     _fields = [
-        ("etype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (ETYPE_INFO2_ETYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
         (
-            "salt",
+            ETYPE_INFO2_SALT,
             KerberosStringAsn1,
             {"tag_type": EXPLICIT, "tag": 1, "optional": True},
         ),
         (
-            "s2kparams",
+            ETYPE_INFO2_S2KPARAMS,
             core.OctetString,
             {"tag_type": EXPLICIT, "tag": 2, "optional": True},
         ),
@@ -665,6 +692,7 @@ class EtypeInfo2EntryAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.EtypeInfo2
 class EtypeInfo2Asn1(core.SequenceOf):
     """
     ETYPE-INFO2             ::= SEQUENCE SIZE (1..MAX) OF ETYPE-INFO2-ENTRY

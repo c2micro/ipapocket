@@ -565,9 +565,9 @@ class Ticket:
     @enc_part.setter
     def enc_part(self, value) -> None:
         self._enc_part = value
-    
+
     @classmethod
-    def load(cls, data:asn1.TicketAsn1):
+    def load(cls, data: asn1.TicketAsn1):
         if isinstance(data, Ticket):
             data = data.to_asn1()
         tmp = cls()
@@ -1552,7 +1552,6 @@ class KdcRep:
         return asn1.KdcRepAsn1()
 
 
-# TODO
 class AsRep:
     _kdc_rep: KdcRep = None
 
@@ -1577,10 +1576,28 @@ class AsRep:
         return asn1.AsRepAsn1(self._kdc_rep)
 
 
-# TODO
 class TgsRep:
-    def __init__(self):
-        pass
+    _kdc_rep: KdcRep = None
+
+    def __init__(self, kdc_rep: KdcRep = None):
+        self._kdc_rep = kdc_rep
+
+    @property
+    def kdc_rep(self) -> KdcRep:
+        return self._kdc_rep
+
+    @kdc_rep.setter
+    def kdc_rep(self, value) -> None:
+        self._kdc_rep = value
+
+    @classmethod
+    def load(cls, data: asn1.TgsRepAsn1):
+        if isinstance(data, TgsRep):
+            data = data.to_asn1()
+        return cls(KdcRep.load(data))
+
+    def to_asn1(self) -> asn1.TgsRepAsn1:
+        return asn1.TgsRepAsn1(self._kdc_rep)
 
 
 class KerberosResponse:

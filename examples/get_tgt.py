@@ -13,19 +13,27 @@ from ipapocket.krb5.operations import (
     _krb_key,
 )
 from ipapocket.krb5.crypto.base import Key, _get_etype_profile
-from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes, EncryptionTypes
+from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger
-from ipapocket.krb5.objects import KerberosResponse, AsRep, EncRepPart, EncryptionKey
+from ipapocket.krb5.objects import KerberosResponse, AsRep, EncRepPart
+from ipapocket.krb5.ccache import Ccache
 
 
 class GetTgt:
-    def __init__(self, username, password, domain, ipa_host):
+    def __init__(self, username, password, domain, ipa_host, ccache_file=None):
         self._username = username
         self._password = password
         self._domain = domain
         self._ipa_host = ipa_host
+        self._ccache_path = ccache_file
         self._krb5_client = Krb5Client(ipa_host)
+
+    def _save_ccache(self, kdc_rep, kdc_enc_part):
+        ccache = Ccache()
+        ccache.set_tgt(kdc_rep, kdc_enc_part)
+        ccache.to_file(self._ccache_path)
+        logging.info("TGT saved to {}".format(self._ccache_path))
 
     def _asRep(self, rep: AsRep, key: Key):
         part = _get_etype_profile(key.enctype).decrypt(
@@ -40,8 +48,10 @@ class GetTgt:
             logging.debug("encrypted part from TGS-REP (linux way)")
         else:
             raise UnknownEncPartType("XXX")
-        logging.info("got valid AS-REP")
-        print(vars(kdc_enc_data.key))
+        if self._ccache_path is not None:
+            self._save_ccache(rep.kdc_rep, kdc_enc_data)
+        else:
+            logging.info("got AS-REP successfully")
 
     def getTgt(self):
         logging.debug("construct AS-REQ wihtout PA")
@@ -109,6 +119,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Verbose mode",
     )
+    parser.add_argument(
+        "--ccache",
+        required=False,
+        action="store",
+        help="Path for CCACHE file to store TGT",
+    )
 
     options = parser.parse_args()
 
@@ -119,7 +135,13 @@ if __name__ == "__main__":
     if options.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    tgt = GetTgt(options.username, options.password, options.domain, options.ipa_host)
+    tgt = GetTgt(
+        options.username,
+        options.password,
+        options.domain,
+        options.ipa_host,
+        options.ccache,
+    )
     try:
         tgt.getTgt()
     except UnexpectedKerberosError as e:

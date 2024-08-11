@@ -427,14 +427,42 @@ class EncTypes:
         return asn1.EncTypesAsn1(final)
 
 
-# TODO
 class HostAddress:
     _type: Int32 = None
     _address = None
 
-    def __init__(self, type, address):
+    def __init__(self, type=None, address=None):
         self._type = type
         self._address = address
+
+    @property
+    def type(self) -> Int32:
+        return self._type
+
+    @type.setter
+    def type(self, value) -> None:
+        self._type = value
+
+    @property
+    def address(self):
+        return self._address
+
+    @address.setter
+    def address(self, value) -> None:
+        self._address = value
+
+    @classmethod
+    def load(cls, data: asn1.HostAddressAsn1):
+        if isinstance(data, HostAddress):
+            data = data.to_asn1()
+        tmp = cls()
+        if HOST_ADDRESS_ADDR_TYPE in data:
+            if data[HOST_ADDRESS_ADDR_TYPE].native is not None:
+                tmp.type = Int32.load(data[HOST_ADDRESS_ADDR_TYPE])
+        if HOST_ADDRESS_ADDRESS in data:
+            if data[HOST_ADDRESS_ADDRESS].native is not None:
+                tmp.address = data[HOST_ADDRESS_ADDRESS].native
+        return tmp
 
     def to_asn1(self) -> asn1.HostAddressAsn1:
         host_address = asn1.HostAddressAsn1()
@@ -445,12 +473,26 @@ class HostAddress:
         return host_address
 
 
-# TODO
 class HostAddresses:
     _addresses: list[HostAddress] = None
 
-    def __init__(self, addresses):
-        self._addresses = addresses
+    def __init__(self):
+        self._addresses = list()
+
+    def add(self, value):
+        self._addresses.append(value)
+
+    def clear(self):
+        self._addresses = list()
+
+    @classmethod
+    def load(cls, data: asn1.HostAddressesAsn1):
+        if isinstance(data, HostAddresses):
+            data = data.to_asn1()
+        tmp = cls()
+        for v in data:
+            tmp.add(HostAddress.load(v))
+        return tmp
 
     def to_asn1(self) -> asn1.HostAddressesAsn1:
         tmp = list()
@@ -1660,3 +1702,380 @@ class KerberosResponse:
         else:
             # unexpected response type
             raise UnexpectedResponseType(response.name)
+
+
+class EncryptionKey:
+    _keytype: EncryptionTypes = None
+    _keyvalue: str = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def keytype(self) -> EncryptionTypes:
+        return self._keytype
+
+    @keytype.setter
+    def keytype(self, value) -> None:
+        self._keytype = value
+
+    @property
+    def keyvalue(self) -> str:
+        return self._keyvalue
+
+    @keyvalue.setter
+    def keyvalue(self, value) -> None:
+        self._keyvalue = value
+
+    @classmethod
+    def load(cls, data: asn1.EncryptionKeyAsn1):
+        if isinstance(data, EncryptionKey):
+            data = data.to_asn1()
+        tmp = cls()
+        if ENCRYPTION_KEY_KEYTYPE in data:
+            if data[ENCRYPTION_KEY_KEYTYPE].native is not None:
+                tmp.keytype = EncryptionTypes(data[ENCRYPTION_KEY_KEYTYPE].native)
+        if ENCRYPTION_KEY_KEYVALUE in data:
+            if data[ENCRYPTION_KEY_KEYVALUE].native is not None:
+                tmp.keyvalue = data[ENCRYPTION_KEY_KEYVALUE].native
+        return tmp
+
+    def to_asn1(self) -> asn1.EncryptionKeyAsn1:
+        enc_key = asn1.EncryptionKeyAsn1()
+        if self._keytype is not None:
+            enc_key[ENCRYPTION_KEY_KEYTYPE] = self._keytype.value
+        if self._keyvalue is not None:
+            enc_key[ENCRYPTION_KEY_KEYVALUE] = self._keyvalue
+        return enc_key
+
+
+class LastReq:
+    _lr_type: Int32 = None
+    _lr_value: KerberosTime = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def lr_type(self) -> Int32:
+        return self._lr_type
+
+    @lr_type.setter
+    def lr_type(self, value) -> None:
+        self._lr_type = value
+
+    @property
+    def lr_value(self) -> KerberosTime:
+        return self._lr_value
+
+    @lr_value.setter
+    def lr_value(self, value) -> None:
+        self._lr_value = value
+
+    @classmethod
+    def load(cls, data: asn1.LastReqAsn1):
+        if isinstance(data, LastReq):
+            data = data.to_asn1()
+        tmp = cls()
+        if LAST_REQ_LR_TYPE in data:
+            if data[LAST_REQ_LR_TYPE].native is not None:
+                tmp.lr_type = Int32.load(data[LAST_REQ_LR_TYPE])
+        if LAST_REQ_LR_VALUE in data:
+            if data[LAST_REQ_LR_VALUE].native is not None:
+                tmp.lr_value = KerberosTime.load(data[LAST_REQ_LR_VALUE])
+        return tmp
+
+    def to_asn1(self) -> asn1.LastReqAsn1:
+        last_req = asn1.LastReqAsn1()
+        if self._lr_type is not None:
+            last_req[LAST_REQ_LR_TYPE] = self._lr_type.to_asn1()
+        if self._lr_value is not None:
+            last_req[LAST_REQ_LR_VALUE] = self._lr_value.to_asn1()
+        return last_req
+
+
+class LastReqs:
+    _reqs: list[LastReq] = None
+
+    def __init__(self):
+        self._reqs = list()
+
+    def add(self, value: LastReq):
+        self._reqs.append(value)
+
+    def clear(self):
+        self._reqs = list()
+
+    @classmethod
+    def load(cls, data: asn1.LastReqsAsn1):
+        if isinstance(data, LastReqs):
+            data = data.to_asn1()
+        tmp = cls()
+        for v in data:
+            tmp.add(LastReq.load(v))
+        return tmp
+
+    def to_asn1(self) -> asn1.LastReqsAsn1:
+        tmp = list()
+        for v in self._reqs:
+            tmp.append(v.to_asn1())
+        return asn1.LastReqsAsn1(tmp)
+
+
+class EncKdcRepPart:
+    _key: EncryptionKey = None
+    _last_req: LastReqs = None
+    _nonce: UInt32 = None
+    _key_expiration: KerberosTime = None
+    _flags: TicketFlags = None
+    _authtime: KerberosTime = None
+    _starttime: KerberosTime = None
+    _endtime: KerberosTime = None
+    _renew_till: KerberosTime = None
+    _srealm: Realm = None
+    _sname: PrincipalName = None
+    _caddr: HostAddresses = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def key(self) -> EncryptionKey:
+        return self._key
+
+    @key.setter
+    def key(self, value) -> None:
+        self._key = value
+
+    @property
+    def last_req(self) -> LastReqs:
+        return self._last_req
+
+    @last_req.setter
+    def last_req(self, value) -> None:
+        self._last_req = value
+
+    @property
+    def nonce(self) -> UInt32:
+        return self._nonce
+
+    @nonce.setter
+    def nonce(self, value) -> None:
+        self._nonce = value
+
+    @property
+    def key_expiration(self) -> KerberosTime:
+        return self._key_expiration
+
+    @key_expiration.setter
+    def key_expiration(self, value) -> None:
+        self._key_expiration = value
+
+    @property
+    def flags(self) -> TicketFlags:
+        return self._flags
+
+    @flags.setter
+    def flags(self, value) -> None:
+        self._flags = value
+
+    @property
+    def authtime(self) -> KerberosTime:
+        return self._authtime
+
+    @authtime.setter
+    def authtime(self, value) -> None:
+        self._authtime = value
+
+    @property
+    def starttime(self) -> KerberosTime:
+        return self._starttime
+
+    @starttime.setter
+    def starttime(self, value) -> None:
+        self._starttime = value
+
+    @property
+    def endtime(self) -> KerberosTime:
+        return self._endtime
+
+    @endtime.setter
+    def endtime(self, value) -> None:
+        self._endtime = value
+
+    @property
+    def renew_till(self) -> KerberosTime:
+        return self._renew_till
+
+    @renew_till.setter
+    def renew_till(self, value) -> None:
+        self._renew_till = value
+
+    @property
+    def srealm(self) -> Realm:
+        return self._srealm
+
+    @srealm.setter
+    def srealm(self, value) -> None:
+        self._srealm = value
+
+    @property
+    def sname(self) -> PrincipalName:
+        return self._sname
+
+    @sname.setter
+    def sname(self, value) -> None:
+        self._sname = value
+
+    @property
+    def caddr(self) -> HostAddresses:
+        return self._caddr
+
+    @caddr.setter
+    def caddr(self, value) -> None:
+        self._caddr = value
+
+    @classmethod
+    def load(cls, data: asn1.EncKdcRepPartAsn1):
+        if isinstance(data, EncKdcRepPart):
+            data = data.to_asn1()
+        tmp = cls()
+        if ENC_KDC_REP_PART_KEY in data:
+            if data[ENC_KDC_REP_PART_KEY].native is not None:
+                tmp.key = EncryptionKey.load(data[ENC_KDC_REP_PART_KEY])
+        if ENC_KDC_REP_PART_LAST_REQ in data:
+            if data[ENC_KDC_REP_PART_LAST_REQ].native is not None:
+                tmp.last_req = LastReqs.load(data[ENC_KDC_REP_PART_LAST_REQ])
+        if ENC_KDC_REP_PART_NONCE in data:
+            if data[ENC_KDC_REP_PART_NONCE].native is not None:
+                tmp.nonce = UInt32.load(data[ENC_KDC_REP_PART_NONCE])
+        if ENC_KDC_REP_PART_KEY_EXPIRATION in data:
+            if data[ENC_KDC_REP_PART_KEY_EXPIRATION].native is not None:
+                tmp.key_expiration = KerberosTime.load(
+                    data[ENC_KDC_REP_PART_KEY_EXPIRATION]
+                )
+        if ENC_KDC_REP_PART_FLAGS in data:
+            if data[ENC_KDC_REP_PART_FLAGS].native is not None:
+                tmp.flags = TicketFlags.load(data[ENC_KDC_REP_PART_FLAGS])
+        if ENC_KDC_REP_PART_AUTHTIME in data:
+            if data[ENC_KDC_REP_PART_AUTHTIME].native is not None:
+                tmp.authtime = KerberosTime.load(data[ENC_KDC_REP_PART_AUTHTIME])
+        if ENC_KDC_REP_PART_STARTTIME in data:
+            if data[ENC_KDC_REP_PART_STARTTIME].native is not None:
+                tmp.starttime = KerberosTime.load(data[ENC_KDC_REP_PART_STARTTIME])
+        if ENC_KDC_REP_PART_ENDTIME in data:
+            if data[ENC_KDC_REP_PART_ENDTIME].native is not None:
+                tmp.endtime = KerberosTime.load(data[ENC_KDC_REP_PART_ENDTIME])
+        if ENC_KDC_REP_PART_RENEW_TILL in data:
+            if data[ENC_KDC_REP_PART_RENEW_TILL].native is not None:
+                tmp.renew_till = KerberosTime.load(data[ENC_KDC_REP_PART_RENEW_TILL])
+        if ENC_KDC_REP_PART_SREALM in data:
+            if data[ENC_KDC_REP_PART_SREALM].native is not None:
+                tmp.srealm = Realm.load(data[ENC_KDC_REP_PART_SREALM])
+        if ENC_KDC_REP_PART_SNAME in data:
+            if data[ENC_KDC_REP_PART_SNAME].native is not None:
+                tmp.sname = PrincipalName.load(data[ENC_KDC_REP_PART_SNAME])
+        if ENC_KDC_REP_PART_CADDR in data:
+            if data[ENC_KDC_REP_PART_CADDR].native is not None:
+                tmp.caddr = HostAddresses.load(data[ENC_KDC_REP_PART_CADDR])
+        return tmp
+
+    def to_asn1(self) -> asn1.EncKdcRepPartAsn1:
+        return asn1.EncKdcRepPartAsn1()
+
+
+class EncAsRepPart:
+    _enc_kdc_rep_part: EncKdcRepPart = None
+
+    def __init__(self, enc_kdc_rep: EncKdcRepPart = None):
+        self._enc_kdc_rep_part = enc_kdc_rep
+
+    @property
+    def enc_kdc_rep_part(self) -> EncKdcRepPart:
+        return self._enc_kdc_rep_part
+
+    @enc_kdc_rep_part.setter
+    def enc_kdc_rep_part(self, value) -> None:
+        self._enc_kdc_rep_part = value
+
+    @classmethod
+    def load(cls, data: asn1.EncAsRepPartAsn1):
+        if isinstance(data, bytes):
+            data = asn1.EncAsRepPartAsn1.load(data)
+        if isinstance(data, EncAsRepPart):
+            data = data.to_asn1()
+        return cls(EncKdcRepPart.load(data))
+
+    def to_asn1(self) -> asn1.EncAsRepPartAsn1:
+        return asn1.EncAsRepPartAsn1(self._enc_kdc_rep_part)
+
+
+class EncTgsRepPart:
+    _enc_kdc_rep_part: EncKdcRepPart = None
+
+    def __init__(self, enc_kdc_rep: EncKdcRepPart = None):
+        self._enc_kdc_rep_part = enc_kdc_rep
+
+    @property
+    def enc_kdc_rep_part(self) -> EncKdcRepPart:
+        return self._enc_kdc_rep_part
+
+    @enc_kdc_rep_part.setter
+    def enc_kdc_rep_part(self, value) -> None:
+        self._enc_kdc_rep_part = value
+
+    @classmethod
+    def load(cls, data: asn1.EncTgsRepPartAsn1):
+        if isinstance(data, bytes):
+            data = asn1.EncTgsRepPartAsn1.load(data)
+        if isinstance(data, EncTgsRepPart):
+            data = data.to_asn1()
+        return cls(EncKdcRepPart.load(data))
+
+    def to_asn1(self) -> asn1.EncTgsRepPartAsn1:
+        return asn1.EncTgsRepPartAsn1(self._enc_kdc_rep_part)
+
+
+class EncRepPart:
+    _enc_as_rep_part: EncAsRepPart = None
+    _enc_tgs_rep_part: EncTgsRepPart = None
+
+    def __init__(self):
+        pass
+
+    def is_enc_as_rep(self) -> bool:
+        return self._enc_as_rep_part is not None
+
+    def is_enc_tgs_rep(self) -> bool:
+        return self._enc_tgs_rep_part is not None
+
+    @property
+    def enc_as_rep_part(self) -> EncAsRepPart:
+        return self._enc_as_rep_part
+
+    @enc_as_rep_part.setter
+    def enc_as_rep_part(self, value) -> None:
+        self._enc_as_rep_part = value
+
+    @property
+    def enc_tgs_rep_part(self) -> EncTgsRepPart:
+        return self._enc_tgs_rep_part
+
+    @enc_tgs_rep_part.setter
+    def enc_tgs_rep_part(self, value) -> None:
+        self._enc_tgs_rep_part = value
+
+    @classmethod
+    def load(cls, data: asn1.EncRepPartAsn1):
+        if isinstance(data, bytes):
+            response = asn1.EncRepPartAsn1.load(data)
+        if response.name == ENC_PART_REP_AS_REP:
+            tmp = cls()
+            tmp.enc_as_rep_part = EncAsRepPart.load(data)
+            return tmp
+        elif response.name == ENC_PART_REP_TGS_REP:
+            tmp = cls()
+            tmp.enc_tgs_rep_part = EncTgsRepPart.load(data)
+            return tmp
+        else:
+            raise UnexpectedEncRepPartType()

@@ -12,12 +12,11 @@ from ipapocket.krb5.operations import (
     as_req_get_preferred_etype,
     _krb_key,
 )
-from ipapocket.krb5.asn1 import *
 from ipapocket.krb5.crypto.base import Key, _get_etype_profile
 from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes, EncryptionTypes
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger
-from ipapocket.krb5.objects import KerberosResponse
+from ipapocket.krb5.objects import KerberosResponse, AsRep, EncRepPart, EncryptionKey
 
 
 class GetTgt:
@@ -28,21 +27,21 @@ class GetTgt:
         self._ipa_host = ipa_host
         self._krb5_client = Krb5Client(ipa_host)
 
-    def asRep(self, rep: AsRepAsn1, key: Key):
-        dec_part = _get_etype_profile(key.enctype).decrypt(
-            key, KeyUsageTypes.AS_REP_ENCPART.value, rep["enc-part"]["cipher"]
+    def _asRep(self, rep: AsRep, key: Key):
+        part = _get_etype_profile(key.enctype).decrypt(
+            key, KeyUsageTypes.AS_REP_ENCPART.value, rep.kdc_rep.enc_part.cipher
         )
-        enc_part = EncRepPartAsn1.load(dec_part)
-        if enc_part.name == "ENC-AS-REP-PART":
+        enc_part = EncRepPart.load(part)
+        if enc_part.is_enc_as_rep():
+            kdc_enc_data = enc_part.enc_as_rep_part.enc_kdc_rep_part
             logging.debug("encrypted part from AS-REP (microsoft way)")
-        elif enc_part.name == "ENC-TGS-REP-PART":
+        elif enc_part.is_enc_tgs_rep():
+            kdc_enc_data = enc_part.enc_tgs_rep_part.enc_kdc_rep_part
             logging.debug("encrypted part from TGS-REP (linux way)")
         else:
-            raise UnknownEncPartType(enc_part.name)
+            raise UnknownEncPartType("XXX")
         logging.info("got valid AS-REP")
-        enc_part = enc_part.native
-        # session_key = Key(EncryptionTypes(enc_part["key"]["keytype"]), enc_part["key"]["keyvalue"])
-        # print(session_key)
+        print(vars(kdc_enc_data.key))
 
     def getTgt(self):
         logging.debug("construct AS-REQ wihtout PA")
@@ -69,12 +68,8 @@ class GetTgt:
                 if response.is_krb_error():
                     raise UnexpectedKerberosError(response.krb_error)
                 else:
-                    print(vars(response.as_rep.kdc_rep))
-                    # got TGT
-                    pass
-                    # calculate key one more time (TODO)
-                    #krb_key = _krb_key(etype, self._password, salt)
-                    #self.asRep(krb_msg.native, krb_key)
+                    key = _krb_key(etype, self._password, salt)
+                    self._asRep(response.as_rep, key)
         else:
             # client doesn't need preauth, so we get TGT right now
             # TODO

@@ -161,7 +161,8 @@ def as_req_with_pa(
     # create AS-REQ
     return AsReq(kdc_req)
 
-def as_req_get_preferred_etype(error:KrbError):
+
+def as_req_get_preferred_etype(error: KrbError):
     """
     Iterate over array of proposed PA types from weak to strong
     """
@@ -171,14 +172,22 @@ def as_req_get_preferred_etype(error:KrbError):
             etypes = EtypeInfo.load(padata.value)
             for etype in etypes._entries:
                 if etype.etype in crypto.supported_enctypes():
-                    logging.debug("Server support ETYPE-INFO with etype {} and salt {}".format(etype.etype.name, etype.salt))
+                    logging.debug(
+                        "Server support ETYPE-INFO with etype {} and salt {}".format(
+                            etype.etype.name, etype.salt
+                        )
+                    )
                     # suppose that salt can't be null in this case
                     return etype.etype, etype.salt.encode()
         if padata.type == PreAuthenticationDataTypes.PA_ETYPE_INFO2:
             etypes2 = EtypeInfo2.load(padata.value)
             for etype2 in etypes2._entries:
                 if etype2.etype in crypto.supported_enctypes():
-                    logging.debug("Server support ETYPE-INFO2 with etype {} and salt {}".format(etype2.etype.name, etype2.salt.to_asn1().native))
+                    logging.debug(
+                        "Server support ETYPE-INFO2 with etype {} and salt {}".format(
+                            etype2.etype.name, etype2.salt.to_asn1().native
+                        )
+                    )
                     # suppose that salt can't be null in this case
                     return etype2.etype, etype2.salt.to_asn1().native.encode()
     raise NoSupportedEtypes("no supported server PA etypes exists in this client")

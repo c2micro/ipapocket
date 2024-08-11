@@ -1,6 +1,6 @@
 from asn1crypto import core
 from ipapocket.exceptions.exceptions import Asn1ConstrainedViolation
-from ipapocket.krb5.constants import MessageTypes
+from ipapocket.krb5.constants import MessageTypes, ApplicationTagNumbers
 from ipapocket.krb5.fields import *
 
 # explicit tag for ASN1
@@ -272,7 +272,7 @@ class TicketAsn1(core.Sequence):
     }
     """
 
-    explicit = (APPLICATION, 1)
+    explicit = (APPLICATION, ApplicationTagNumbers.TICKET.value)
 
     _fields = [
         (TICKET_TKT_VNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
@@ -407,11 +407,13 @@ class KdcReqAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.AsReq
 class AsReqAsn1(KdcReqAsn1):
-    explicit = (APPLICATION, MessageTypes.KRB_AS_REQ.value)
+    explicit = (APPLICATION, ApplicationTagNumbers.AS_REQ.value)
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.9
+# wrapped by ipapocket.krb5.objects.EncryptionKey
 class EncryptionKeyAsn1(core.Sequence):
     """
     EncryptionKey   ::= SEQUENCE {
@@ -421,11 +423,13 @@ class EncryptionKeyAsn1(core.Sequence):
     """
 
     _fields = [
-        ("keytype", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("keyvalue", core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
+        (ENCRYPTION_KEY_KEYTYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (ENCRYPTION_KEY_KEYVALUE, core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
     ]
 
 
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.LastReq
 class LastReqAsn1(core.Sequence):
     """
     LastReq         ::=     SEQUENCE OF SEQUENCE {
@@ -435,17 +439,19 @@ class LastReqAsn1(core.Sequence):
     """
 
     _fields = [
-        ("lr-type", Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("lr-value", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (LAST_REQ_LR_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (LAST_REQ_LR_VALUE, KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 1}),
     ]
 
 
 # type to hold sequences of LastReq
+# wrapped by ipapocket.krb5.objects.LastReqs
 class LastReqsAsn1(core.SequenceOf):
     _child_spec = LastReqAsn1
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.EncKdcRepPart
 class EncKdcRepPartAsn1(core.Sequence):
     """
     EncKDCRepPart   ::= SEQUENCE {
@@ -465,31 +471,31 @@ class EncKdcRepPartAsn1(core.Sequence):
     """
 
     _fields = [
-        ("key", EncryptionKeyAsn1, {"tag_type": EXPLICIT, "tag": 0}),
-        ("last-req", LastReqsAsn1, {"tag_type": EXPLICIT, "tag": 1}),
-        ("nonce", Int32Asn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (ENC_KDC_REP_PART_KEY, EncryptionKeyAsn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (ENC_KDC_REP_PART_LAST_REQ, LastReqsAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (ENC_KDC_REP_PART_NONCE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 2}),
         (
-            "key-expiration",
+            ENC_KDC_REP_PART_KEY_EXPIRATION,
             KerberosTimeAsn1,
             {"tag_type": EXPLICIT, "tag": 3, "optional": True},
         ),
-        ("flags", TicketFlagsAsn1, {"tag_type": EXPLICIT, "tag": 4}),
-        ("authtime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 5}),
+        (ENC_KDC_REP_PART_FLAGS, TicketFlagsAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+        (ENC_KDC_REP_PART_AUTHTIME, KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 5}),
         (
-            "starttime",
+            ENC_KDC_REP_PART_STARTTIME,
             KerberosTimeAsn1,
             {"tag_type": EXPLICIT, "tag": 6, "optional": True},
         ),
-        ("endtime", KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 7}),
+        (ENC_KDC_REP_PART_ENDTIME, KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 7}),
         (
-            "renew-till",
+            ENC_KDC_REP_PART_RENEW_TILL,
             KerberosTimeAsn1,
             {"tag_type": EXPLICIT, "tag": 8, "optional": True},
         ),
-        ("srealm", RealmAsn1, {"tag_type": EXPLICIT, "tag": 9}),
-        ("sname", PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 10}),
+        (ENC_KDC_REP_PART_SREALM, RealmAsn1, {"tag_type": EXPLICIT, "tag": 9}),
+        (ENC_KDC_REP_PART_SNAME, PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 10}),
         (
-            "caddr",
+            ENC_KDC_REP_PART_CADDR,
             HostAddressesAsn1,
             {"tag_type": EXPLICIT, "tag": 11, "optional": True},
         ),
@@ -551,7 +557,7 @@ class KrbErrorAsn1(core.Sequence):
     }
     """
 
-    explicit = (APPLICATION, MessageTypes.KRB_ERROR.value)
+    explicit = (APPLICATION, ApplicationTagNumbers.KRB_ERROR.value)
 
     _fields = [
         (KRB_ERROR_PVNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
@@ -601,7 +607,7 @@ class AsRepAsn1(KdcRepAsn1):
     AS-REP          ::= [APPLICATION 11] KDC-REP
     """
 
-    explicit = (APPLICATION, MessageTypes.KRB_AS_REP.value)
+    explicit = (APPLICATION, ApplicationTagNumbers.AS_REP.value)
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
@@ -610,7 +616,7 @@ class TgsRepAsn1(KdcRepAsn1):
     TGS-REP         ::= [APPLICATION 13] KDC-REP
     """
 
-    explicit = (APPLICATION, MessageTypes.KRB_TGS_REP.value)
+    explicit = (APPLICATION, ApplicationTagNumbers.TGS_REP.value)
 
 
 # class to handle different types of returned response
@@ -726,26 +732,29 @@ class PaEncTsEncAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.EncAsRepPart
 class EncAsRepPartAsn1(EncKdcRepPartAsn1):
-    explicit = (APPLICATION, 25)
+    explicit = (APPLICATION, ApplicationTagNumbers.ENC_AS_REP_PART.value)
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-class EncTGSRepPartAsn1(EncKdcRepPartAsn1):
-    explicit = (APPLICATION, 26)
+# wrapped by ipapocket.krb5.objects.EncTgsRepPart
+class EncTgsRepPartAsn1(EncKdcRepPartAsn1):
+    explicit = (APPLICATION, ApplicationTagNumbers.ENC_TGS_REP_PART.value)
 
 
 # class to handle different type of response's encrypted part
+# wrapped by ipapocket.krb5.objects.EncRepPart
 class EncRepPartAsn1(core.Choice):
     _alternatives = [
         (
-            "ENC-AS-REP-PART",
+            ENC_PART_REP_AS_REP,
             EncAsRepPartAsn1,
-            {"implicit": (APPLICATION, 25)},
+            {"implicit": (APPLICATION, ApplicationTagNumbers.ENC_AS_REP_PART.value)},
         ),
         (
-            "ENC-TGS-REP-PART",
-            EncTGSRepPartAsn1,
-            {"implicit": (APPLICATION, 26)},
+            ENC_PART_REP_TGS_REP,
+            EncTgsRepPartAsn1,
+            {"implicit": (APPLICATION, ApplicationTagNumbers.ENC_TGS_REP_PART.value)},
         ),
     ]

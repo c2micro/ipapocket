@@ -5,6 +5,6 @@ Toolset for interaction with FreeIPA
 Due to lack of support FreeIPA features in impacket.
 
 ## Examples
-`get-tgt.py` - get AS-REP
+`get_tgt.py` - get AS-REP and save TGT to CCACHE
 
 `user_enum.py` - enumarate users via Kerberos

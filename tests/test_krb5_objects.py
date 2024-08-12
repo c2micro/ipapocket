@@ -26,5 +26,8 @@ from tests.krb5.kerberos_strings import TestKerberosStringsObject
 # test PrincipalName
 from tests.krb5.principal_name import TestPrincipalNameObject
 
+# test Realm
+from tests.krb5.realm import TestRealmObject
+
 if __name__ == "__main__":
     unittest.main()

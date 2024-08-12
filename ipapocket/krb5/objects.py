@@ -307,8 +307,8 @@ class PrincipalName:
 class Realm:
     _realm: KerberosString = None
 
-    def __init__(self, realm: str | KerberosString = None):
-        self._realm = self._validate_realm(realm)
+    def __init__(self, realm=None):
+        self.realm = realm
 
     @classmethod
     def load(cls, data: asn1.RealmAsn1):
@@ -317,6 +317,8 @@ class Realm:
         return cls(realm=data.native)
 
     def _validate_realm(self, realm) -> KerberosString:
+        if realm is None:
+            return KerberosString()
         if isinstance(realm, str):
             return KerberosString(realm)
         elif isinstance(realm, KerberosString):
@@ -325,12 +327,18 @@ class Realm:
             raise InvalidRealmValue(realm)
 
     @property
-    def realm(self) -> str:
+    def realm(self) -> KerberosString:
         return self._realm
 
     @realm.setter
     def realm(self, realm) -> None:
         self._realm = self._validate_realm(realm)
+
+    def __eq__(self, obj):
+        if isinstance(obj, Realm):
+            return self.realm == obj.realm
+        else:
+            return False
 
     def to_asn1(self) -> asn1.RealmAsn1:
         return asn1.RealmAsn1(self._realm.to_asn1().native)

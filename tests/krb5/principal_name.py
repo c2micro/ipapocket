@@ -4,6 +4,11 @@ from ipapocket.krb5.constants import *
 
 
 class TestPrincipalNameObject(unittest.TestCase):
+    def test_none(self):
+        pn = PrincipalName()
+        self.assertEqual(pn.name_type, None)
+        self.assertEqual(pn.name_value, KerberosStrings())
+
     def test_type(self):
         self.assertEqual(
             PrincipalName(PrincipalType.NT_PRINCIPAL).name_type,

@@ -7,10 +7,10 @@ from datetime import datetime
 
 
 class Int32:
-    _value: int = None
+    _value: int = 0
 
-    def __init__(self, value: int):
-        self._value = self._validate_value(value)
+    def __init__(self, value=None):
+        self.value = value
 
     @classmethod
     def load(cls, data: asn1.Int32Asn1):
@@ -22,14 +22,14 @@ class Int32:
 
     def _validate_value(self, value) -> int:
         if value is None:
-            return None
+            return 0
         if isinstance(value, Int32):
             return value.value
         if isinstance(value, enum.Enum):
             value = value.value
         if not isinstance(value, int):
             raise InvalidInt32Value(value)
-        if value not in range(-2147483648, 2147483647):
+        if value not in range(-2147483648, 2147483648):
             raise InvalidInt32Value(value)
         return value
 
@@ -46,27 +46,29 @@ class Int32:
 
 
 class UInt32:
-    _value: int = None
+    _value: int = 0
 
-    def __init__(self, value: int):
-        self._value = self._validate_value(value)
+    def __init__(self, value=None):
+        self.value = value
 
     @classmethod
     def load(cls, data: asn1.UInt32Asn1):
         if isinstance(data, UInt32):
             data = data.to_asn1()
+        if isinstance(data, int):
+            return cls(data)
         return cls(data.native)
 
     def _validate_value(self, value) -> int:
         if value is None:
-            return None
+            return 0
         if isinstance(value, UInt32):
             return value.value
         if isinstance(value, enum.Enum):
             value = value.value
         if not isinstance(value, int):
             raise InvalidUInt32Value(value)
-        if value not in range(0, 4294967295):
+        if value not in range(0, 4294967296):
             raise InvalidUInt32Value(value)
         return value
 
@@ -75,7 +77,7 @@ class UInt32:
         return self._value
 
     @value.setter
-    def value(self, value: int) -> None:
+    def value(self, value) -> None:
         self._value = self._validate_value(value)
 
     def to_asn1(self) -> asn1.UInt32Asn1:
@@ -83,21 +85,27 @@ class UInt32:
 
 
 class Microseconds:
-    _value: int = None
+    _value: int = 0
 
-    def __init__(self, value: int):
-        self._value = self._validate_value(value)
+    def __init__(self, value = None):
+        self.value = value
 
     @classmethod
     def load(cls, data: asn1.MicrosecondsAsn1):
         if isinstance(data, Microseconds):
             data = data.to_asn1()
+        if isinstance(data, int):
+            return cls(data)
         return cls(data.native)
 
     def _validate_value(self, value) -> int:
+        if value is None:
+            value = 0
+        if isinstance(value, Microseconds):
+            return value.value
         if not isinstance(value, int):
             raise InvalidMicrosecondsValue(value)
-        if value not in range(0, 999999):
+        if value not in range(0, 1000000):
             raise InvalidMicrosecondsValue(value)
         return value
 
@@ -116,11 +124,13 @@ class Microseconds:
 class KerberosString:
     _value: str = None
 
-    def __init__(self, value: str = None):
-        self._value = self._validate_value(value)
+    def __init__(self, value=None):
+        self.value = value
 
     def _validate_value(self, value) -> str:
-        if isinstance(value, str):
+        if value is None:
+            return b""
+        elif isinstance(value, str):
             return value
         elif isinstance(value, KerberosString):
             return value.to_asn1().native

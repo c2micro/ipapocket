@@ -22,7 +22,7 @@ class Int32Asn1(core.Integer):
         """
         Validate that value in specified range
         """
-        if value not in range(-2147483648, 2147483647):
+        if value not in range(-2147483648, 2147483648):
             raise Asn1ConstrainedViolation(
                 "Invalid value {} for Int32 ASN1 type".format(value)
             )
@@ -40,7 +40,7 @@ class UInt32Asn1(core.Integer):
         """
         Validate that value in specified range
         """
-        if value not in range(0, 4294967295):
+        if value not in range(0, 4294967296):
             raise Asn1ConstrainedViolation(
                 "Invalid value {} for UInt32 ASN1 type".format(value)
             )
@@ -58,7 +58,7 @@ class MicrosecondsAsn1(core.Integer):
         """
         Validate that value in specified range
         """
-        if value not in range(0, 999999):
+        if value not in range(0, 1000000):
             raise Asn1ConstrainedViolation(
                 "Invalid value {} for Microseconds ASN1 type".format(value)
             )

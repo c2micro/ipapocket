@@ -41,6 +41,14 @@ class Int32:
     def value(self, value: int) -> None:
         self._value = self._validate_value(value)
 
+    def __eq__(self, obj):
+        if isinstance(obj, Int32):
+            return self.value == obj.value
+        elif isinstance(obj, int):
+            return self.value == obj
+        else:
+            return False
+
     def to_asn1(self) -> asn1.Int32Asn1:
         return asn1.Int32Asn1(self._value)
 
@@ -80,6 +88,14 @@ class UInt32:
     def value(self, value) -> None:
         self._value = self._validate_value(value)
 
+    def __eq__(self, obj):
+        if isinstance(obj, UInt32):
+            return self.value == obj.value
+        elif isinstance(obj, int):
+            return self.value == obj
+        else:
+            return False
+
     def to_asn1(self) -> asn1.UInt32Asn1:
         return asn1.UInt32Asn1(self._value)
 
@@ -87,7 +103,7 @@ class UInt32:
 class Microseconds:
     _value: int = 0
 
-    def __init__(self, value = None):
+    def __init__(self, value=None):
         self.value = value
 
     @classmethod
@@ -116,6 +132,14 @@ class Microseconds:
     @value.setter
     def value(self, value: int) -> None:
         self._value = self._validate_value(value)
+
+    def __eq__(self, obj):
+        if isinstance(obj, Microseconds):
+            return self.value == obj.value
+        elif isinstance(obj, int):
+            return self.value == obj
+        else:
+            return False
 
     def to_asn1(self) -> asn1.MicrosecondsAsn1:
         return asn1.MicrosecondsAsn1(self._value)
@@ -151,15 +175,23 @@ class KerberosString:
     def value(self, value) -> None:
         self._value = self._validate_value(value)
 
+    def __eq__(self, obj):
+        if isinstance(obj, KerberosString):
+            return self.value == obj.value
+        elif isinstance(obj, str):
+            return self.value == obj
+        else:
+            return False
+
     def to_asn1(self) -> asn1.KerberosStringAsn1:
         return asn1.KerberosStringAsn1(self._value)
 
 
 class KerberosStrings:
-    _value: list = None
+    _value: list[KerberosString] = None
 
     def __init__(self, value=None):
-        self._value = self._validate_value(value)
+        self.value = value
 
     @classmethod
     def load(cls, data: asn1.KerberosStringsAsn1):
@@ -168,6 +200,8 @@ class KerberosStrings:
         return cls(data.native)
 
     def _validate_value(self, value) -> list:
+        if value is None:
+            return list[KerberosString]()
         if isinstance(value, str):
             return [KerberosString(value)]
         elif isinstance(value, list):
@@ -184,6 +218,22 @@ class KerberosStrings:
             return tmp
         else:
             raise InvalidKerberosStringsValue(value)
+
+    @property
+    def value(self) -> list[KerberosString]:
+        return self._value
+
+    @value.setter
+    def value(self, value) -> None:
+        self._value = self._validate_value(value)
+
+    def __eq__(self, obj):
+        if isinstance(obj, KerberosStrings):
+            return self.value == obj.value
+        elif isinstance(obj, list):
+            return self.value == obj
+        else:
+            return False
 
     def to_asn1(self) -> asn1.KerberosStringsAsn1:
         tmp = list()

@@ -29,7 +29,7 @@ class Int32:
             value = value.value
         if not isinstance(value, int):
             raise InvalidInt32Value(value)
-        if value not in range(-2147483648, 2147483648):
+        if value not in range(MIN_INT32, MAX_INT32 + 1):
             raise InvalidInt32Value(value)
         return value
 
@@ -68,7 +68,7 @@ class UInt32:
             value = value.value
         if not isinstance(value, int):
             raise InvalidUInt32Value(value)
-        if value not in range(0, 4294967296):
+        if value not in range(MIN_UINT32, MAX_UINT32 + 1):
             raise InvalidUInt32Value(value)
         return value
 
@@ -105,7 +105,7 @@ class Microseconds:
             return value.value
         if not isinstance(value, int):
             raise InvalidMicrosecondsValue(value)
-        if value not in range(0, 1000000):
+        if value not in range(MIN_MICROSECONDS, MAX_MICROSECONDS + 1):
             raise InvalidMicrosecondsValue(value)
         return value
 

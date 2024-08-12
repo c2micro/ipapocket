@@ -1,6 +1,6 @@
 from asn1crypto import core
 from ipapocket.exceptions.exceptions import Asn1ConstrainedViolation
-from ipapocket.krb5.constants import MessageTypes, ApplicationTagNumbers
+from ipapocket.krb5.constants import MessageTypes, ApplicationTagNumbers, MIN_INT32, MAX_INT32, MIN_UINT32, MAX_UINT32, MIN_MICROSECONDS, MAX_MICROSECONDS
 from ipapocket.krb5.fields import *
 
 # explicit tag for ASN1
@@ -22,7 +22,7 @@ class Int32Asn1(core.Integer):
         """
         Validate that value in specified range
         """
-        if value not in range(-2147483648, 2147483648):
+        if value not in range(MIN_INT32, MAX_INT32 + 1):
             raise Asn1ConstrainedViolation(
                 "Invalid value {} for Int32 ASN1 type".format(value)
             )
@@ -40,7 +40,7 @@ class UInt32Asn1(core.Integer):
         """
         Validate that value in specified range
         """
-        if value not in range(0, 4294967296):
+        if value not in range(MIN_UINT32, MAX_UINT32 + 1):
             raise Asn1ConstrainedViolation(
                 "Invalid value {} for UInt32 ASN1 type".format(value)
             )
@@ -58,7 +58,7 @@ class MicrosecondsAsn1(core.Integer):
         """
         Validate that value in specified range
         """
-        if value not in range(0, 1000000):
+        if value not in range(MIN_MICROSECONDS, MAX_MICROSECONDS + 1):
             raise Asn1ConstrainedViolation(
                 "Invalid value {} for Microseconds ASN1 type".format(value)
             )

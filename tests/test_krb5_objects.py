@@ -26,14 +26,14 @@ class TestInt32Object(unittest.TestCase):
         )
 
     def test_min_value(self):
-        self.assertEqual(Int32(-2147483648).value, -2147483648)
+        self.assertEqual(Int32(MIN_INT32).value, MIN_INT32)
         with self.assertRaises(InvalidInt32Value):
-            Int32(-2147483649)
+            Int32(MIN_INT32 - 1)
 
     def test_max_value(self):
-        self.assertEqual(Int32(2147483647).value, 2147483647)
+        self.assertEqual(Int32(MAX_INT32).value, MAX_INT32)
         with self.assertRaises(InvalidInt32Value):
-            Int32(2147483648)
+            Int32(MAX_INT32 + 1)
 
 
 class TestUInt32Object(unittest.TestCase):
@@ -53,14 +53,14 @@ class TestUInt32Object(unittest.TestCase):
         )
 
     def test_min_value(self):
-        self.assertEqual(Int32(0).value, 0)
+        self.assertEqual(Int32(MIN_UINT32).value, MIN_UINT32)
         with self.assertRaises(InvalidUInt32Value):
-            UInt32(-1)
+            UInt32(MIN_UINT32 - 1)
 
     def test_max_value(self):
-        self.assertEqual(UInt32(4294967295).value, 4294967295)
+        self.assertEqual(UInt32(MAX_UINT32).value, MAX_UINT32)
         with self.assertRaises(InvalidUInt32Value):
-            UInt32(4294967296)
+            UInt32(MAX_UINT32 + 1)
 
 
 class TestMicrosecondsObject(unittest.TestCase):
@@ -75,14 +75,14 @@ class TestMicrosecondsObject(unittest.TestCase):
         self.assertEqual(Microseconds(Microseconds(228)).value, 228)
 
     def test_min_value(self):
-        self.assertEqual(Microseconds(0).value, 0)
+        self.assertEqual(Microseconds(MIN_MICROSECONDS).value, MIN_MICROSECONDS)
         with self.assertRaises(InvalidMicrosecondsValue):
-            Microseconds(-1)
+            Microseconds(MIN_MICROSECONDS - 1)
 
     def test_max_value(self):
-        self.assertEqual(Microseconds(999999).value, 999999)
+        self.assertEqual(Microseconds(MAX_MICROSECONDS).value, MAX_MICROSECONDS)
         with self.assertRaises(InvalidMicrosecondsValue):
-            Microseconds(1000000)
+            Microseconds(MAX_MICROSECONDS + 1)
 
 
 if __name__ == "__main__":

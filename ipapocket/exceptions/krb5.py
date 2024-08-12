@@ -135,3 +135,10 @@ class UnexpectedResponseType(Exception):
 
 class UnexpectedEncRepPartType(Exception):
     pass
+
+
+class InvalidPrincipalNameType(Exception):
+    def __init__(self, value):
+        super(Exception, self).__init__(
+            "Invalid type {} of PrincipalName".format(type(value).__name__)
+        )

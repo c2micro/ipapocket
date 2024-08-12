@@ -23,6 +23,8 @@ from tests.krb5.kerberos_string import TestKerberosStringObject
 # test KerberosStrings
 from tests.krb5.kerberos_strings import TestKerberosStringsObject
 
+# test PrincipalName
+from tests.krb5.principal_name import TestPrincipalNameObject
 
 if __name__ == "__main__":
     unittest.main()

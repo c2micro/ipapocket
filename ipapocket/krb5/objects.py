@@ -247,17 +247,21 @@ class PrincipalName:
     _value: KerberosStrings = None
 
     def __init__(self, type: PrincipalType = None, value=None):
-        self._type = type
-        self._value = self._validate_value(value)
+        self.name_type = type
+        self.name_value = value
 
     @classmethod
     def load(cls, data: asn1.PrincipalNameAsn1):
         if isinstance(data, PrincipalName):
             data = data.to_asn1()
-        return cls(
-            type=PrincipalType(data.native[PRINCIPAL_NAME_NAME_TYPE]),
-            value=data.native[PRINCIPAL_NAME_NAME_STRING],
-        )
+        tmp = cls()
+        if PRINCIPAL_NAME_NAME_TYPE in data:
+            if data[PRINCIPAL_NAME_NAME_TYPE].native is not None:
+                tmp.name_type = PrincipalType(data[PRINCIPAL_NAME_NAME_TYPE].native)
+        if PRINCIPAL_NAME_NAME_STRING in data:
+            if data[PRINCIPAL_NAME_NAME_STRING].native is not None:
+                tmp.name_value = KerberosStrings.load(data[PRINCIPAL_NAME_NAME_STRING])
+        return tmp
 
     @property
     def name_type(self) -> PrincipalType:
@@ -269,14 +273,27 @@ class PrincipalName:
 
     @name_type.setter
     def name_type(self, type: PrincipalType) -> None:
-        self._type = type
+        self._type = self._validate_type(type)
 
     @name_value.setter
     def name_value(self, value) -> None:
         self._value = self._validate_value(value)
 
+    def _validate_type(self, value) -> PrincipalType:
+        if value is None:
+            return None
+        if not isinstance(value, PrincipalType):
+            raise InvalidPrincipalNameType(value)
+        return value
+
     def _validate_value(self, value) -> KerberosStrings:
         return KerberosStrings(value)
+
+    def __eq__(self, obj):
+        if isinstance(obj, PrincipalName):
+            return self.name_type == obj.name_type and self.name_value == obj.name_value
+        else:
+            return False
 
     def to_asn1(self) -> asn1.PrincipalNameAsn1:
         principal_name = asn1.PrincipalNameAsn1()

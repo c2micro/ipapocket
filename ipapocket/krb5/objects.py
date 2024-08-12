@@ -129,7 +129,7 @@ class KerberosString:
 
     def _validate_value(self, value) -> str:
         if value is None:
-            return b""
+            return ""
         elif isinstance(value, str):
             return value
         elif isinstance(value, KerberosString):

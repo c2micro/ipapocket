@@ -35,6 +35,9 @@ class TestInt32Object(unittest.TestCase):
         with self.assertRaises(InvalidInt32Value):
             Int32(MAX_INT32 + 1)
 
+    def test_asn1_native(self):
+        self.assertEqual(Int32(-987654).to_asn1().native, -987654)
+
 
 class TestUInt32Object(unittest.TestCase):
     def test_none_value(self):
@@ -62,6 +65,9 @@ class TestUInt32Object(unittest.TestCase):
         with self.assertRaises(InvalidUInt32Value):
             UInt32(MAX_UINT32 + 1)
 
+    def test_asn1_native(self):
+        self.assertEqual(UInt32(2281337).to_asn1().native, 2281337)
+
 
 class TestMicrosecondsObject(unittest.TestCase):
     def test_none_value(self):
@@ -83,6 +89,27 @@ class TestMicrosecondsObject(unittest.TestCase):
         self.assertEqual(Microseconds(MAX_MICROSECONDS).value, MAX_MICROSECONDS)
         with self.assertRaises(InvalidMicrosecondsValue):
             Microseconds(MAX_MICROSECONDS + 1)
+
+    def test_asn1_native(self):
+        self.assertEqual(Microseconds(123).to_asn1().native, 123)
+
+
+class TestKerberosStringObject(unittest.TestCase):
+    def test_none_value(self):
+        self.assertEqual(KerberosString().value, "")
+
+    def test_str_value(self):
+        self.assertEqual(KerberosString("Hello world").value, "Hello world")
+        self.assertEqual(KerberosString("Привет мир").value, "Привет мир")
+
+    def test_kerberos_string_value(self):
+        self.assertEqual(KerberosString(KerberosString("ipapocket")).value, "ipapocket")
+
+    def test_asn1_native(self):
+        self.assertEqual(
+            KerberosString("1,2,3,one,two,three").to_asn1().native,
+            "1,2,3,one,two,three",
+        )
 
 
 if __name__ == "__main__":

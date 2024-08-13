@@ -2,9 +2,6 @@ import argparse
 import sys
 import logging
 
-# hack to import from ipapocket
-sys.path.append(".")
-
 from ipapocket.network.krb5 import Krb5Client
 from ipapocket.krb5.operations import BaseKrb5Operations
 from ipapocket.krb5.constants import ErrorCodes

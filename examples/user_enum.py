@@ -6,7 +6,7 @@ import logging
 sys.path.append(".")
 
 from ipapocket.network.krb5 import Krb5Client
-from ipapocket.krb5.operations import as_req_wihtout_pa
+from ipapocket.krb5.operations import BaseKrb5Operations
 from ipapocket.krb5.constants import ErrorCodes
 from ipapocket.utils import logger
 from ipapocket.krb5.objects import KerberosResponse
@@ -14,6 +14,8 @@ from ipapocket.krb5.objects import KerberosResponse
 
 class UserEnum:
     def __init__(self, usernames: list, domain: str, ipa_host: str):
+        self._base = BaseKrb5Operations(domain)
+
         self._usernames = usernames
         self._domain = domain
         self._ipa_host = ipa_host
@@ -28,7 +30,7 @@ class UserEnum:
     def enumerate(self):
         for username in self._usernames:
             logging.debug("try username: {}".format(username))
-            as_req = as_req_wihtout_pa(self._domain, username)
+            as_req = self._base.as_req_without_pa(username)
             data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
             # convert to response type
             response = KerberosResponse.load(data)

@@ -12,7 +12,7 @@ with open("requirements.txt") as f:
 
 setup(
     name='ipapocket',
-    version = '0.1',
+    version = VERSION,
     description="Toolset for interaction with FreeIPA",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",

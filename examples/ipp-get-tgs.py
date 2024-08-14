@@ -7,7 +7,6 @@ import logging
 from ipapocket.network.krb5 import Krb5Client
 from ipapocket.krb5.operations import BaseKrb5Operations
 from ipapocket.krb5.crypto.base import Key, _get_etype_profile
-from ipapocket.krb5.crypto.crypto import string_to_key
 from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger

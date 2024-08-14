@@ -3,6 +3,7 @@ from ipapocket.exceptions.exceptions import (
     InvalidChecksum,
     InvalidKeyLength,
     UnknownEtype,
+    UnknownChecksumType,
 )
 from ipapocket.krb5.crypto.utils import (
     _nfold,
@@ -16,7 +17,7 @@ from Cryptodome.Hash import HMAC, SHA1, SHA256, SHA384
 from Cryptodome.Protocol.KDF import PBKDF2
 from ipapocket.krb5.crypto.sp800 import SP800_108_Counter
 import struct
-from ipapocket.krb5.constants import EncryptionTypes
+from ipapocket.krb5.constants import EncryptionTypes, ChecksumTypes
 
 
 class Key(object):
@@ -42,6 +43,28 @@ class _EtypeBaseProfile(object):
         if len(seed) != self.seedsize:
             raise InvalidSeedSize(seed, self.seedsize)
         return Key(self.enctype, seed)
+
+
+class _ChecksumBaseProfile(object):
+    @classmethod
+    def verify(cls, key, keyusage, text, cksum):
+        expected = cls.checksum(key, keyusage, text)
+        if not _mac_equal(bytearray(cksum), bytearray(expected)):
+            raise InvalidChecksum("checksum verification failure")
+
+
+class _SimplifiedChecksum(_ChecksumBaseProfile):
+    @classmethod
+    def checksum(cls, key, keyusage, text):
+        kc = cls.enc.derive(key, struct.pack(">IB", keyusage, 0x99))
+        hmac = HMAC.new(kc.contents, text, cls.enc.hashmod).digest()
+        return hmac[: cls.macsize]
+
+    @classmethod
+    def verify(cls, key, keyusage, text, cksum):
+        if key.enctype != cls.enc.enctype:
+            raise ValueError("Wrong key type for checksum")
+        super(_SimplifiedChecksum, cls).verify(key, keyusage, text, cksum)
 
 
 class _EtypeRfc3961Profile(_EtypeBaseProfile):
@@ -247,11 +270,21 @@ class _AES128_SHA1(_EtypeRfc3962):
     hashmod = SHA1
 
 
+class _SHA1_AES128(_SimplifiedChecksum):
+    macsize = 12
+    enc = _AES128_SHA1
+
+
 class _AES256_SHA1(_EtypeRfc3962):
     enctype = EncryptionTypes.AES256_CTS_HMAC_SHA1_96
     keysize = 32
     seedsize = 32
     hashmod = SHA1
+
+
+class _SHA1_AES256(_SimplifiedChecksum):
+    macsize = 12
+    enc = _AES256_SHA1
 
 
 class _AES128_SHA256(_EtypeRfc8009):
@@ -263,6 +296,11 @@ class _AES128_SHA256(_EtypeRfc8009):
     enctype_name = b"aes128-cts-hmac-sha256-128"
 
 
+class _SHA256_AES128(_SimplifiedChecksum):
+    macsize = _AES128_SHA256.macsize
+    enc = _AES128_SHA256
+
+
 class _AES256_SHA384(_EtypeRfc8009):
     enctype = EncryptionTypes.AES256_CTS_HMAC_SHA384_192
     seedsize = 384 // 8
@@ -272,19 +310,58 @@ class _AES256_SHA384(_EtypeRfc8009):
     enctype_name = b"aes256-cts-hmac-sha384-192"
 
 
+class _SHA384_AES256(_SimplifiedChecksum):
+    macsize = _AES256_SHA384.macsize
+    enc = _AES256_SHA384
+
+
 def _get_etype_profile(etype: EncryptionTypes):
     """
     Get encryption class (profile)
     """
     if etype not in _etype_table:
-        raise UnknownEtype(etype.name)
+        raise UnknownEtype(etype)
     return _etype_table[etype]
 
 
-# dictionary to hold classes for enctypriont
+def _get_cksum_profile(cksumtype: ChecksumTypes):
+    """
+    Get checksum class (profile)
+    """
+    if cksumtype not in _cksum_table:
+        raise UnknownChecksumType(cksumtype)
+    return _cksum_table[cksumtype]
+
+
+def _cksum_for_etype(etype: EncryptionTypes) -> ChecksumTypes:
+    """
+    Get checksum type for etype
+    """
+    if etype not in _etype_cksum_table:
+        raise UnknownEtype(etype)
+    return _etype_cksum_table[etype]
+
+
+# dictionary to hold classes for encryption types
 _etype_table: dict = {
     EncryptionTypes.AES128_CTS_HMAC_SHA1_96: _AES128_SHA1,
     EncryptionTypes.AES128_CTS_HMAC_SHA256_128: _AES128_SHA256,
     EncryptionTypes.AES256_CTS_HMAC_SHA1_96: _AES256_SHA1,
     EncryptionTypes.AES256_CTS_HMAC_SHA384_192: _AES256_SHA384,
+}
+
+# dictionary to hold classes for checksum types
+_cksum_table: dict = {
+    ChecksumTypes.HMAC_SHA1_96_AES128: _SHA1_AES128,
+    ChecksumTypes.HMAC_SHA1_96_AES256: _SHA1_AES256,
+    ChecksumTypes.HMAC_SHA256_128_AES128: _SHA256_AES128,
+    ChecksumTypes.HMAC_SHA384_192_AES256: _SHA384_AES256,
+}
+
+# dictionary to hold types of checksums for encryption types
+_etype_cksum_table: dict = {
+    EncryptionTypes.AES128_CTS_HMAC_SHA1_96: ChecksumTypes.HMAC_SHA1_96_AES128,
+    EncryptionTypes.AES256_CTS_HMAC_SHA1_96: ChecksumTypes.HMAC_SHA1_96_AES256,
+    EncryptionTypes.AES128_CTS_HMAC_SHA256_128: ChecksumTypes.HMAC_SHA256_128_AES128,
+    EncryptionTypes.AES256_CTS_HMAC_SHA384_192: ChecksumTypes.HMAC_SHA384_192_AES256,
 }

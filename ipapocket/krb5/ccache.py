@@ -705,6 +705,9 @@ class Ccache:
         return tmp
 
     def pprint(self) -> None:
+        """
+        Print content of CCACHE in pretty human way
+        """
         logging.info("%-30s: 0x%04x" % ("CCACHE version", self.file_format_version))
         logging.info(
             "%-30s: %d" % ("Credentials number", len(self.credentials.credentials))
@@ -769,6 +772,8 @@ class Ccache:
                     tkt_sname += str(tkt.sname.name_value.value[j]) + "/"
             # format tkt_realm
             tkt_realm = tkt.realm.realm
+            # format tkt_etype
+            tkt_etype = tkt.enc_part.etype.name
             # format tkt_enc
             tkt_enc = base64.b64encode(tkt.enc_part.cipher).decode("utf-8")
             logging.info("[#%d] %-25s: %s" % (i, "User name", user_name))
@@ -785,6 +790,7 @@ class Ccache:
             logging.info("[#%d]   %-23s: %d" % (i, "Ticket serivce kvno", tkt_kvno))
             logging.info("[#%d]   %-23s: %s" % (i, "Ticket service name", tkt_sname))
             logging.info("[#%d]   %-23s: %s" % (i, "Ticket service realm", tkt_realm))
+            logging.info("[#%d]   %-23s: %s" % (i, "Ticket encryption type", tkt_etype))
             logging.info("[#%d]   %-23s: %s" % (i, "Ticket encrypted part", tkt_enc))
         pass
 

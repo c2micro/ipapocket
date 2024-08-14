@@ -478,13 +478,13 @@ class KerberosTime:
 class EncTypes:
     _etypes: list[EncryptionTypes] = None
 
-    def __init__(self, etypes: list[EncryptionTypes]):
-        self._etypes = etypes
+    def __init__(self, etypes):
+        self.etypes = etypes
 
     def _validate_etypes(self, value):
         if isinstance(value, int):
             return [EncryptionTypes(value)]
-        elif isinstance(value, list[EncryptionTypes]):
+        elif isinstance(value, list):
             return value
         elif isinstance(value, EncryptionTypes):
             return [value]
@@ -590,17 +590,26 @@ class HostAddresses:
 
 
 class EncryptedData:
-    _etype: Int32 = None
+    _etype: EncryptionTypes = None
     _kvno: UInt32 = None
     _cipher = None
 
     def __init__(self, etype=None, kvno=None, cipher=None):
-        self._etype = self._validate_etype(etype)
+        self.etype = etype
         self._kvno = self._validate_kvno(kvno)
         self._cipher = cipher
 
     def _validate_etype(self, value):
-        return Int32(value)
+        if value is None:
+            return None
+        if isinstance(value, int):
+            return EncryptionTypes(value)
+        elif isinstance(value, EncryptionTypes):
+            return value
+        elif isinstance(value, Int32):
+            return EncryptionTypes(value.value)
+        else:
+            raise
 
     def _validate_kvno(self, value):
         return UInt32(value)
@@ -612,7 +621,7 @@ class EncryptedData:
         tmp = cls()
         if ENCRYPTED_DATA_ETYPE in data:
             if data[ENCRYPTED_DATA_ETYPE].native is not None:
-                tmp.etype = Int32.load(data[ENCRYPTED_DATA_ETYPE])
+                tmp.etype = EncryptionTypes(Int32.load(data[ENCRYPTED_DATA_ETYPE]).value)
         if ENCRYPTED_DATA_KVNO in data:
             if data[ENCRYPTED_DATA_KVNO].native is not None:
                 tmp.kvno = UInt32.load(data[ENCRYPTED_DATA_KVNO])
@@ -621,7 +630,7 @@ class EncryptedData:
         return tmp
 
     @property
-    def etype(self) -> Int32:
+    def etype(self) -> EncryptionTypes:
         return self._etype
 
     @etype.setter
@@ -647,7 +656,7 @@ class EncryptedData:
     def to_asn1(self) -> asn1.EncryptedDataAsn1:
         enc_data = asn1.EncryptedDataAsn1()
         if self._etype is not None:
-            enc_data[ENCRYPTED_DATA_ETYPE] = self._etype.to_asn1()
+            enc_data[ENCRYPTED_DATA_ETYPE] = self._etype.value
         if self._kvno is not None:
             enc_data[ENCRYPTED_DATA_KVNO] = self._kvno.to_asn1()
         if self._cipher is not None:
@@ -1385,6 +1394,36 @@ class AsReq:
 
     def to_asn1(self):
         return asn1.AsReqAsn1(self._req.to_asn1().native)
+
+
+class TgsReq:
+    _req: KdcReq = None
+
+    def __init__(self, req=None):
+        self._req = self._validate_req(req)
+
+    @property
+    def req(self) -> KdcReq:
+        return self._req
+
+    @req.setter
+    def req(self, value) -> None:
+        self._req = self._validate_req(value)
+
+    def _validate_req(self, req):
+        if isinstance(req, KdcReq):
+            return req
+        else:
+            raise InvalidTgsReqRequest()
+
+    @classmethod
+    def load(cls, data: asn1.TgsReqAsn1):
+        if isinstance(data, TgsReq):
+            data = data.to_asn1()
+        return cls(KdcReq.load(data))
+
+    def to_asn1(self):
+        return asn1.TgsReqAsn1(self._req.to_asn1().native)
 
 
 class KrbError:
@@ -2169,3 +2208,367 @@ class EncRepPart:
             return tmp
         else:
             raise UnexpectedEncRepPartType()
+
+
+class ApOptions:
+    _options: KerberosFlags = None
+
+    def __init__(self):
+        self._options = KerberosFlags()
+
+    def add(self, option):
+        self._options.add(self._validate_option(option))
+
+    def clear(self):
+        self._options.clear()
+
+    @property
+    def options(self):
+        return self._options.flags
+
+    @classmethod
+    def load(cls, value: asn1.ApOptionsAsn1):
+        if isinstance(value, ApOptions):
+            value = value.to_asn1()
+        tmp = cls()
+        for v in value.native:
+            if v == 1:
+                tmp.add(ApOptionsTypes(v))
+        return tmp
+
+    def _validate_option(self, value) -> ApOptionsTypes:
+        if not isinstance(value, ApOptionsTypes):
+            raise InvalidApOptionsValueType(value)
+        return value
+
+    def to_asn1(self) -> asn1.ApOptionsAsn1:
+        return asn1.ApOptionsAsn1(self._options.to_asn1().native)
+
+
+class Checksum:
+    _cksumtype: ChecksumTypes = None
+    _checksum: str = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def cksumtype(self) -> ChecksumTypes:
+        return self._cksumtype
+
+    @cksumtype.setter
+    def cksumtype(self, value) -> None:
+        self._cksumtype = value
+
+    @property
+    def checksum(self) -> str:
+        return self._checksum
+
+    @checksum.setter
+    def checksum(self, value) -> None:
+        self._checksum = value
+    
+    def to_asn1(self) -> asn1.ChecksumAsn1:
+        checksum = asn1.ChecksumAsn1()
+        if self.cksumtype is not None:
+            checksum[CHECKSUM_CKSUMTYPE] = self.cksumtype.value
+        if self.checksum is not None:
+            checksum[CHECKSUM_CHECKSUM] = self._checksum
+        return checksum
+
+
+class AuthorizationDataElement:
+    _ad_type: AuthorizationDataTypes = None
+    _ad_data: str = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def ad_type(self) -> AuthorizationDataTypes:
+        return self._ad_type
+
+    @ad_type.setter
+    def ad_type(self, value) -> None:
+        self._ad_type = value
+
+    @property
+    def ad_data(self) -> str:
+        return self._ad_data
+
+    @ad_data.setter
+    def ad_data(self, value) -> None:
+        self._ad_data = value
+
+
+class AuthorizationData:
+    _elements: list[AuthorizationDataElement] = None
+
+    def __init__(self):
+        self._elements = list()
+
+    def add(self, value):
+        self._elements.append(value)
+
+    @property
+    def elements(self) -> list[AuthorizationDataElement]:
+        return self._elements
+
+    @classmethod
+    def load(cls, data: asn1.AuthenticatorAsn1):
+        if isinstance(data, AuthorizationData):
+            data = data.to_asn1()
+        tmp = cls()
+        for v in data:
+            tmp.add(AuthorizationDataElement.load(v))
+        return tmp
+
+    def to_asn1(self) -> asn1.AuthorizationDataAsn1:
+        tmp = list()
+        for v in self.elements:
+            tmp.append(v.to_asn1())
+        return asn1.AuthorizationDataAsn1(tmp)
+
+
+class Authenticator:
+    _authenticator_vno: Int32 = None
+    _crealm: Realm = None
+    _cname: PrincipalName = None
+    _cksum: Checksum = None
+    _cusec: Microseconds = None
+    _ctime: KerberosTime = None
+    _subkey: EncryptionKey = None
+    _seq_number: UInt32 = None
+    _authorization_data: AuthorizationData = None
+
+    @property
+    def authenticator_vno(self) -> Int32:
+        return self._authenticator_vno
+
+    @authenticator_vno.setter
+    def authenticator_vno(self, value) -> None:
+        if isinstance(value, int):
+            self._authenticator_vno = Int32.load(value)
+        else:
+            self._authenticator_vno = value
+
+    @property
+    def crealm(self) -> Realm:
+        return self._crealm
+
+    @crealm.setter
+    def crealm(self, value) -> None:
+        self._crealm = value
+
+    @property
+    def cname(self) -> PrincipalName:
+        return self._cname
+
+    @cname.setter
+    def cname(self, value) -> None:
+        self._cname = value
+
+    @property
+    def cksum(self) -> Checksum:
+        return self._cksum
+
+    @cksum.setter
+    def cksum(self, value) -> None:
+        self._cksum = value
+
+    @property
+    def cusec(self) -> Microseconds:
+        return self._cusec
+
+    @cusec.setter
+    def cusec(self, value) -> None:
+        self._cusec = value
+
+    @property
+    def ctime(self) -> KerberosTime:
+        return self._ctime
+
+    @ctime.setter
+    def ctime(self, value) -> None:
+        self._ctime = value
+
+    @property
+    def subkey(self) -> EncryptionKey:
+        return self._subkey
+
+    @subkey.setter
+    def subkey(self, value) -> None:
+        self._subkey = value
+
+    @property
+    def seq_number(self) -> UInt32:
+        return self._seq_number
+
+    @seq_number.setter
+    def seq_number(self, value) -> None:
+        if isinstance(value, int):
+            self._seq_number = UInt32.load(value)
+        else:
+            self._seq_number = value
+
+    @property
+    def authorization_data(self) -> AuthorizationData:
+        return self._authorization_data
+
+    @authorization_data.setter
+    def authorization_data(self, value) -> None:
+        self._authorization_data = value
+
+    @classmethod
+    def load(cls, data: asn1.AuthenticatorAsn1):
+        if isinstance(data, Authenticator):
+            data = data.to_asn1()
+        tmp = cls()
+        if AUTHENTICATOR_AUTHENTICATOR_VNO in data:
+            if data[AUTHENTICATOR_AUTHENTICATOR_VNO].native is not None:
+                tmp.authenticator_vno = Int32.load(
+                    data[AUTHENTICATOR_AUTHENTICATOR_VNO]
+                )
+        if AUTHENTICATOR_CREALM in data:
+            if data[AUTHENTICATOR_CREALM].native is not None:
+                tmp.crealm = Realm.load(data[AUTHENTICATOR_CREALM])
+        if AUTHENTICATOR_CNAME in data:
+            if data[AUTHENTICATOR_CNAME].native is not None:
+                tmp.cname = PrincipalName.load(data[AUTHENTICATOR_CNAME])
+        if AUTHENTICATOR_CKSUM in data:
+            if data[AUTHENTICATOR_CKSUM].native is not None:
+                tmp.cksum = Checksum.load(data[AUTHENTICATOR_CKSUM])
+        if AUTHENTICATOR_CUSEC in data:
+            if data[AUTHENTICATOR_CUSEC].native is not None:
+                tmp.cusec = Microseconds.load(data[AUTHENTICATOR_CUSEC])
+        if AUTHENTICATOR_CTIME in data:
+            if data[AUTHENTICATOR_CTIME].native is not None:
+                tmp.ctime = KerberosTime.load(data[AUTHENTICATOR_CTIME])
+        if AUTHENTICATOR_SUBKEY in data:
+            if data[AUTHENTICATOR_SUBKEY].native is not None:
+                tmp.subkey = EncryptionKey.load(data[AUTHENTICATOR_SUBKEY])
+        if AUTHENTICATOR_SEQ_NUMBER in data:
+            if data[AUTHENTICATOR_SEQ_NUMBER].native is not None:
+                tmp.seq_number = UInt32.load(data[AUTHENTICATOR_SEQ_NUMBER])
+        if AUTHENTICATOR_AUTHORIZATION_DATA in data:
+            if data[AUTHENTICATOR_AUTHORIZATION_DATA].native is not None:
+                tmp.authorization_data = AuthorizationData.load(
+                    data[AUTHENTICATOR_AUTHORIZATION_DATA]
+                )
+        return tmp
+
+    def to_asn1(self) -> asn1.AuthenticatorAsn1:
+        authenticator = asn1.AuthenticatorAsn1()
+        if self.authenticator_vno is not None:
+            authenticator[AUTHENTICATOR_AUTHENTICATOR_VNO] = (
+                self.authenticator_vno.to_asn1()
+            )
+        if self.crealm is not None:
+            authenticator[AUTHENTICATOR_CREALM] = self.crealm.to_asn1()
+        if self.cname is not None:
+            authenticator[AUTHENTICATOR_CNAME] = self.cname.to_asn1()
+        if self.cksum is not None:
+            authenticator[AUTHENTICATOR_CKSUM] = self.cksum.to_asn1()
+        if self.cusec is not None:
+            authenticator[AUTHENTICATOR_CUSEC] = self.cusec.to_asn1()
+        if self.ctime is not None:
+            authenticator[AUTHENTICATOR_CTIME] = self.ctime.to_asn1()
+        if self.subkey is not None:
+            authenticator[AUTHENTICATOR_SUBKEY] = self.subkey.to_asn1()
+        if self.seq_number is not None:
+            authenticator[AUTHENTICATOR_SEQ_NUMBER] = self.seq_number.to_asn1()
+        if self.authorization_data is not None:
+            authenticator[AUTHENTICATOR_AUTHORIZATION_DATA] = (
+                self.authorization_data.to_asn1()
+            )
+        return authenticator
+
+
+class ApReq:
+    _pvno: Int32 = None
+    _msg_type: MessageTypes = None
+    _ap_options: ApOptions = None
+    _ticket: Ticket = None
+    _authenticator: EncryptedData = None
+
+    def __init__(self):
+        pass
+
+    @property
+    def pvno(self) -> Int32:
+        return self._pvno
+
+    @pvno.setter
+    def pvno(self, value) -> None:
+        if isinstance(value, int):
+            self._pvno = Int32.load(value)
+        else:
+            self._pvno = value
+
+    @property
+    def msg_type(self) -> MessageTypes:
+        return self._msg_type
+
+    @msg_type.setter
+    def msg_type(self, value) -> None:
+        self._msg_type = value
+
+    @property
+    def ap_options(self) -> ApOptions:
+        return self._ap_options
+
+    @ap_options.setter
+    def ap_options(self, value) -> None:
+        self._ap_options = value
+
+    @property
+    def ticket(self) -> Ticket:
+        return self._ticket
+
+    @ticket.setter
+    def ticket(self, value) -> None:
+        self._ticket = value
+
+    @property
+    def authenticator(self) -> EncryptedData:
+        return self._authenticator
+
+    @authenticator.setter
+    def authenticator(self, value) -> None:
+        self._authenticator = value
+
+    @classmethod
+    def load(cls, data: asn1.ApReqAsn1):
+        if isinstance(data, ApReq):
+            data = data.to_asn1()
+        tmp = cls()
+        if AP_REQ_PVNO in data:
+            if data[AP_REQ_PVNO].native is not None:
+                tmp.pvno = Int32.load(data[AP_REQ_PVNO])
+        if AP_REQ_MSG_TYPE in data:
+            if data[AP_REQ_MSG_TYPE].native is not None:
+                tmp.msg_type = MessageTypes(data[AP_REQ_MSG_TYPE].native)
+        if AP_REQ_AP_OPTIONS in data:
+            if data[AP_REQ_AP_OPTIONS].native is not None:
+                tmp.ap_options = ApOptions.load(data[AP_REQ_AP_OPTIONS])
+        if AP_REQ_TICKET in data:
+            if data[AP_REQ_TICKET].native is not None:
+                tmp.ticket = Ticket.load(data[AP_REQ_TICKET])
+        if AP_REQ_AUTHENTICATOR in data:
+            if data[AP_REQ_AUTHENTICATOR].native is not None:
+                tmp.authenticator = EncryptedData.load(data[AP_REQ_AUTHENTICATOR])
+        return tmp
+
+    def to_asn1(self) -> asn1.ApReqAsn1:
+        ap_req = asn1.ApReqAsn1()
+        if self.pvno is not None:
+            ap_req[AP_REQ_PVNO] = self.pvno.to_asn1()
+        if self.msg_type is not None:
+            ap_req[AP_REQ_MSG_TYPE] = self.msg_type.value
+        if self.ap_options is not None:
+            ap_req[AP_REQ_AP_OPTIONS] = self.ap_options.to_asn1()
+        if self.ticket is not None:
+            ap_req[AP_REQ_TICKET] = self.ticket.to_asn1()
+        if self.authenticator is not None:
+            ap_req[AP_REQ_AUTHENTICATOR] = self.authenticator.to_asn1()
+        return ap_req

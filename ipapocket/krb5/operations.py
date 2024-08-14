@@ -5,7 +5,7 @@ import collections
 from ipapocket.krb5.objects import *
 from ipapocket.krb5.constants import *
 from ipapocket.krb5.crypto import crypto
-from ipapocket.krb5.crypto.base import _get_etype_profile, Key
+from ipapocket.krb5.crypto.base import _get_etype_profile, _cksum_for_etype, Key
 from ipapocket.exceptions.exceptions import NoSupportedEtypes
 
 
@@ -88,7 +88,7 @@ class BaseKrb5Operations:
         # realm
         realm = Realm(domain)
         # sname
-        sname = PrincipalName(PrincipalType.NT_PRINCIPAL, ["krbtgt", domain])
+        sname = PrincipalName(PrincipalType.NT_SRV_INST, ["krbtgt", domain])
 
         # KDC request body
         kdc_req_body = KdcReqBody()
@@ -155,7 +155,7 @@ class BaseKrb5Operations:
         # create realm
         realm = Realm(domain)
         # create sname
-        sname = PrincipalName(PrincipalType.NT_PRINCIPAL, ["krbtgt", domain])
+        sname = PrincipalName(PrincipalType.NT_SRV_INST, ["krbtgt", domain])
 
         # create KDC request body
         kdc_req_body = KdcReqBody()
@@ -254,3 +254,105 @@ class BaseKrb5Operations:
                         self.salt = etype2.salt.to_asn1().native.encode()
                         return
         raise NoSupportedEtypes("no supported server PA etypes exists in this client")
+
+    def tgs_req(self, kdc_rep: KdcRep, ticket: Ticket, session_key: Key):
+        """
+        Construct TGS-REQ packet
+        """
+        current_timestamp = datetime.now(timezone.utc)
+        # generate nonce
+        nonce = UInt32(secrets.randbits(31))
+
+        # we need uppercase domain
+        domain = self._domain.upper()
+        # create realm
+        realm = Realm(domain)
+
+        # create KDC request body
+        kdc_req_body = KdcReqBody()
+
+        # create KDC options
+        kdc_options = KdcOptions()
+        kdc_options.add(KdcOptionsTypes.FORWARDABLE)
+        kdc_options.add(KdcOptionsTypes.CANONICALIZE)
+
+        # create till timstamp
+        till = KerberosTime(current_timestamp + timedelta(days=1))
+
+        # set kdc options in request body
+        kdc_req_body.kdc_options = kdc_options
+        # set realm in request body
+        kdc_req_body.realm = realm
+        # set service name (for which we want get ST)
+        # TODO get from cli
+        kdc_req_body.sname = PrincipalName(
+            PrincipalType.NT_PRINCIPAL, ["krbtgt", domain]
+        )
+        # set till timestamp in request body
+        kdc_req_body.till = till
+        # set nonce in request body
+        kdc_req_body.nonce = nonce
+        # set etype in request body
+        kdc_req_body.etype = EncTypes(self._etype)
+
+        # create KDC request
+        kdc_req = KdcReq()
+
+        # calculate checksum for KDC request body
+        checksum = Checksum()
+        checksum.cksumtype = _cksum_for_etype(kdc_rep.enc_part.etype)
+        checksum.checksum = crypto.make_checksum(
+            checksum.cksumtype,
+            session_key,
+            KeyUsageTypes.TGS_REQ_AUTH_CKSUM.value,
+            kdc_req_body.to_asn1().dump(),
+        )
+
+        # create authenticator
+        authenticator = Authenticator()
+        authenticator.authenticator_vno = KRB5_VERSION
+        authenticator.crealm = kdc_rep.crealm
+        authenticator.cname = kdc_rep.cname
+        authenticator.cusec = Microseconds(current_timestamp.microsecond)
+        authenticator.ctime = KerberosTime(current_timestamp)
+        authenticator.cksum = checksum
+        authenticator.seq_number = 0
+
+        # encrypt authenticator
+        enc_authenticator = EncryptedData()
+        enc_authenticator.etype = kdc_rep.enc_part.etype
+        enc_authenticator.cipher = _get_etype_profile(kdc_rep.enc_part.etype).encrypt(
+            session_key,
+            KeyUsageTypes.TGS_REQ_AUTH.value,
+            authenticator.to_asn1().dump(),
+            None,
+        )
+
+        # create ap-req
+        ap_req = ApReq()
+        ap_req.pvno = KRB5_VERSION
+        ap_req.msg_type = MessageTypes.KRB_AP_REQ
+        ap_req.ap_options = ApOptions()
+        ap_req.ticket = ticket
+        ap_req.authenticator = enc_authenticator
+
+        # creation of AP-REQ with authenticator
+        pa_datas = PaDatas()
+        # create PaData entry
+        pa_data = PaData(PreAuthenticationDataTypes.PA_TGS_REQ, ap_req.to_asn1().dump())
+
+        # add PaData in PaDatas
+        pa_datas.add(pa_data)
+
+        # add version of kerberos
+        kdc_req.pvno = KRB5_VERSION
+        # add KDC requst body
+        kdc_req.req_body = kdc_req_body
+        # add message type
+        kdc_req.msg_type = MessageTypes.KRB_TGS_REQ
+        # add pa data (ap-req with authenticator)
+        kdc_req.padata = pa_datas
+
+        # create TGS-REQ
+        tgs_req = TgsReq(kdc_req)
+        return tgs_req

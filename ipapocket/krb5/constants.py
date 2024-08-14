@@ -344,6 +344,11 @@ class KdcOptionsTypes(enum.Enum):
     RENEW = 30
     VALIDATE = 31
 
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.5.1
+# withour reserved bits
+class ApOptionsTypes(enum.Enum):
+    USE_SESSION_KEY = 1
+    MUTUAL_REQUIRED = 2
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.3
 # without reserved bits

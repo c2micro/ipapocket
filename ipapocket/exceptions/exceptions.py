@@ -31,6 +31,9 @@ class UnknownEtype(Exception):
     def __init__(self, etype: str):
         super(Exception, self).__init__("Unknown etype {} for crypto".format(etype))
 
+class UnknownChecksumType(Exception):
+    def __init__(self, cksumtype):
+        super(Exception, self).__init__("Unknown checksum type {} for crypto".format(cksumtype))
 
 class InvalidKeyLength(Exception):
     """

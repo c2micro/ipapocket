@@ -1,6 +1,15 @@
 from asn1crypto import core
 from ipapocket.exceptions.exceptions import Asn1ConstrainedViolation
-from ipapocket.krb5.constants import MessageTypes, ApplicationTagNumbers, MIN_INT32, MAX_INT32, MIN_UINT32, MAX_UINT32, MIN_MICROSECONDS, MAX_MICROSECONDS
+from ipapocket.krb5.constants import (
+    MessageTypes,
+    ApplicationTagNumbers,
+    MIN_INT32,
+    MAX_INT32,
+    MIN_UINT32,
+    MAX_UINT32,
+    MIN_MICROSECONDS,
+    MAX_MICROSECONDS,
+)
 from ipapocket.krb5.fields import *
 
 # explicit tag for ASN1
@@ -412,6 +421,49 @@ class AsReqAsn1(KdcReqAsn1):
     explicit = (APPLICATION, ApplicationTagNumbers.AS_REQ.value)
 
 
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.AsReq
+class TgsReqAsn1(KdcReqAsn1):
+    explicit = (APPLICATION, ApplicationTagNumbers.TGS_REQ.value)
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.5.1
+# wrapped by ipapocket.krb5.objects.ApOptions
+class ApOptionsAsn1(KerberosFlagsAsn1):
+    """
+    APOptions       ::= KerberosFlags
+           -- reserved(0),
+           -- use-session-key(1),
+           -- mutual-required(2)
+    """
+
+    pass
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.5.1
+# wrapped by ipapocket.krb5.objects.ApReq
+class ApReqAsn1(core.Sequence):
+    """
+    AP-REQ          ::= [APPLICATION 14] SEQUENCE {
+           pvno            [0] INTEGER (5),
+           msg-type        [1] INTEGER (14),
+           ap-options      [2] APOptions,
+           ticket          [3] Ticket,
+           authenticator   [4] EncryptedData -- Authenticator
+    }
+    """
+
+    explicit = (APPLICATION, ApplicationTagNumbers.AP_REQ.value)
+
+    _fields = [
+        (AP_REQ_PVNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (AP_REQ_MSG_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (AP_REQ_AP_OPTIONS, ApOptionsAsn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (AP_REQ_TICKET, TicketAsn1, {"tag_type": EXPLICIT, "tag": 3}),
+        (AP_REQ_AUTHENTICATOR, EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+    ]
+
+
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.9
 # wrapped by ipapocket.krb5.objects.EncryptionKey
 class EncryptionKeyAsn1(core.Sequence):
@@ -425,6 +477,96 @@ class EncryptionKeyAsn1(core.Sequence):
     _fields = [
         (ENCRYPTION_KEY_KEYTYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
         (ENCRYPTION_KEY_KEYVALUE, core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
+    ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.AuthorizationDataElement
+class AuthorizationDataElementAsn1(core.Sequence):
+    """
+    AuthorizationData       ::= SEQUENCE OF SEQUENCE {
+        ad-type         [0] Int32,
+        ad-data         [1] OCTET STRING
+    }
+    """
+
+    _fields = [
+        (AUTHORIZATION_DATA_AD_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            AUTHORIZATION_DATA_AD_DATA,
+            core.OctetString,
+            {"tag_type": EXPLICIT, "tag": 1},
+        ),
+    ]
+
+
+# sequence of authorization data
+# wrapped by ipapocket.krb5.objects.AuthorizationData
+class AuthorizationDataAsn1(core.SequenceOf):
+    _child_spec = AuthorizationDataElementAsn1
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.Checksum
+class ChecksumAsn1(core.Sequence):
+    """
+    Checksum        ::= SEQUENCE {
+        cksumtype       [0] Int32,
+        checksum        [1] OCTET STRING
+    }
+    """
+
+    _fields = [
+        (CHECKSUM_CKSUMTYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (CHECKSUM_CHECKSUM, core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
+    ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.5.1
+# wrapped by ipapocket.krb5.objects.Authenticator
+class AuthenticatorAsn1(core.Sequence):
+    """
+    Authenticator   ::= [APPLICATION 2] SEQUENCE  {
+           authenticator-vno       [0] INTEGER (5),
+           crealm                  [1] Realm,
+           cname                   [2] PrincipalName,
+           cksum                   [3] Checksum OPTIONAL,
+           cusec                   [4] Microseconds,
+           ctime                   [5] KerberosTime,
+           subkey                  [6] EncryptionKey OPTIONAL,
+           seq-number              [7] UInt32 OPTIONAL,
+           authorization-data      [8] AuthorizationData OPTIONAL
+    }
+    """
+
+    explicit = (APPLICATION, ApplicationTagNumbers.AUTHENTICATOR.value)
+
+    _fields = [
+        (AUTHENTICATOR_AUTHENTICATOR_VNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (AUTHENTICATOR_CREALM, RealmAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (AUTHENTICATOR_CNAME, PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (
+            AUTHENTICATOR_CKSUM,
+            ChecksumAsn1,
+            {"tag_type": EXPLICIT, "tag": 3, "optional": True},
+        ),
+        (AUTHENTICATOR_CUSEC, MicrosecondsAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+        (AUTHENTICATOR_CTIME, KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 5}),
+        (
+            AUTHENTICATOR_SUBKEY,
+            EncryptionKeyAsn1,
+            {"tag_type": EXPLICIT, "tag": 6, "optional": True},
+        ),
+        (
+            AUTHENTICATOR_SEQ_NUMBER,
+            UInt32Asn1,
+            {"tag_type": EXPLICIT, "tag": 7, "optional": True},
+        ),
+        (
+            AUTHENTICATOR_AUTHORIZATION_DATA,
+            AuthorizationDataAsn1,
+            {"tag_type": EXPLICIT, "tag": 8, "optional": True},
+        ),
     ]
 
 

@@ -69,6 +69,13 @@ class InvalidKdcOptionsValueType(Exception):
         )
 
 
+class InvalidApOptionsValueType(Exception):
+    def __init__(self, value):
+        super(Exception, self).__init__(
+            "Invalid ApOptions value type {}".format(type(value).__name__)
+        )
+
+
 class InvalidTicketFlagsValueType(Exception):
     def __init__(self, value):
         super(Exception, self).__init__(
@@ -117,6 +124,10 @@ class InvalidPaDataType(Exception):
 
 
 class InvalidAsReqRequest(Exception):
+    pass
+
+
+class InvalidTgsReqRequest(Exception):
     pass
 
 

@@ -74,7 +74,7 @@ class GetTgt:
                 data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
                 response = KerberosResponse.load(data)
                 if response.is_krb_error():
-                    raise UnexpectedKerberosError(response.krb_error)
+                    raise UnexpectedKerberosError(response.krb_error.error_code)
                 else:
                     self._asRep(response.as_rep, self._base.key)
         else:

@@ -1,5 +1,15 @@
 from ipapocket.krb5.objects import *
+from ipapocket.exceptions.ccache import *
 from asn1crypto import core
+import base64
+import logging
+import io
+
+# we support only version 4 right now
+CCACHE_VERSION4 = 0x0504
+CCACHE_VERSION3 = 0x0503
+CCACHE_VERSION2 = 0x0502
+CCACHE_VERSION1 = 0x0501
 
 
 class OctetString:
@@ -35,11 +45,23 @@ class OctetString:
         b += self._data
         return b
 
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        """
+        Create object from reader
+        """
+        length = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        data = reader.read(length)
+        return cls(data)
+
 
 class Header:
     _tag: int = None  # uint16_t
     _taglen: int = None  # uint16_t
     _tagdata: bytes = None  # uint8_t[uint16_t]
+
+    def __init__(self):
+        pass
 
     @property
     def tag(self) -> int:
@@ -67,20 +89,42 @@ class Header:
         self._taglen = len(self._tagdata)
 
     def size(self):
-        return 4 + len(self._tagdata)
+        """
+        Calculate size of header's fields
+        """
+        return len(self.to_bytes())
 
     @classmethod
     def default(cls):
+        """
+        This is default header for version 0x0504 with tag number 1.
+        It can represent time offset between client and KDC,
+        but we will set offset to 0.
+        """
         tmp = cls()
         tmp.tag = 1
         tmp.tagdata = b"\x00" * 8
         return tmp
 
     def to_bytes(self) -> bytes:
-        b = self._tag.to_bytes(2, byteorder="big", signed=True)
-        b += self._taglen.to_bytes(2, byteorder="big", signed=True)
-        b += self._tagdata
+        """
+        Convert object to bytes
+        """
+        b = self._tag.to_bytes(2, byteorder="big", signed=True)  # uint16_t
+        b += self._taglen.to_bytes(2, byteorder="big", signed=True)  # uint16_t
+        b += self._tagdata  # uint8_t[uint16_t]
         return b
+
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        """
+        Create object from reader
+        """
+        tmp = cls()
+        tmp.tag = int.from_bytes(reader.read(2), byteorder="big", signed=True)
+        tmp.taglen = int.from_bytes(reader.read(2), byteorder="big", signed=True)
+        tmp.tagdata = reader.read(tmp.taglen)
+        return tmp
 
 
 class Headers:
@@ -108,16 +152,41 @@ class Headers:
         self._headerslen = 0
 
     def size(self):
+        """
+        Get total size of headers list
+        """
         total = 0
         for v in self._headers:
             total += v.size()
         return total
 
     def to_bytes(self) -> bytes:
+        """
+        Convert object to bytes
+        """
         b = self._headerslen.to_bytes(2, byteorder="big", signed=True)
         for v in self._headers:
             b += v.to_bytes()
         return b
+
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        """
+        User reader to iterate over bytes
+        """
+        tmp = cls()
+        eof_pos = len(reader.getbuffer())
+        while reader.tell() < eof_pos:
+            tmp.add(Header.parse(reader))
+        return tmp
+
+    @classmethod
+    def from_bytes(cls, data: bytes):
+        """
+        Convert bytes to object
+        """
+        r = io.BytesIO(data)
+        return cls.parse(r)
 
 
 class Keyblock:
@@ -126,11 +195,12 @@ class Keyblock:
     _keylen: int = None  # uint16_t
     _keyvalue: bytes = None  # uint8_t[uint16_t]
 
-    def __init__(self, key: EncryptionKey):
-        self._keytype = key.keytype.value
-        self._etype = 0  # only present in version 0x0503
-        self._keyvalue = key.keyvalue
-        self._keylen = len(self._keyvalue)
+    def __init__(self, key: EncryptionKey = None):
+        if key is not None:
+            self._keytype = key.keytype.value
+            self._etype = 0  # only present in version 0x0503
+            self._keyvalue = key.keyvalue
+            self._keylen = len(self._keyvalue)
 
     @property
     def keytype(self) -> int:
@@ -171,6 +241,18 @@ class Keyblock:
         b += self._keyvalue
         return b
 
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        """
+        Convert reader to object
+        """
+        tmp = cls()
+        tmp.keytype = int.from_bytes(reader.read(2), byteorder="big", signed=True)
+        tmp.etype = int.from_bytes(reader.read(2), byteorder="big", signed=True)
+        tmp.keylen = int.from_bytes(reader.read(2), byteorder="big", signed=True)
+        tmp.keyvalue = reader.read(tmp.keylen)
+        return tmp
+
 
 class Times:
     _authtime: int = 0  # uint32_t
@@ -180,10 +262,10 @@ class Times:
 
     def __init__(
         self,
-        authtime: KerberosTime,
-        starttime: KerberosTime,
-        endtime: KerberosTime,
-        renew_till: KerberosTime,
+        authtime: KerberosTime = None,
+        starttime: KerberosTime = None,
+        endtime: KerberosTime = None,
+        renew_till: KerberosTime = None,
     ):
         if authtime is not None:
             self._authtime = int(authtime.to_asn1().native.timestamp())
@@ -232,6 +314,15 @@ class Times:
         b += self._endtime.to_bytes(4, byteorder="big", signed=True)
         b += self._renew_till.to_bytes(4, byteorder="big", signed=True)
         return b
+
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        tmp = cls()
+        tmp.authtime = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        tmp.starttime = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        tmp.endtime = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        tmp.renew_till = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        return tmp
 
 
 class Address:
@@ -297,6 +388,18 @@ class Principal:
         for v in self._components:
             b += v.to_bytes()
         return b
+
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        principal_type = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        num_components = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        realm = OctetString.parse(reader).data.decode()
+        components = list[str]()
+        for i in range(num_components):
+            components.append(OctetString.parse(reader).data.decode())
+        return cls(
+            PrincipalName(PrincipalType(principal_type), components), Realm(realm)
+        )
 
 
 class DeltaTime:
@@ -382,12 +485,28 @@ class Credential:
         self._num_address = value
 
     @property
+    def addrs(self) -> list[Address]:
+        return self._addrs
+
+    @addrs.setter
+    def addrs(self, value) -> None:
+        self._addrs = value
+
+    @property
     def num_authdata(self) -> int:
         return self._num_authdata
 
     @num_authdata.setter
     def num_authdata(self, value) -> None:
         self._num_authdata = value
+
+    @property
+    def authdata(self) -> list[Authdata]:
+        return self._authdata
+
+    @authdata.setter
+    def authdata(self, value) -> None:
+        self._authdata = value
 
     @property
     def ticket(self) -> OctetString:
@@ -422,6 +541,29 @@ class Credential:
         b += self._second_ticket.to_bytes()
         return b
 
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        tmp = cls()
+        tmp.client = Principal.parse(reader)
+        tmp.server = Principal.parse(reader)
+        tmp.key = Keyblock.parse(reader)
+        tmp.time = Times.parse(reader)
+        tmp.is_skey = int.from_bytes(reader.read(1))
+        tmp.tktflags = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        tmp.num_address = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        addrs = list[Address]()
+        for _ in range(tmp.num_address):
+            addrs.append(Address.parse(reader))
+        tmp.addrs = addrs
+        tmp.num_authdata = int.from_bytes(reader.read(4), byteorder="big", signed=True)
+        authdata = list[Authdata]()
+        for _ in range(tmp.num_authdata):
+            authdata.append(Authdata.parse(reader))
+        tmp.authdata = authdata
+        tmp.ticket = OctetString.parse(reader)
+        tmp.second_ticket = OctetString.parse(reader)
+        return tmp
+
 
 class Credentials:
     _credentials: list[Credential] = None
@@ -445,18 +587,50 @@ class Credentials:
             b += v.to_bytes()
         return b
 
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        """
+        Create object from reader
+        """
+        tmp = cls()
+        eof_pos = len(reader.getbuffer())
+        while reader.tell() < eof_pos - 1:
+            cred = Credential.parse(reader)
+            if (
+                cred.server.components[0].data == b"krb5_ccache_conf_data"
+                and cred.server.realm.data == b"X-CACHECONF:"
+            ):
+                # skip this credential as its local for machine only
+                pass
+            else:
+                tmp.add(cred)
+        return tmp
+
+    @classmethod
+    def from_bytes(cls, data: bytes):
+        """
+        Create object from bytes
+        """
+        return cls.parse(io.BytesIO(data))
+
 
 # https://repo.or.cz/w/krb5dissect.git/blob_plain/HEAD:/ccache.txt
+# https://github.com/krb5/krb5/blob/master/doc/formats/ccache_file_format.rst
 class Ccache:
-    _file_format_version: int = 0x0504  # uint16_t
+    _file_format_version: int = CCACHE_VERSION4  # uint16_t
     _headers: Headers = None
     _primary_principal: Principal = None
     _credentials: Credentials = None
 
     def __init__(self):
+        self._file_format_version = CCACHE_VERSION4
         self._headers = Headers()
         self._credentials = Credentials()
         self._headers.add(Header.default())
+
+    @property
+    def file_format_version(self) -> int:
+        return self._file_format_version
 
     @property
     def headers(self) -> list[Header]:
@@ -474,7 +648,7 @@ class Ccache:
         """
         Set TGT as main credentials in CCACHE structure
         """
-        self._credentials = Credentials()
+        self._credentiparseals = Credentials()
         # set primary principal
         self._primary_principal = Principal(kdc_rep.cname, kdc_rep.crealm)
         # create credential
@@ -496,13 +670,143 @@ class Ccache:
         c.second_ticket = OctetString()
         self._credentials.add(c)
 
-    def serialize(self) -> bytes:
+    def to_bytes(self) -> bytes:
+        """
+        Convert object to bytes
+        """
         b = self._file_format_version.to_bytes(2, byteorder="big", signed=True)
         b += self._headers.to_bytes()
         b += self._primary_principal.to_bytes()
         b += self._credentials.to_bytes()
         return b
 
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        tmp = cls()
+
+        # read version (uint16_t)
+        ccache_version = int.from_bytes(reader.read(2), byteorder="big", signed=True)
+        if ccache_version != CCACHE_VERSION4:
+            raise UnsupportedCcacheVersion(ccache_version)
+        else:
+            tmp._file_format_version = ccache_version
+
+        # read headers
+        header_size = int.from_bytes(
+            reader.read(2), byteorder="big", signed=True
+        )  # uint16_t
+        tmp._headers = Headers.from_bytes(reader.read(header_size))
+
+        # read primary principal
+        tmp._primary_principal = Principal.parse(reader)
+
+        # read credentials
+        tmp._credentials = Credentials.parse(reader)
+        return tmp
+
+    def pprint(self) -> None:
+        logging.info("%-30s: 0x%04x" % ("CCACHE version", self.file_format_version))
+        logging.info(
+            "%-30s: %d" % ("Credentials number", len(self.credentials.credentials))
+        )
+        for i in range(len(self.credentials.credentials)):
+            cred = self.credentials.credentials[i]
+            # format user principal
+            user_name = ""
+            for j in range(cred.client.num_components):
+                if j == cred.client.num_components - 1:
+                    user_name += cred.client.components[j].data.decode("utf-8")
+                else:
+                    user_name += cred.client.components[j].data.decode("utf-8") + "/"
+            user_realm = cred.client.realm.data.decode("utf-8")
+            # format service principal
+            service_name = ""
+            for j in range(cred.server.num_components):
+                if j == cred.server.num_components - 1:
+                    service_name += cred.server.components[j].data.decode("utf-8")
+                else:
+                    service_name += cred.server.components[j].data.decode("utf-8") + "/"
+            service_realm = cred.server.realm.data.decode("utf-8")
+            # format authtime
+            auth_time = datetime.fromtimestamp(cred.time.authtime).strftime(
+                "%d/%m/%Y %H:%M:%S %p"
+            )
+            # format starttime
+            start_time = datetime.fromtimestamp(cred.time.starttime).strftime(
+                "%d/%m/%Y %H:%M:%S %p"
+            )
+            # format endtime
+            end_time = datetime.fromtimestamp(cred.time.endtime).strftime(
+                "%d/%m/%Y %H:%M:%S %p"
+            )
+            if datetime.fromtimestamp(cred.time.endtime) < datetime.now():
+                end_time += " [expired]"
+            # format renew till
+            renew_till = datetime.fromtimestamp(cred.time.renew_till).strftime(
+                "%d/%m/%Y %H:%M:%S %p"
+            )
+            if datetime.fromtimestamp(cred.time.renew_till) < datetime.now():
+                renew_till += " [expired]"
+            # format ticket flags
+            tkt_flags = ""
+            for j in TicketFlagsTypes:
+                if (cred.tktflags >> (31 - j.value)) & 1 == 1:
+                    tkt_flags += j.name + ","
+            tkt_flags = tkt_flags.strip(",")
+            # format key_type
+            key_type = EncryptionTypes(cred.key.keytype).name
+            # format key_value
+            key_value = base64.b64encode(cred.key.keyvalue).decode("utf-8")
+            tkt = Ticket.load(cred.ticket.data)
+            # format tkt_kvno
+            tkt_kvno = tkt.tkt_vno.value
+            # format tkt_sname
+            tkt_sname = ""
+            for j in range(len(tkt.sname.name_value.value)):
+                if j == len(tkt.sname.name_value.value) - 1:
+                    tkt_sname += str(tkt.sname.name_value.value[j])
+                else:
+                    tkt_sname += str(tkt.sname.name_value.value[j]) + "/"
+            # format tkt_realm
+            tkt_realm = tkt.realm.realm
+            # format tkt_enc
+            tkt_enc = base64.b64encode(tkt.enc_part.cipher).decode("utf-8")
+            logging.info("[#%d] %-25s: %s" % (i, "User name", user_name))
+            logging.info("[#%d] %-25s: %s" % (i, "User realm", user_realm))
+            logging.info("[#%d] %-25s: %s" % (i, "Service name", service_name))
+            logging.info("[#%d] %-25s: %s" % (i, "Service realm", service_realm))
+            logging.info("[#%d] %-25s: %s" % (i, "Auth time", auth_time))
+            logging.info("[#%d] %-25s: %s" % (i, "Start time", start_time))
+            logging.info("[#%d] %-25s: %s" % (i, "End time", end_time))
+            logging.info("[#%d] %-25s: %s" % (i, "Renew till time", renew_till))
+            logging.info("[#%d] %-25s: %s" % (i, "Flags", tkt_flags))
+            logging.info("[#%d] %-25s: %s" % (i, "Key type", key_type))
+            logging.info("[#%d] %-25s: %s" % (i, "Key value", key_value))
+            logging.info("[#%d]   %-23s: %d" % (i, "Ticket serivce kvno", tkt_kvno))
+            logging.info("[#%d]   %-23s: %s" % (i, "Ticket service name", tkt_sname))
+            logging.info("[#%d]   %-23s: %s" % (i, "Ticket service realm", tkt_realm))
+            logging.info("[#%d]   %-23s: %s" % (i, "Ticket encrypted part", tkt_enc))
+        pass
+
+    @classmethod
+    def from_bytes(cls, data: bytes):
+        """
+        Parse bytes to object
+        """
+        return cls.parse(io.BytesIO(data))
+
     def to_file(self, path) -> None:
+        """
+        Write object's bytes to file
+        """
         with open(path, "wb") as f:
-            f.write(self.serialize())
+            f.write(self.to_bytes())
+
+    @classmethod
+    def from_file(cls, path):
+        """
+        Read bytes from file and convert to Ccache object
+        """
+        with open(path, "rb") as f:
+            data = f.read()
+        return Ccache.from_bytes(data)

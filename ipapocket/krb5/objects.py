@@ -175,6 +175,9 @@ class KerberosString:
     def value(self, value) -> None:
         self._value = self._validate_value(value)
 
+    def __str__(self) -> str:
+        return self._value
+
     def __eq__(self, obj):
         if isinstance(obj, KerberosString):
             return self.value == obj.value
@@ -695,6 +698,8 @@ class Ticket:
 
     @classmethod
     def load(cls, data: asn1.TicketAsn1):
+        if isinstance(data, bytes):
+            data = asn1.TicketAsn1.load(data)
         if isinstance(data, Ticket):
             data = data.to_asn1()
         tmp = cls()

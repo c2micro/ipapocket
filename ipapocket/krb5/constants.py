@@ -47,9 +47,10 @@ class PrincipalType(enum.Enum):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.1
+# https://github.com/krb5/krb5/blob/bcc0dda256b184f8d87a4587f3f3997770020c87/src/include/krb5/krb5.hin#L935
 class KeyUsageTypes(enum.Enum):
     AS_REQ_PA_ENC_TIMESTAMP = 1
-    AS_TGS_REP = 2
+    KDC_REP_TICKET = 2
     AS_REP_ENCPART = 3
     TGS_REQ_AD_SESSKEY = 4
     TGS_REQ_AD_SUBKEY = 5

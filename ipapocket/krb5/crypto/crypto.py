@@ -19,7 +19,7 @@ def make_checksum(cksumtype, key, keyusage, data):
 
 def supported_enctypes() -> list[EncryptionTypes]:
     enctypes = list()
-    #enctypes.append(EncryptionTypes.AES128_CTS_HMAC_SHA1_96)
+    enctypes.append(EncryptionTypes.AES128_CTS_HMAC_SHA1_96)
     enctypes.append(EncryptionTypes.AES256_CTS_HMAC_SHA1_96)
     enctypes.append(EncryptionTypes.AES128_CTS_HMAC_SHA256_128)
     enctypes.append(EncryptionTypes.AES256_CTS_HMAC_SHA384_192)

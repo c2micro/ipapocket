@@ -345,11 +345,13 @@ class KdcOptionsTypes(enum.Enum):
     RENEW = 30
     VALIDATE = 31
 
+
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.5.1
 # withour reserved bits
 class ApOptionsTypes(enum.Enum):
     USE_SESSION_KEY = 1
     MUTUAL_REQUIRED = 2
+
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.3
 # https://github.com/krb5/krb5/blob/bcc0dda256b184f8d87a4587f3f3997770020c87/src/include/krb5/krb5.hin#L1705
@@ -370,4 +372,4 @@ class TicketFlagsTypes(enum.Enum):
     TRANSITED_POLICY_CHECKED = 12
     OS_AS_DELEGATED = 13
     ENC_PA_REP = 15
-    ANONYMOUS = 16 # https://www.rfc-editor.org/rfc/rfc6112#section-1
+    ANONYMOUS = 16  # https://www.rfc-editor.org/rfc/rfc6112#section-1

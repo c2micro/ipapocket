@@ -2,7 +2,7 @@ from ipapocket.krb5.constants import EncryptionTypes
 from ipapocket.krb5.crypto.base import _get_etype_profile, _get_cksum_profile
 
 
-def string_to_key(etype:EncryptionTypes, data, salt, params=None):
+def string_to_key(etype: EncryptionTypes, data, salt, params=None):
     """
     Convert data to Key
     """

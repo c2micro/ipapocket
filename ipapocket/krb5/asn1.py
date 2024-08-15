@@ -389,6 +389,7 @@ class MethodDataAsn1(core.SequenceOf):
     """
     METHOD-DATA     ::= SEQUENCE OF PA-DATA
     """
+
     _child_spec = PaDataAsn1
 
 

@@ -97,7 +97,9 @@ class BaseKrb5Operations:
         # set realm in body
         kdc_req_body.realm = Realm(domain)
         # set sname (spn) in body
-        kdc_req_body.sname = PrincipalName(PrincipalType.NT_SRV_INST, ["krbtgt", domain])
+        kdc_req_body.sname = PrincipalName(
+            PrincipalType.NT_SRV_INST, ["krbtgt", domain]
+        )
         # set till timestamp in body
         kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
         # set rtime timestamp in body
@@ -152,7 +154,9 @@ class BaseKrb5Operations:
         # set realm in request
         kdc_req_body.realm = Realm(domain)
         # set sname (spn) in request
-        kdc_req_body.sname = PrincipalName(PrincipalType.NT_SRV_INST, ["krbtgt", domain])
+        kdc_req_body.sname = PrincipalName(
+            PrincipalType.NT_SRV_INST, ["krbtgt", domain]
+        )
         # set till in request
         kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
         # set rtime in request
@@ -321,5 +325,5 @@ class BaseKrb5Operations:
 
         # create TGS-REQ
         tgs_req = TgsReq(kdc_req)
-        
+
         return tgs_req

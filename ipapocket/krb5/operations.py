@@ -186,7 +186,7 @@ class BaseKrb5Operations:
         kdc_req_body.nonce = nonce
 
         # set etype in request
-        kdc_req_body.etype = EncTypes(crypto.supported_enctypes())
+        kdc_req_body.etype = EncTypes(self.etype)
 
         # create KDC request
         kdc_req = KdcReq()

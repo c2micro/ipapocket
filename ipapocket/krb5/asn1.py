@@ -383,9 +383,12 @@ class PaDataAsn1(core.Sequence):
     ]
 
 
-# sequence of preauthentication data sets
-# wrapped by ipapocket.krb5.objects.PaDatas
-class PaDatasAsn1(core.SequenceOf):
+# https://www.rfc-editor.org/rfc/rfc4120#appendix-A
+# wrapped by ipapocket.krb5.objects.MethodData
+class MethodDataAsn1(core.SequenceOf):
+    """
+    METHOD-DATA     ::= SEQUENCE OF PA-DATA
+    """
     _child_spec = PaDataAsn1
 
 
@@ -408,7 +411,7 @@ class KdcReqAsn1(core.Sequence):
         (KDC_REQ_MSG_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 2}),
         (
             KDC_REQ_PADATA,
-            PaDatasAsn1,
+            MethodDataAsn1,
             {"tag_type": EXPLICIT, "tag": 3, "optional": True},
         ),
         (KDC_REQ_REQ_BODY, KdcReqBodyAsn1, {"tag_type": EXPLICIT, "tag": 4}),
@@ -668,7 +671,7 @@ class KdcRepAsn1(core.Sequence):
         (KDC_REP_MSG_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
         (
             KDC_REP_PADATA,
-            PaDatasAsn1,
+            MethodDataAsn1,
             {"tag_type": EXPLICIT, "tag": 2, "optional": True},
         ),
         (KDC_REP_CREALM, RealmAsn1, {"tag_type": EXPLICIT, "tag": 3}),

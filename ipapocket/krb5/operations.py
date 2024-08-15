@@ -78,44 +78,32 @@ class BaseKrb5Operations:
             self.username = username
 
         current_timestamp = datetime.now(timezone.utc)
-        # generate nonce
-        nonce = UInt32(secrets.randbits(31))
-
         # need uppercase domain name
         domain = self.domain.upper()
-        # cname (upn)
-        cname = PrincipalName(PrincipalType.NT_PRINCIPAL, self.username)
-        # realm
-        realm = Realm(domain)
-        # sname
-        sname = PrincipalName(PrincipalType.NT_SRV_INST, ["krbtgt", domain])
 
         # KDC request body
         kdc_req_body = KdcReqBody()
+
         # KDC options (flags)
         kdc_options = KdcOptions()
         kdc_options.add(KdcOptionsTypes.FORWARDABLE)
         kdc_options.add(KdcOptionsTypes.CANONICALIZE)
         kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
 
-        # create timestamps
-        till = KerberosTime(current_timestamp + timedelta(days=1))
-        rtime = KerberosTime(current_timestamp + timedelta(days=1))
-
         # set kdc options in body
         kdc_req_body.kdc_options = kdc_options
-        # set cname in body
-        kdc_req_body.cname = cname
+        # set cname (upn) in body
+        kdc_req_body.cname = PrincipalName(PrincipalType.NT_PRINCIPAL, self.username)
         # set realm in body
-        kdc_req_body.realm = realm
-        # set sname in body
-        kdc_req_body.sname = sname
+        kdc_req_body.realm = Realm(domain)
+        # set sname (spn) in body
+        kdc_req_body.sname = PrincipalName(PrincipalType.NT_SRV_INST, ["krbtgt", domain])
         # set till timestamp in body
-        kdc_req_body.till = till
+        kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
         # set rtime timestamp in body
-        kdc_req_body.rtime = rtime
+        kdc_req_body.rtime = KerberosTime(current_timestamp + timedelta(days=1))
         # set nonce in body
-        kdc_req_body.nonce = nonce
+        kdc_req_body.nonce = UInt32(secrets.randbits(31))
         # set etype in body
         kdc_req_body.etype = EncTypes(crypto.supported_enctypes())
 
@@ -145,17 +133,8 @@ class BaseKrb5Operations:
         Construct AS-REQ packet with encrypted Preauthentication Data
         """
         current_timestamp = datetime.now(timezone.utc)
-        # generate nonce
-        nonce = UInt32(secrets.randbits(31))
-
         # we need uppercase domain
         domain = self.domain.upper()
-        # create cname
-        cname = PrincipalName(PrincipalType.NT_PRINCIPAL, self.username)
-        # create realm
-        realm = Realm(domain)
-        # create sname
-        sname = PrincipalName(PrincipalType.NT_SRV_INST, ["krbtgt", domain])
 
         # create KDC request body
         kdc_req_body = KdcReqBody()
@@ -166,25 +145,20 @@ class BaseKrb5Operations:
         kdc_options.add(KdcOptionsTypes.CANONICALIZE)
         kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
 
-        # generate timestamps for validatity of TGT
-        till = KerberosTime(current_timestamp + timedelta(days=1))
-        rtime = KerberosTime(current_timestamp + timedelta(days=1))
-
         # set options in request
         kdc_req_body.kdc_options = kdc_options
-        # set cname in request
-        kdc_req_body.cname = cname
+        # set cname (upn) in request
+        kdc_req_body.cname = PrincipalName(PrincipalType.NT_PRINCIPAL, self.username)
         # set realm in request
-        kdc_req_body.realm = realm
-        # set sname in request
-        kdc_req_body.sname = sname
+        kdc_req_body.realm = Realm(domain)
+        # set sname (spn) in request
+        kdc_req_body.sname = PrincipalName(PrincipalType.NT_SRV_INST, ["krbtgt", domain])
         # set till in request
-        kdc_req_body.till = till
+        kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
         # set rtime in request
-        kdc_req_body.rtime = rtime
+        kdc_req_body.rtime = KerberosTime(current_timestamp + timedelta(days=1))
         # set nonce in request
-        kdc_req_body.nonce = nonce
-
+        kdc_req_body.nonce = UInt32(secrets.randbits(31))
         # set etype in request
         kdc_req_body.etype = EncTypes(self.etype)
 
@@ -192,7 +166,7 @@ class BaseKrb5Operations:
         kdc_req = KdcReq()
 
         # create encrypted PA-DATA
-        pa_datas = PaDatas()
+        method_data = MethodData()
         pa_enc_ts = PaEncTsEnc(current_timestamp, current_timestamp.microsecond)
 
         enc_ts = _get_etype_profile(self.etype).encrypt(
@@ -201,7 +175,7 @@ class BaseKrb5Operations:
             pa_enc_ts.to_asn1().dump(),
             None,
         )
-        pa_datas.add(
+        method_data.add(
             PaData(
                 PreAuthenticationDataTypes.PA_ENC_TIMESTAMP,
                 EncryptedData(self.etype, KRB5_VERSION, enc_ts),
@@ -215,7 +189,7 @@ class BaseKrb5Operations:
         # add message type
         kdc_req.msg_type = MessageTypes.KRB_AS_REQ
         # add pa data
-        kdc_req.padata = pa_datas
+        kdc_req.padata = method_data
 
         # create AS-REQ
         as_req = AsReq(kdc_req)
@@ -225,7 +199,7 @@ class BaseKrb5Operations:
         """
         Iterate over array of proposed PA types from weak to strong
         """
-        for padata in PaDatas.load(error.e_data).padatas:
+        for padata in MethodData.load(error.e_data).padatas:
             # from https://www.rfc-editor.org/rfc/rfc4120#section-5.2.7.5 - might be ONLY ONE ETYPE-ENTRY in sequence of each
             if padata.type == PreAuthenticationDataTypes.PA_ETYPE_INFO:
                 etypes = EtypeInfo.load(padata.value)
@@ -260,13 +234,8 @@ class BaseKrb5Operations:
         Construct TGS-REQ packet
         """
         current_timestamp = datetime.now(timezone.utc)
-        # generate nonce
-        nonce = UInt32(secrets.randbits(31))
-
         # we need uppercase domain
         domain = self._domain.upper()
-        # create realm
-        realm = Realm(domain)
 
         # create KDC request body
         kdc_req_body = KdcReqBody()
@@ -276,22 +245,19 @@ class BaseKrb5Operations:
         kdc_options.add(KdcOptionsTypes.FORWARDABLE)
         kdc_options.add(KdcOptionsTypes.CANONICALIZE)
 
-        # create till timstamp
-        till = KerberosTime(current_timestamp + timedelta(days=1))
-
         # set kdc options in request body
         kdc_req_body.kdc_options = kdc_options
         # set realm in request body
-        kdc_req_body.realm = realm
+        kdc_req_body.realm = Realm(domain)
         # set service name (for which we want get ST)
         # TODO get from cli
         kdc_req_body.sname = PrincipalName(
             PrincipalType.NT_PRINCIPAL, ["krbtgt", domain]
         )
         # set till timestamp in request body
-        kdc_req_body.till = till
+        kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
         # set nonce in request body
-        kdc_req_body.nonce = nonce
+        kdc_req_body.nonce = UInt32(secrets.randbits(31))
         # set etype in request body
         kdc_req_body.etype = EncTypes(self._etype)
 
@@ -337,12 +303,12 @@ class BaseKrb5Operations:
         ap_req.authenticator = enc_authenticator
 
         # creation of AP-REQ with authenticator
-        pa_datas = PaDatas()
+        method_data = MethodData()
         # create PaData entry
         pa_data = PaData(PreAuthenticationDataTypes.PA_TGS_REQ, ap_req.to_asn1().dump())
 
         # add PaData in PaDatas
-        pa_datas.add(pa_data)
+        method_data.add(pa_data)
 
         # add version of kerberos
         kdc_req.pvno = KRB5_VERSION
@@ -351,8 +317,9 @@ class BaseKrb5Operations:
         # add message type
         kdc_req.msg_type = MessageTypes.KRB_TGS_REQ
         # add pa data (ap-req with authenticator)
-        kdc_req.padata = pa_datas
+        kdc_req.padata = method_data
 
         # create TGS-REQ
         tgs_req = TgsReq(kdc_req)
+        
         return tgs_req

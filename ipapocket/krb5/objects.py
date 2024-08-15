@@ -431,9 +431,9 @@ class TicketFlags:
         if isinstance(value, TicketFlags):
             value = value.to_asn1()
         tmp = cls()
-        for v in value.native:
-            if v == 1:
-                tmp.add(TicketFlagsTypes(v))
+        for i in range(len(value.native)):
+            if value.native[i] == 1:
+                tmp.add(TicketFlagsTypes(i))
         return tmp
 
     def _validate_option(self, value) -> TicketFlagsTypes:
@@ -621,7 +621,9 @@ class EncryptedData:
         tmp = cls()
         if ENCRYPTED_DATA_ETYPE in data:
             if data[ENCRYPTED_DATA_ETYPE].native is not None:
-                tmp.etype = EncryptionTypes(Int32.load(data[ENCRYPTED_DATA_ETYPE]).value)
+                tmp.etype = EncryptionTypes(
+                    Int32.load(data[ENCRYPTED_DATA_ETYPE]).value
+                )
         if ENCRYPTED_DATA_KVNO in data:
             if data[ENCRYPTED_DATA_KVNO].native is not None:
                 tmp.kvno = UInt32.load(data[ENCRYPTED_DATA_KVNO])
@@ -787,9 +789,12 @@ class KdcReqBody:
 
     @realm.setter
     def realm(self, value):
-        if not isinstance(value, Realm):
+        if isinstance(value, str):
+            self._realm = Realm(value)
+        elif isinstance(value, Realm):
+            self._realm = value
+        else:
             raise InvalidTypeInKdcReqBody("realm", value)
-        self._realm = value
 
     @property
     def sname(self) -> PrincipalName:
@@ -1243,7 +1248,7 @@ class PaData:
         return pa_data
 
 
-class PaDatas:
+class MethodData:
     _padatas: list = None
 
     def __init__(self):
@@ -1262,10 +1267,10 @@ class PaDatas:
         return self._padatas
 
     @classmethod
-    def load(cls, data: asn1.PaDatasAsn1):
+    def load(cls, data: asn1.MethodDataAsn1):
         if isinstance(data, bytes):
-            data = asn1.PaDatasAsn1.load(data)
-        if isinstance(data, PaDatas):
+            data = asn1.MethodDataAsn1.load(data)
+        if isinstance(data, MethodData):
             data = data.to_asn1()
         tmp = cls()
         for v in data.native:
@@ -1276,13 +1281,13 @@ class PaDatas:
         tmp = list()
         for pa_data in self._padatas:
             tmp.append(pa_data.to_asn1())
-        return asn1.PaDatasAsn1(tuple(tmp))
+        return asn1.MethodDataAsn1(tuple(tmp))
 
 
 class KdcReq:
     _pvno: Int32 = None
     _msg_type: MessageTypes = None
-    _padata: PaDatas = None
+    _padata: MethodData = None
     _req_body: KdcReqBody = None
 
     def __init__(self):
@@ -1315,12 +1320,12 @@ class KdcReq:
             raise InvalidTypeInKdcReq(KDC_REQ_MSG_TYPE, value)
 
     @property
-    def padata(self) -> PaDatas:
+    def padata(self) -> MethodData:
         return self._padata
 
     @padata.setter
     def padata(self, value) -> None:
-        if not isinstance(value, PaDatas):
+        if not isinstance(value, MethodData):
             raise InvalidTypeInKdcReq(KDC_REQ_PADATA, value)
         self._padata = value
 
@@ -1347,7 +1352,7 @@ class KdcReq:
                 tmp.msg_type = MessageTypes(data[KDC_REQ_MSG_TYPE].native)
         if KDC_REQ_PADATA in data:
             if data[KDC_REQ_PADATA].native is not None:
-                tmp.padata = PaDatas.load(data[KDC_REQ_PADATA])
+                tmp.padata = MethodData.load(data[KDC_REQ_PADATA])
         if KDC_REQ_REQ_BODY in data:
             if data[KDC_REQ_REQ_BODY].native is not None:
                 tmp.req_body = KdcReqBody.load(data[KDC_REQ_REQ_BODY])
@@ -1626,7 +1631,7 @@ class KrbError:
 class KdcRep:
     _pvno: Int32 = None
     _msg_type: MessageTypes = None
-    _pdata: PaDatas = None
+    _pdata: MethodData = None
     _crealm: Realm = None
     _cname: PrincipalName = None
     _ticket: Ticket = None
@@ -1652,7 +1657,7 @@ class KdcRep:
         self._msg_type = value
 
     @property
-    def padata(self) -> PaDatas:
+    def padata(self) -> MethodData:
         return self._pdata
 
     @padata.setter
@@ -1704,7 +1709,7 @@ class KdcRep:
                 tmp.msg_type = MessageTypes(data[KDC_REP_MSG_TYPE].native)
         if KDC_REP_PADATA in data:
             if data[KDC_REP_PADATA].native is not None:
-                tmp.padata = PaDatas.load(data[KDC_REP_PADATA])
+                tmp.padata = MethodData.load(data[KDC_REP_PADATA])
         if KDC_REP_CREALM in data:
             if data[KDC_REP_CREALM].native is not None:
                 tmp.crealm = Realm.load(data[KDC_REP_CREALM])
@@ -2267,7 +2272,7 @@ class Checksum:
     @checksum.setter
     def checksum(self, value) -> None:
         self._checksum = value
-    
+
     def to_asn1(self) -> asn1.ChecksumAsn1:
         checksum = asn1.ChecksumAsn1()
         if self.cksumtype is not None:

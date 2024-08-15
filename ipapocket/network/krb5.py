@@ -28,7 +28,7 @@ class Krb5Client:
         recv_len = struct.unpack("!i", self._socket.recv(4))[0]
         rep = self._socket.recv(recv_len)
         while len(rep) < recv_len:
-            r += self._socket.recv(recv_len - len(rep))
+            rep += self._socket.recv(recv_len - len(rep))
 
         self._close()
         return rep

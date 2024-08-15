@@ -44,6 +44,15 @@ class _EtypeBaseProfile(object):
             raise InvalidSeedSize(seed, self.seedsize)
         return Key(self.enctype, seed)
 
+    @classmethod
+    def splitter(cls, ciphertext):
+        """
+        Function to split block on raw ciphertext and mac
+        """
+        ctext = ciphertext[: -cls.macsize]
+        mac = ciphertext[-cls.macsize :]
+        return ctext, mac
+
 
 class _ChecksumBaseProfile(object):
     @classmethod
@@ -113,15 +122,6 @@ class _EtypeRfc3961Profile(_EtypeBaseProfile):
             raise InvalidChecksum("ciphertext integrity failure")
         # Discard the confounder.
         return bytes(basic_plaintext[cls.blocksize :])
-
-    @classmethod
-    def splitter(cls, ciphertext):
-        """
-        Function to split block on raw ciphertext and mac
-        """
-        ctext = ciphertext[: -cls.macsize]
-        mac = ciphertext[-cls.macsize :]
-        return ctext, mac
 
     @classmethod
     def prf(cls, key, string):
@@ -267,12 +267,6 @@ class _EtypeRfc8009(_EtypeRfc3961Profile):
             raise InvalidChecksum("ciphertext integrity failure")
         plaintext = cls.basic_decrypt(ke, c, iv)[cls.blocksize :]
         return plaintext
-
-    @classmethod
-    def splitter(cls, ciphertext):
-        ctext = ciphertext[: -cls.macsize]
-        mac = ciphertext[-cls.macsize :]
-        return ctext, mac
 
 
 class _AES128_SHA1(_EtypeRfc3962):

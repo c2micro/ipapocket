@@ -103,9 +103,7 @@ class _EtypeRfc3961Profile(_EtypeBaseProfile):
         ke = cls.derive(key, struct.pack(">IB", keyusage, 0xAA))
         if len(ciphertext) < cls.blocksize + cls.macsize:
             raise ValueError("ciphertext too short")
-        basic_ctext, mac = bytearray(ciphertext[: -cls.macsize]), bytearray(
-            ciphertext[-cls.macsize :]
-        )
+        basic_ctext, mac = cls.splitter(ciphertext)
         if len(basic_ctext) % cls.padsize != 0:
             raise ValueError("ciphertext does not meet padding requirement")
         basic_plaintext = cls.basic_decrypt(ke, bytes(basic_ctext))
@@ -115,6 +113,15 @@ class _EtypeRfc3961Profile(_EtypeBaseProfile):
             raise InvalidChecksum("ciphertext integrity failure")
         # Discard the confounder.
         return bytes(basic_plaintext[cls.blocksize :])
+
+    @classmethod
+    def splitter(cls, ciphertext):
+        """
+        Function to split block on raw ciphertext and mac
+        """
+        ctext = ciphertext[: -cls.macsize]
+        mac = ciphertext[-cls.macsize :]
+        return ctext, mac
 
     @classmethod
     def prf(cls, key, string):
@@ -167,100 +174,105 @@ class _EtypeRfc8009(_EtypeRfc3961Profile):
     enctype_name = None  # Encryption type name as byte string
 
     @classmethod
-    def random_to_key(self, seed):
-        return Key(self.enctype, seed)
+    def random_to_key(cls, seed):
+        return Key(cls.enctype, seed)
 
     @classmethod
-    def basic_encrypt(self, key, plaintext, iv):
-        return basic_encrypt_all_aes(self, key, plaintext, iv)
+    def basic_encrypt(cls, key, plaintext, iv):
+        return basic_encrypt_all_aes(cls, key, plaintext, iv)
 
     @classmethod
-    def basic_decrypt(self, key, ciphertext, iv):
-        return basic_decrypt_all_aes(self, key, ciphertext, iv)
+    def basic_decrypt(cls, key, ciphertext, iv):
+        return basic_decrypt_all_aes(cls, key, ciphertext, iv)
 
     @classmethod
-    def kdf_hmac_sha2(self, key, label, k, context=b""):
-        hmac_sha2 = lambda p, s: HMAC.new(p, s, self.hashmod).digest()
+    def kdf_hmac_sha2(cls, key, label, k, context=b""):
+        hmac_sha2 = lambda p, s: HMAC.new(p, s, cls.hashmod).digest()
         return SP800_108_Counter(
             master=key, key_len=k, prf=hmac_sha2, label=label, context=context
         )
 
     @classmethod
-    def derive(self, key, constant):
-        return self.random_to_key(
-            self.kdf_hmac_sha2(key=key.contents, label=constant, k=self.macsize)
+    def derive(cls, key, constant):
+        return cls.random_to_key(
+            cls.kdf_hmac_sha2(key=key.contents, label=constant, k=cls.macsize)
         )
 
     @classmethod
-    def prf(self, input_key, string):
-        return self.kdf_hmac_sha2(
-            key=input_key.contents, label=b"prf", k=self.seedsize, context=string
+    def prf(cls, input_key, string):
+        return cls.kdf_hmac_sha2(
+            key=input_key.contents, label=b"prf", k=cls.seedsize, context=string
         )
 
     @classmethod
-    def string_to_key(self, string, salt, params):
+    def string_to_key(cls, string, salt, params):
         if not isinstance(string, bytes):
             string = string.encode("utf-8")
         if not isinstance(salt, bytes):
             salt = salt.encode("utf-8")
 
-        saltp = self.enctype_name + b"\0" + salt
+        saltp = cls.enctype_name + b"\0" + salt
 
         iter_count = struct.unpack(">L", params)[0] if params else 32768
         tkey = PBKDF2(
             password=string,
             salt=saltp,
             count=iter_count,
-            dkLen=self.keysize,
-            hmac_hash_module=self.hashmod,
+            dkLen=cls.keysize,
+            hmac_hash_module=cls.hashmod,
         )
-        return self.random_to_key(
-            self.kdf_hmac_sha2(key=tkey, label=b"kerberos", k=self.keysize)
+        return cls.random_to_key(
+            cls.kdf_hmac_sha2(key=tkey, label=b"kerberos", k=cls.keysize)
         )
 
     @classmethod
-    def encrypt(self, key, keyusage, plaintext, confounder):
-        ke = self.random_to_key(
-            self.kdf_hmac_sha2(
-                key.contents, struct.pack(">IB", keyusage, 0xAA), self.keysize
+    def encrypt(cls, key, keyusage, plaintext, confounder):
+        ke = cls.random_to_key(
+            cls.kdf_hmac_sha2(
+                key.contents, struct.pack(">IB", keyusage, 0xAA), cls.keysize
             )
         )
-        ki = self.random_to_key(
-            self.kdf_hmac_sha2(
-                key.contents, struct.pack(">IB", keyusage, 0x55), self.macsize
+        ki = cls.random_to_key(
+            cls.kdf_hmac_sha2(
+                key.contents, struct.pack(">IB", keyusage, 0x55), cls.macsize
             )
         )
-        n = _random_bytes(self.blocksize)
+        n = _random_bytes(cls.blocksize)
         # Initial cipher state is a zeroed buffer
-        iv = bytes(self.blocksize)
-        c = self.basic_encrypt(ke, n + plaintext, iv)
-        h = HMAC.new(ki.contents, iv + c, self.hashmod).digest()
-        ciphertext = c + h[: self.macsize]
-        assert plaintext == self.decrypt(key, keyusage, ciphertext)
+        iv = bytes(cls.blocksize)
+        c = cls.basic_encrypt(ke, n + plaintext, iv)
+        h = HMAC.new(ki.contents, iv + c, cls.hashmod).digest()
+        ciphertext = c + h[: cls.macsize]
+        assert plaintext == cls.decrypt(key, keyusage, ciphertext)
         return ciphertext
 
     @classmethod
-    def decrypt(self, key, keyusage, ciphertext):
+    def decrypt(cls, key, keyusage, ciphertext):
         if not isinstance(ciphertext, bytes):
             ciphertext = bytes(ciphertext)
-        ke = self.random_to_key(
-            self.kdf_hmac_sha2(
-                key.contents, struct.pack(">IB", keyusage, 0xAA), self.keysize
+        ke = cls.random_to_key(
+            cls.kdf_hmac_sha2(
+                key.contents, struct.pack(">IB", keyusage, 0xAA), cls.keysize
             )
         )
-        ki = self.random_to_key(
-            self.kdf_hmac_sha2(
-                key.contents, struct.pack(">IB", keyusage, 0x55), self.macsize
+        ki = cls.random_to_key(
+            cls.kdf_hmac_sha2(
+                key.contents, struct.pack(">IB", keyusage, 0x55), cls.macsize
             )
         )
-        c = ciphertext[: -self.macsize]
-        h = ciphertext[-self.macsize :]
+        c, h = cls.splitter(ciphertext)
         # Initial cipher state is a zeroed buffer
-        iv = bytes(self.blocksize)
-        if h != HMAC.new(ki.contents, iv + c, self.hashmod).digest()[: self.macsize]:
+        iv = bytes(cls.blocksize)
+        if h != HMAC.new(ki.contents, iv + c, cls.hashmod).digest()[: cls.macsize]:
             raise InvalidChecksum("ciphertext integrity failure")
-        plaintext = self.basic_decrypt(ke, c, iv)[self.blocksize :]
+        plaintext = cls.basic_decrypt(ke, c, iv)[cls.blocksize :]
         return plaintext
+
+    @classmethod
+    def splitter(cls, ciphertext):
+        ctext = ciphertext[: -cls.macsize]
+        mac = ciphertext[-cls.macsize :]
+        return ctext, mac
 
 
 class _AES128_SHA1(_EtypeRfc3962):

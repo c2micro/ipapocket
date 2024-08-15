@@ -28,7 +28,7 @@ pipx install git+https://github.com/c2micro/ipapocket
 
 ## Examples AKA the pentest tools
 
-`ipp-cve-2024-3183.py` - PoC for CVE-2024-3183 (*hashcat module is currently under development*)
+`ipp-cve-2024-3183.py` - PoC for CVE-2024-3183 ([fork of hashcat](https://github.com/c2micro/hashcat). `32900` for AES256-SHA1 ak. etype 18)
 
 `ipp-get-tgs.py` - get TGS-REP and save TGS to CCACHE
 

@@ -97,7 +97,7 @@ class _EtypeRfc3961Profile(_EtypeBaseProfile):
         return cls.random_to_key(rndseed[0 : cls.seedsize])
 
     @classmethod
-    def encrypt(cls, key, keyusage, plaintext, confounder):
+    def encrypt(cls, key, keyusage, plaintext, confounder=None):
         ki = cls.derive(key, struct.pack(">IB", keyusage, 0x55))
         ke = cls.derive(key, struct.pack(">IB", keyusage, 0xAA))
         if confounder is None:
@@ -226,7 +226,7 @@ class _EtypeRfc8009(_EtypeRfc3961Profile):
         )
 
     @classmethod
-    def encrypt(cls, key, keyusage, plaintext, confounder):
+    def encrypt(cls, key, keyusage, plaintext, confounder=None):
         ke = cls.random_to_key(
             cls.kdf_hmac_sha2(
                 key.contents, struct.pack(">IB", keyusage, 0xAA), cls.keysize

@@ -6,7 +6,8 @@ import logging
 
 from ipapocket.network.krb5 import Krb5Client
 from ipapocket.krb5.operations import BaseKrb5Operations
-from ipapocket.krb5.crypto.base import Key, _get_etype_profile
+from ipapocket.krb5.crypto.backend import Key
+from ipapocket.krb5.crypto import crypto
 from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger
@@ -53,10 +54,13 @@ class GetTgs:
         """
         Process AS-REP
         """
-        part = _get_etype_profile(key.enctype).decrypt(
-            key, KeyUsageTypes.AS_REP_ENCPART.value, rep.kdc_rep.enc_part.cipher
+        enc_part = EncRepPart.load(
+            crypto.decrypt(
+                key,
+                KeyUsageTypes.AS_REP_ENCPART,
+                rep.kdc_rep.enc_part.cipher,
+            )
         )
-        enc_part = EncRepPart.load(part)
         if enc_part.is_enc_as_rep():
             kdc_enc_data = enc_part.enc_as_rep_part.enc_kdc_rep_part
             logging.debug("encrypted part from AS-REP (microsoft way)")
@@ -76,7 +80,7 @@ class GetTgs:
         Process TGS-REQ
         """
         logging.debug("construct TGS-REQ")
-        tgs_req = self._base.tgs_req(kdc_rep, ticket, self._session_key)
+        tgs_req = self._base.tgs_req(kdc_rep, ticket, self._session_key, self._service_name)
         logging.debug("send TGS-REQ")
         data = self._krb5_client.sendrcv(tgs_req.to_asn1().dump())
         # convert to response type
@@ -87,12 +91,13 @@ class GetTgs:
             self._tgs_rep(response.tgs_rep)
 
     def _tgs_rep(self, rep: TgsRep):
-        part = _get_etype_profile(self._session_key.enctype).decrypt(
-            self._session_key,
-            KeyUsageTypes.TGS_REP_ENCPART_SESSKEY.value,
-            rep.kdc_rep.enc_part.cipher,
+        enc_part = EncRepPart.load(
+            crypto.decrypt(
+                self._session_key,
+                KeyUsageTypes.TGS_REP_ENCPART_SESSKEY,
+                rep.kdc_rep.enc_part.cipher,
+            )
         )
-        enc_part = EncRepPart.load(part)
         if enc_part.is_enc_as_rep():
             kdc_enc_data = enc_part.enc_as_rep_part.enc_kdc_rep_part
             logging.debug("encrypted part from AS-REP (microsoft way)")
@@ -183,7 +188,7 @@ if __name__ == "__main__":
         "--service",
         required=False,
         action="store",
-        help="Name of service to get ST for (SPN)",
+        help="Name of service to get ST for (SPN). Default krbtgt/DOMAIN",
     )
     parser.add_argument(
         "--ccache",

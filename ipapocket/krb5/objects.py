@@ -290,6 +290,9 @@ class PrincipalName:
         return value
 
     def _validate_value(self, value) -> KerberosStrings:
+        if isinstance(value, str):
+            # e.g. krbtgt/ipa.test
+            value = value.split("/")
         return KerberosStrings(value)
 
     def __eq__(self, obj):
@@ -965,6 +968,9 @@ class KdcReqBody:
             )
         return kdc_req_body
 
+    def dump(self) -> bytes:
+        return self.to_asn1().dump()
+
 
 class PaEncTsEnc:
     _patimestamp: KerberosTime = None
@@ -1030,6 +1036,12 @@ class PaEncTsEnc:
         if self._pausec is not None:
             pa_enc_ts_enc[PA_ENC_TS_ENC_PA_USEC] = self._pausec.to_asn1()
         return pa_enc_ts_enc
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class EtypeInfoEntry:
@@ -2487,6 +2499,12 @@ class Authenticator:
                 self.authorization_data.to_asn1()
             )
         return authenticator
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class ApReq:

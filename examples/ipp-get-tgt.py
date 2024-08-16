@@ -6,7 +6,8 @@ import logging
 
 from ipapocket.network.krb5 import Krb5Client
 from ipapocket.krb5.operations import BaseKrb5Operations
-from ipapocket.krb5.crypto.base import Key, _get_etype_profile
+from ipapocket.krb5.crypto.backend import Key
+from ipapocket.krb5.crypto import crypto
 from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger
@@ -15,7 +16,7 @@ from ipapocket.krb5.ccache import Ccache
 
 
 class GetTgt:
-    def __init__(self, username, password, domain, ipa_host, ccache_file=None):
+    def __init__(self, username, password, domain, ipa_host, service, ccache_file=None):
         self._base = BaseKrb5Operations(domain, username, password)
         self._krb5_client = Krb5Client(ipa_host)
 
@@ -24,6 +25,7 @@ class GetTgt:
         self._domain = domain
         self._ipa_host = ipa_host
         self._ccache_path = ccache_file
+        self._service_name = service
 
     def _save_ccache(self, kdc_rep, kdc_enc_part):
         ccache = Ccache()
@@ -32,10 +34,13 @@ class GetTgt:
         logging.info("TGT saved to {}".format(self._ccache_path))
 
     def _as_rep(self, rep: AsRep, key: Key):
-        part = _get_etype_profile(key.enctype).decrypt(
-            key, KeyUsageTypes.AS_REP_ENCPART.value, rep.kdc_rep.enc_part.cipher
+        enc_part = EncRepPart.load(
+            crypto.decrypt(
+                key,
+                KeyUsageTypes.AS_REP_ENCPART,
+                rep.kdc_rep.enc_part.cipher,
+            )
         )
-        enc_part = EncRepPart.load(part)
         if enc_part.is_enc_as_rep():
             kdc_enc_data = enc_part.enc_as_rep_part.enc_kdc_rep_part
             logging.debug("encrypted part from AS-REP (microsoft way)")
@@ -51,7 +56,7 @@ class GetTgt:
 
     def get_tgt(self):
         logging.debug("construct AS-REQ wihtout PA")
-        as_req = self._base.as_req_without_pa()
+        as_req = self._base.as_req_without_pa(service=self._service_name)
         logging.debug("send AS-REQ without PA")
         data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
         # convert to response type
@@ -69,7 +74,7 @@ class GetTgt:
                 self._base.gen_key()
                 # construct as-req with PA
                 logging.debug("construct AS-REQ with encrypted PA")
-                as_req = self._base.as_req_with_pa()
+                as_req = self._base.as_req_with_pa(service=self._service_name)
                 logging.debug("send AS-REQ with encrypted PA")
                 data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
                 response = KerberosResponse.load(data)
@@ -116,6 +121,13 @@ if __name__ == "__main__":
         help="Verbose mode",
     )
     parser.add_argument(
+        "-s",
+        "--service",
+        required=False,
+        action="store",
+        help="Name of service to get TGT for (SPN). Default krbtgt/DOMAIN",
+    )
+    parser.add_argument(
         "--ccache",
         required=False,
         action="store",
@@ -136,6 +148,7 @@ if __name__ == "__main__":
         options.password,
         options.domain,
         options.ipa_host,
+        options.service,
         options.ccache,
     )
     try:

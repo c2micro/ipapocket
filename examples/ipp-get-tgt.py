@@ -16,7 +16,7 @@ from ipapocket.krb5.ccache import Ccache
 
 
 class GetTgt:
-    def __init__(self, username, password, domain, ipa_host, service, ccache_file=None):
+    def __init__(self, username, password, domain, ipa_host, service, renew, ccache_file=None):
         self._base = BaseKrb5Operations(
             domain=domain, username=username, password=password
         )
@@ -28,6 +28,7 @@ class GetTgt:
         self._ipa_host = ipa_host
         self._ccache_path = ccache_file
         self._service_name = service
+        self._renew = renew
 
     def _save_ccache(self, kdc_rep, kdc_enc_part):
         ccache = Ccache()
@@ -76,7 +77,7 @@ class GetTgt:
                 self._base.gen_key()
                 # construct as-req with PA
                 logging.debug("construct AS-REQ with encrypted PA")
-                as_req = self._base.as_req_with_pa(service=self._service_name)
+                as_req = self._base.as_req_with_pa(service=self._service_name, renew=self._renew)
                 logging.debug("send AS-REQ with encrypted PA")
                 data = self._krb5_client.sendrcv(as_req.dump())
                 response = KerberosResponse.load(data)
@@ -130,6 +131,12 @@ if __name__ == "__main__":
         help="Name of service to get TGT for (SPN). Default krbtgt/DOMAIN",
     )
     parser.add_argument(
+        "--renew",
+        required=False,
+        action="store_true",
+        help="Make TGT renewable",
+    )
+    parser.add_argument(
         "--ccache",
         required=False,
         action="store",
@@ -151,6 +158,7 @@ if __name__ == "__main__":
         options.domain,
         options.ipa_host,
         options.service,
+        options.renew,
         options.ccache,
     )
     try:

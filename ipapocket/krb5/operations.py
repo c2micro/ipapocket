@@ -138,7 +138,7 @@ class BaseKrb5Operations:
         self.key = crypto.string_to_key(self.etype, self.password, self.salt)
 
     def as_req_with_pa(
-        self, username=None, etype=None, service=None, key=None
+        self, username=None, etype=None, service=None, key=None, renew=False
     ) -> AsReq:
         """
         Construct AS-REQ packet with encrypted Preauthentication Data
@@ -168,6 +168,8 @@ class BaseKrb5Operations:
         kdc_options.add(KdcOptionsTypes.FORWARDABLE)
         kdc_options.add(KdcOptionsTypes.CANONICALIZE)
         kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
+        if renew:
+            kdc_options.add(KdcOptionsTypes.RENEWABLE)
 
         # set options in request
         kdc_req_body.kdc_options = kdc_options
@@ -179,8 +181,8 @@ class BaseKrb5Operations:
         kdc_req_body.sname = PrincipalName(PrincipalType.NT_SRV_INST, service)
         # set till in request
         kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
-        # set rtime in request
-        kdc_req_body.rtime = KerberosTime(current_timestamp + timedelta(days=1))
+        # set rtime in request (renewable time)
+        #kdc_req_body.rtime = KerberosTime(current_timestamp + timedelta(days=1))
         # set nonce in request
         kdc_req_body.nonce = UInt32(secrets.randbits(31))
         # set etype in request

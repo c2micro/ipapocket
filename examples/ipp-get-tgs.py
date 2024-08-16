@@ -80,9 +80,11 @@ class GetTgs:
         Process TGS-REQ
         """
         logging.debug("construct TGS-REQ")
-        tgs_req = self._base.tgs_req(kdc_rep, ticket, self._session_key, self._service_name)
+        tgs_req = self._base.tgs_req(
+            kdc_rep, ticket, self._session_key, self._service_name
+        )
         logging.debug("send TGS-REQ")
-        data = self._krb5_client.sendrcv(tgs_req.to_asn1().dump())
+        data = self._krb5_client.sendrcv(tgs_req.dump())
         # convert to response type
         response = KerberosResponse.load(data)
         if response.is_krb_error():
@@ -115,7 +117,7 @@ class GetTgs:
         logging.debug("construct AS-REQ wihtout PA")
         as_req = self._base.as_req_without_pa()
         logging.debug("send AS-REQ without PA")
-        data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
+        data = self._krb5_client.sendrcv(as_req.dump())
         # convert to response type
         response = KerberosResponse.load(data)
         if response.is_krb_error():
@@ -133,7 +135,7 @@ class GetTgs:
                 logging.debug("construct AS-REQ with encrypted PA")
                 as_req = self._base.as_req_with_pa()
                 logging.debug("send AS-REQ with encrypted PA")
-                data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
+                data = self._krb5_client.sendrcv(as_req.dump())
                 response = KerberosResponse.load(data)
                 if response.is_krb_error():
                     raise UnexpectedKerberosError(response.krb_error.error_code.name)

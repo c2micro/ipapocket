@@ -30,7 +30,7 @@ class UserEnum:
         for username in self._usernames:
             logging.debug("try username: {}".format(username))
             as_req = self._base.as_req_without_pa(username)
-            data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
+            data = self._krb5_client.sendrcv(as_req.dump())
             # convert to response type
             response = KerberosResponse.load(data)
             if response.is_krb_error:

@@ -17,7 +17,9 @@ from ipapocket.krb5.ccache import Ccache
 
 class GetTgt:
     def __init__(self, username, password, domain, ipa_host, service, ccache_file=None):
-        self._base = BaseKrb5Operations(domain, username, password)
+        self._base = BaseKrb5Operations(
+            domain=domain, username=username, password=password
+        )
         self._krb5_client = Krb5Client(ipa_host)
 
         self._username = username
@@ -58,7 +60,7 @@ class GetTgt:
         logging.debug("construct AS-REQ wihtout PA")
         as_req = self._base.as_req_without_pa(service=self._service_name)
         logging.debug("send AS-REQ without PA")
-        data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
+        data = self._krb5_client.sendrcv(as_req.dump())
         # convert to response type
         response = KerberosResponse.load(data)
         if response.is_krb_error():
@@ -76,7 +78,7 @@ class GetTgt:
                 logging.debug("construct AS-REQ with encrypted PA")
                 as_req = self._base.as_req_with_pa(service=self._service_name)
                 logging.debug("send AS-REQ with encrypted PA")
-                data = self._krb5_client.sendrcv(as_req.to_asn1().dump())
+                data = self._krb5_client.sendrcv(as_req.dump())
                 response = KerberosResponse.load(data)
                 if response.is_krb_error():
                     raise UnexpectedKerberosError(response.krb_error.error_code.name)

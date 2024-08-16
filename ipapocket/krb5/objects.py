@@ -52,6 +52,12 @@ class Int32:
     def to_asn1(self) -> asn1.Int32Asn1:
         return asn1.Int32Asn1(self._value)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class UInt32:
     _value: int = 0
@@ -99,6 +105,12 @@ class UInt32:
     def to_asn1(self) -> asn1.UInt32Asn1:
         return asn1.UInt32Asn1(self._value)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class Microseconds:
     _value: int = 0
@@ -144,6 +156,12 @@ class Microseconds:
     def to_asn1(self) -> asn1.MicrosecondsAsn1:
         return asn1.MicrosecondsAsn1(self._value)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class KerberosString:
     _value: str = None
@@ -188,6 +206,12 @@ class KerberosString:
 
     def to_asn1(self) -> asn1.KerberosStringAsn1:
         return asn1.KerberosStringAsn1(self._value)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class KerberosStrings:
@@ -243,6 +267,12 @@ class KerberosStrings:
         for v in self._value:
             tmp.append(v.to_asn1())
         return asn1.KerberosStringsAsn1(tmp)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class PrincipalName:
@@ -309,6 +339,12 @@ class PrincipalName:
             principal_name[PRINCIPAL_NAME_NAME_STRING] = self._value.to_asn1()
         return principal_name
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class Realm:
     _realm: KerberosString = None
@@ -349,6 +385,12 @@ class Realm:
     def to_asn1(self) -> asn1.RealmAsn1:
         return asn1.RealmAsn1(self._realm.to_asn1().native)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class KerberosFlags:
     _flags: list = None
@@ -376,6 +418,12 @@ class KerberosFlags:
         for flag in self._flags:
             b_arr[flag.value] = 1
         return asn1.KerberosFlagsAsn1(tuple(b_arr.tolist()))
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class KdcOptions:
@@ -412,6 +460,12 @@ class KdcOptions:
     def to_asn1(self) -> asn1.KdcOptionsAsn1:
         return asn1.KdcOptionsAsn1(self._options.to_asn1().native)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class TicketFlags:
     _flags: KerberosFlags = None
@@ -447,6 +501,12 @@ class TicketFlags:
     def to_asn1(self) -> asn1.TicketFlagsAsn1:
         return asn1.TicketFlagsAsn1(self._flags.to_asn1().native)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class KerberosTime:
     _time: datetime = None
@@ -476,6 +536,12 @@ class KerberosTime:
 
     def to_asn1(self) -> asn1.KerberosTimeAsn1:
         return asn1.KerberosTimeAsn1(self._time)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class EncTypes:
@@ -516,6 +582,12 @@ class EncTypes:
         for t in self._etypes:
             final.append(t.value)
         return asn1.EncTypesAsn1(final)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class HostAddress:
@@ -563,6 +635,12 @@ class HostAddress:
             host_address[HOST_ADDRESS_ADDRESS] = self._address
         return host_address
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class HostAddresses:
     _addresses: list[HostAddress] = None
@@ -590,6 +668,12 @@ class HostAddresses:
         for v in self._addresses:
             tmp.append(v.to_asn1())
         return asn1.HostAddressesAsn1(tmp)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class EncryptedData:
@@ -668,6 +752,12 @@ class EncryptedData:
             enc_data[ENCRYPTED_DATA_CIPHER] = self._cipher
         return enc_data
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class Ticket:
     _tkt_vno: Int32 = None
@@ -742,6 +832,12 @@ class Ticket:
         if self._enc_part is not None:
             ticket[TICKET_ENC_PART] = self._enc_part.to_asn1()
         return ticket
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 # TODO
@@ -969,6 +1065,9 @@ class KdcReqBody:
         return kdc_req_body
 
     def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
         return self.to_asn1().dump()
 
 
@@ -1090,6 +1189,12 @@ class EtypeInfoEntry:
             etype_info[ETYPE_INFO_SALT] = self._salt
         return etype_info
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class EtypeInfo:
     _entries: list[EtypeInfoEntry] = None
@@ -1116,6 +1221,12 @@ class EtypeInfo:
         for v in self._entries:
             tmp.append(v.to_asn1())
         return asn1.EtypeInfoAsn1(tmp)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class EtypeInfo2Entry:
@@ -1178,6 +1289,12 @@ class EtypeInfo2Entry:
             etype_info2_entry[ETYPE_INFO2_S2KPARAMS] = self._s2kparams
         return etype_info2_entry
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class EtypeInfo2:
     _entries: list[EtypeInfo2Entry] = None
@@ -1204,6 +1321,12 @@ class EtypeInfo2:
         for v in self._entries:
             tmp.append(v.to_asn1())
         return asn1.EtypeInfo2Asn1(tmp)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class PaData:
@@ -1259,6 +1382,12 @@ class PaData:
             pa_data[PADATA_PADATA_VALUE] = self._value
         return pa_data
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class MethodData:
     _padatas: list = None
@@ -1294,6 +1423,12 @@ class MethodData:
         for pa_data in self._padatas:
             tmp.append(pa_data.to_asn1())
         return asn1.MethodDataAsn1(tuple(tmp))
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class KdcReq:
@@ -1382,6 +1517,12 @@ class KdcReq:
             kdc_req[KDC_REQ_PADATA] = self._padata.to_asn1()
         return kdc_req
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class AsReq:
     _req: KdcReq = None
@@ -1412,6 +1553,12 @@ class AsReq:
     def to_asn1(self):
         return asn1.AsReqAsn1(self._req.to_asn1().native)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class TgsReq:
     _req: KdcReq = None
@@ -1441,6 +1588,12 @@ class TgsReq:
 
     def to_asn1(self):
         return asn1.TgsReqAsn1(self._req.to_asn1().native)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class KrbError:
@@ -1639,6 +1792,12 @@ class KrbError:
             krb_err[KRB_ERROR_E_DATA] = self._e_data
         return krb_err
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class KdcRep:
     _pvno: Int32 = None
@@ -1739,6 +1898,12 @@ class KdcRep:
     def to_asn1(self) -> asn1.KdcRepAsn1:
         return asn1.KdcRepAsn1()
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class AsRep:
     _kdc_rep: KdcRep = None
@@ -1763,6 +1928,12 @@ class AsRep:
     def to_asn1(self) -> asn1.AsRepAsn1:
         return asn1.AsRepAsn1(self._kdc_rep)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class TgsRep:
     _kdc_rep: KdcRep = None
@@ -1786,6 +1957,12 @@ class TgsRep:
 
     def to_asn1(self) -> asn1.TgsRepAsn1:
         return asn1.TgsRepAsn1(self._kdc_rep)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class KerberosResponse:
@@ -1849,6 +2026,12 @@ class KerberosResponse:
             # unexpected response type
             raise UnexpectedResponseType(response.name)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class EncryptionKey:
     _keytype: EncryptionTypes = None
@@ -1893,6 +2076,12 @@ class EncryptionKey:
         if self._keyvalue is not None:
             enc_key[ENCRYPTION_KEY_KEYVALUE] = self._keyvalue
         return enc_key
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class LastReq:
@@ -1939,6 +2128,12 @@ class LastReq:
             last_req[LAST_REQ_LR_VALUE] = self._lr_value.to_asn1()
         return last_req
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class LastReqs:
     _reqs: list[LastReq] = None
@@ -1966,6 +2161,12 @@ class LastReqs:
         for v in self._reqs:
             tmp.append(v.to_asn1())
         return asn1.LastReqsAsn1(tmp)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class EncKdcRepPart:
@@ -2129,6 +2330,12 @@ class EncKdcRepPart:
     def to_asn1(self) -> asn1.EncKdcRepPartAsn1:
         return asn1.EncKdcRepPartAsn1()
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class EncAsRepPart:
     _enc_kdc_rep_part: EncKdcRepPart = None
@@ -2155,6 +2362,12 @@ class EncAsRepPart:
     def to_asn1(self) -> asn1.EncAsRepPartAsn1:
         return asn1.EncAsRepPartAsn1(self._enc_kdc_rep_part)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class EncTgsRepPart:
     _enc_kdc_rep_part: EncKdcRepPart = None
@@ -2180,6 +2393,12 @@ class EncTgsRepPart:
 
     def to_asn1(self) -> asn1.EncTgsRepPartAsn1:
         return asn1.EncTgsRepPartAsn1(self._enc_kdc_rep_part)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class EncRepPart:
@@ -2226,6 +2445,12 @@ class EncRepPart:
         else:
             raise UnexpectedEncRepPartType()
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class ApOptions:
     _options: KerberosFlags = None
@@ -2261,6 +2486,12 @@ class ApOptions:
     def to_asn1(self) -> asn1.ApOptionsAsn1:
         return asn1.ApOptionsAsn1(self._options.to_asn1().native)
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class Checksum:
     _cksumtype: ChecksumTypes = None
@@ -2293,6 +2524,12 @@ class Checksum:
             checksum[CHECKSUM_CHECKSUM] = self._checksum
         return checksum
 
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
+
 
 class AuthorizationDataElement:
     _ad_type: AuthorizationDataTypes = None
@@ -2316,6 +2553,12 @@ class AuthorizationDataElement:
     @ad_data.setter
     def ad_data(self, value) -> None:
         self._ad_data = value
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class AuthorizationData:
@@ -2345,6 +2588,12 @@ class AuthorizationData:
         for v in self.elements:
             tmp.append(v.to_asn1())
         return asn1.AuthorizationDataAsn1(tmp)
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()
 
 
 class Authenticator:
@@ -2595,3 +2844,9 @@ class ApReq:
         if self.authenticator is not None:
             ap_req[AP_REQ_AUTHENTICATOR] = self.authenticator.to_asn1()
         return ap_req
+
+    def dump(self) -> bytes:
+        """
+        Dump object to bytes (with ASN1 structure)
+        """
+        return self.to_asn1().dump()

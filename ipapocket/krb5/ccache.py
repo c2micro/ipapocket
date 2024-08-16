@@ -666,7 +666,7 @@ class Ccache:
         c.tktflags = kdc_enc_part.flags
         c.num_address = 0
         c.num_authdata = 0
-        c.ticket = OctetString(kdc_rep.ticket.to_asn1().dump())
+        c.ticket = OctetString(kdc_rep.ticket.dump())
         c.second_ticket = OctetString()
         self._credentials.add(c)
 

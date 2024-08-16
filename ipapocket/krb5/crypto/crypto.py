@@ -1,4 +1,4 @@
-from ipapocket.krb5.constants import EncryptionTypes, KeyUsageTypes, ChecksumTypes
+from ipapocket.krb5.constants import EncryptionTypes, KeyUsageTypes
 from ipapocket.krb5.crypto.backend import (
     _get_etype_profile,
     _get_cksum_profile,

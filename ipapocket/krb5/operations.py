@@ -79,8 +79,8 @@ class BaseKrb5Operations:
         # need uppercase domain name
         domain = self.domain.upper()
         # cname
-        if username is not None:
-            self.username = username
+        if username is None:
+            username = self.username
         # type
         if etype is None:
             etype = crypto.supported_etypes()
@@ -323,7 +323,7 @@ class BaseKrb5Operations:
         # creation of AP-REQ with authenticator
         method_data = MethodData()
         # create PaData entry
-        pa_data = PaData(PreAuthenticationDataTypes.PA_TGS_REQ, ap_req.to_asn1().dump())
+        pa_data = PaData(PreAuthenticationDataTypes.PA_TGS_REQ, ap_req.dump())
 
         # add PaData in PaDatas
         method_data.add(pa_data)

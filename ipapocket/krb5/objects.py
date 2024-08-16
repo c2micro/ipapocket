@@ -321,6 +321,8 @@ class PrincipalName:
 
     def _validate_value(self, value) -> KerberosStrings:
         if isinstance(value, str):
+            # e.g. admin@ipa.test (we are dropping part after @)
+            value = value.split("@")[0]
             # e.g. krbtgt/ipa.test
             value = value.split("/")
         return KerberosStrings(value)

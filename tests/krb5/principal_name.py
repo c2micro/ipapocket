@@ -28,6 +28,14 @@ class TestPrincipalNameObject(unittest.TestCase):
             PrincipalName(value="krbtgt/ipa.test").name_value,
             ["krbtgt", "ipa.test"],
         )
+        self.assertEqual(
+            PrincipalName(value="admin@ipa.test").name_value,
+            KerberosStrings("admin"),
+        )
+        self.assertEqual(
+            PrincipalName(value="krbtgt/ipa.test@ipa.test").name_value,
+            KerberosStrings(["krbtgt", "ipa.test"]),
+        )
 
     def test_eq(self):
         pn01 = PrincipalName(PrincipalType.NT_SRV_HST, "IPA.TEST.LOCAL")

@@ -52,6 +52,12 @@ class Int32:
     def to_asn1(self) -> asn1.Int32Asn1:
         return asn1.Int32Asn1(self._value)
 
+    def pretty(self):
+        """
+        Convert object to value
+        """
+        return self.value
+
     def dump(self) -> bytes:
         """
         Dump object to bytes (with ASN1 structure)
@@ -207,6 +213,12 @@ class KerberosString:
     def to_asn1(self) -> asn1.KerberosStringAsn1:
         return asn1.KerberosStringAsn1(self._value)
 
+    def pretty(self):
+        """
+        Convert object to string
+        """
+        return self.value
+
     def dump(self) -> bytes:
         """
         Dump object to bytes (with ASN1 structure)
@@ -267,6 +279,15 @@ class KerberosStrings:
         for v in self._value:
             tmp.append(v.to_asn1())
         return asn1.KerberosStringsAsn1(tmp)
+
+    def pretty(self):
+        """
+        Convert object to list of values
+        """
+        tmp = list()
+        for v in self.value:
+            tmp.append(v.pretty())
+        return tmp
 
     def dump(self) -> bytes:
         """
@@ -340,6 +361,21 @@ class PrincipalName:
         if self._value is not None:
             principal_name[PRINCIPAL_NAME_NAME_STRING] = self._value.to_asn1()
         return principal_name
+
+    def pretty(self):
+        """
+        Convert object to dict
+        """
+        tmp = {}
+        if self.name_type is not None:
+            tmp[PRINCIPAL_NAME_NAME_TYPE] = self.name_type.name
+        else:
+            tmp[PRINCIPAL_NAME_NAME_TYPE] = None
+        if self.name_value is not None:
+            tmp[PRINCIPAL_NAME_NAME_STRING] = self.name_value.pretty()
+        else:
+            tmp[PRINCIPAL_NAME_NAME_STRING] = None
+        return tmp
 
     def dump(self) -> bytes:
         """
@@ -1066,6 +1102,14 @@ class KdcReqBody:
             )
         return kdc_req_body
 
+    def pretty(self):
+        """
+        Convert object to dict
+        """
+        tmp = dict()
+        # TODO
+        return {KDC_REQ_BODY: tmp}
+
     def dump(self) -> bytes:
         """
         Dump object to bytes (with ASN1 structure)
@@ -1519,6 +1563,29 @@ class KdcReq:
             kdc_req[KDC_REQ_PADATA] = self._padata.to_asn1()
         return kdc_req
 
+    def pretty(self):
+        """
+        Convert object to dict
+        """
+        tmp = dict()
+        if self.pvno is not None:
+            tmp[KDC_REQ_PVNO] = self.pvno.pretty()
+        else:
+            tmp[KDC_REQ_PVNO] = None
+        if self.msg_type is not None:
+            tmp[KDC_REQ_MSG_TYPE] = self.msg_type.name
+        else:
+            tmp[KDC_REQ_MSG_TYPE] = None
+        if self.req_body is not None:
+            tmp[KDC_REQ_REQ_BODY] = self.req_body.pretty()
+        else:
+            tmp[KDC_REQ_REQ_BODY] = None
+        if self.padata is not None:
+            tmp[KDC_REQ_PADATA] = self.padata.pretty()
+        else:
+            tmp[KDC_REQ_PADATA] = None
+        return {KDC_REQ: tmp}
+
     def dump(self) -> bytes:
         """
         Dump object to bytes (with ASN1 structure)
@@ -1554,6 +1621,16 @@ class AsReq:
 
     def to_asn1(self):
         return asn1.AsReqAsn1(self._req.to_asn1().native)
+
+    def pretty(self):
+        """
+        Convert object to dict
+        """
+        if self.req is not None:
+            value = self.req.pretty()
+        else:
+            value = None
+        return {AS_REQ: value}
 
     def dump(self) -> bytes:
         """

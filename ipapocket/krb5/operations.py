@@ -129,6 +129,8 @@ class BaseKrb5Operations:
         # create AS-REQ
         as_req = AsReq(kdc_req)
 
+        print(as_req.pretty())
+
         return as_req
 
     def gen_key(self):

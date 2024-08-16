@@ -54,6 +54,12 @@ class OctetString:
         data = reader.read(length)
         return cls(data)
 
+    def to_kerberos_string(self) -> KerberosString:
+        """
+        Convert CCACHE OctetString to ASN1 KerberosStirng
+        """
+        return KerberosString(self.data.decode("utf-8"))
+
 
 class Header:
     _tag: int = None  # uint16_t
@@ -400,6 +406,17 @@ class Principal:
         return cls(
             PrincipalName(PrincipalType(principal_type), components), Realm(realm)
         )
+
+    def to_principal_name(self, type=None) -> PrincipalName:
+        """
+        Convert CCACHE principal to ASN1 principal
+        """
+        if type is None:
+            type = PrincipalType.NT_PRINCIPAL
+        tmp = list[KerberosString]()
+        for v in self._components:
+            tmp.append(v.to_kerberos_string())
+        return PrincipalName(type=type, value=tmp)
 
 
 class DeltaTime:

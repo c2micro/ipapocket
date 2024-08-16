@@ -253,7 +253,7 @@ class BaseKrb5Operations:
                         return
         raise NoSupportedEtypes("no supported server PA etypes exists in this client")
 
-    def tgs_req(self, kdc_rep: KdcRep, ticket: Ticket, session_key: Key, service=None):
+    def tgs_req(self, kdc_rep: KdcRep, ticket: Ticket, session_key: Key, service=None, renewable=False):
         """
         Construct TGS-REQ packet
         """
@@ -270,13 +270,14 @@ class BaseKrb5Operations:
         kdc_options = KdcOptions()
         kdc_options.add(KdcOptionsTypes.FORWARDABLE)
         kdc_options.add(KdcOptionsTypes.CANONICALIZE)
+        if renewable:
+            kdc_options.add(KdcOptionsTypes.RENEWABLE)
 
         # set kdc options in request body
         kdc_req_body.kdc_options = kdc_options
         # set realm in request body
         kdc_req_body.realm = Realm(domain)
         # set service name (for which we want get ST)
-        # TODO get from cli
         kdc_req_body.sname = PrincipalName(PrincipalType.NT_PRINCIPAL, service)
         # set till timestamp in request body
         kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))

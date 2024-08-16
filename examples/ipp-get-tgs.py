@@ -31,6 +31,7 @@ class GetTgs:
         ipa_host,
         use_ccache,
         service_name,
+        renewable,
         ccache_file=None,
     ):
         self._base = BaseKrb5Operations(domain, username, password)
@@ -43,6 +44,7 @@ class GetTgs:
         self._session_key: Key = None
         self._service_name = service_name
         self._ccache_path = ccache_file
+        self._renewable = renewable
 
     def _save_ccache(self, kdc_rep, kdc_enc_part):
         ccache = Ccache()
@@ -81,7 +83,11 @@ class GetTgs:
         """
         logging.debug("construct TGS-REQ")
         tgs_req = self._base.tgs_req(
-            kdc_rep, ticket, self._session_key, self._service_name
+            kdc_rep=kdc_rep,
+            ticket=ticket,
+            session_key=self._session_key,
+            service=self._service_name,
+            renewable=self._renewable,
         )
         logging.debug("send TGS-REQ")
         data = self._krb5_client.sendrcv(tgs_req.dump())
@@ -133,7 +139,8 @@ class GetTgs:
                 self._base.gen_key()
                 # construct as-req with PA
                 logging.debug("construct AS-REQ with encrypted PA")
-                as_req = self._base.as_req_with_pa()
+                # tgt must have renewable flag to make renewable TGS
+                as_req = self._base.as_req_with_pa(renewable=self._renewable)
                 logging.debug("send AS-REQ with encrypted PA")
                 data = self._krb5_client.sendrcv(as_req.dump())
                 response = KerberosResponse.load(data)
@@ -193,6 +200,12 @@ if __name__ == "__main__":
         help="Name of service to get ST for (SPN). Default krbtgt/DOMAIN",
     )
     parser.add_argument(
+        "--renewable",
+        required=False,
+        action="store_true",
+        help="Make TGS renewable (set KDC option in TGS-REQ)",
+    )
+    parser.add_argument(
         "--ccache",
         required=False,
         action="store",
@@ -215,6 +228,7 @@ if __name__ == "__main__":
         options.ipa_host,
         options.k,
         options.service,
+        options.renewable,
         options.ccache,
     )
     try:

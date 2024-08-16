@@ -138,7 +138,7 @@ class BaseKrb5Operations:
         self.key = crypto.string_to_key(self.etype, self.password, self.salt)
 
     def as_req_with_pa(
-        self, username=None, etype=None, service=None, key=None, renew=False
+        self, username=None, etype=None, service=None, key=None, renewable=False
     ) -> AsReq:
         """
         Construct AS-REQ packet with encrypted Preauthentication Data
@@ -168,7 +168,7 @@ class BaseKrb5Operations:
         kdc_options.add(KdcOptionsTypes.FORWARDABLE)
         kdc_options.add(KdcOptionsTypes.CANONICALIZE)
         kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
-        if renew:
+        if renewable:
             kdc_options.add(KdcOptionsTypes.RENEWABLE)
 
         # set options in request

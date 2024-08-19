@@ -7,8 +7,14 @@ VERSION = '0.1'
 def read(fname):
     return open(fname).read()
 
-with open("requirements.txt") as f:
-    requirements = f.read().splitlines()
+requirements="""\
+annotated-types==0.7.0
+asn1crypto==1.5.1
+bitarray==2.9.2
+pycryptodomex==3.20.0
+setuptools==72.2.0
+typing_extensions==4.12.2
+"""
 
 setup(
     name='ipapocket',

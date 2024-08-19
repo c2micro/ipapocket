@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from ipapocket.utils import logger
 from ipapocket.krb5.ccache import Ccache
 import argparse

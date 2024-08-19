@@ -20,7 +20,7 @@ setup(
     author = "c2micro",
     maintainer="c2micro",
     platforms=["Unix"],
-    packages=['ipapocket', 'ipapocket.exceptions', 'ipapocket.krb5', 'ipapocket.krb5.crypto', 'ipapocket.network', 'ipapocket.utils'],
+    packages=['ipapocket', 'ipapocket.exceptions', 'ipapocket.krb5', 'ipapocket.krb5.types', 'ipapocket.krb5.crypto', 'ipapocket.network', 'ipapocket.utils'],
     scripts=glob.glob(os.path.join('examples', '*.py')),
     install_requires=requirements,
     classifiers=[

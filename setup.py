@@ -14,6 +14,7 @@ bitarray==2.9.2
 pycryptodomex==3.20.0
 setuptools==72.2.0
 typing_extensions==4.12.2
+pyparsing==3.1.2
 """
 
 setup(

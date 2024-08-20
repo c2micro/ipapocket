@@ -5,6 +5,8 @@ from ipapocket.krb5.constants import (
     ApplicationTagNumbers,
     MIN_INT32,
     MAX_INT32,
+    MIN_UINT16,
+    MAX_UINT16,
     MIN_UINT32,
     MAX_UINT32,
     MIN_MICROSECONDS,
@@ -14,6 +16,7 @@ from ipapocket.krb5.fields import *
 
 # explicit tag for ASN1
 EXPLICIT = "explicit"
+IMPLICIT = "implicit"
 
 UNIVERSAL = 0
 APPLICATION = 1
@@ -903,4 +906,121 @@ class EncRepPartAsn1(core.Choice):
             EncTgsRepPartAsn1,
             {"implicit": (APPLICATION, ApplicationTagNumbers.ENC_TGS_REP_PART.value)},
         ),
+    ]
+
+
+# https://github.com/freeipa/freeipa/blob/master/util/ipa_krb5.c#L359
+class KrbSaltAsn1(core.Sequence):
+    """
+    KrbSalt ::= SEQUENCE {
+        type      [0] Int32,
+        salt      [1] OCTET STRING OPTIONAL
+    }
+    """
+
+    _fields = [
+        (KRB_SALT_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            KRB_SALT_SALT,
+            core.OctetString,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+    ]
+
+
+# https://github.com/freeipa/freeipa/blob/master/util/ipa_krb5.c#L352
+class KrbKeyAsn1(core.Sequence):
+    """
+    KrbKey ::= SEQUENCE {
+        salt      [0] KrbSalt OPTIONAL,
+        key       [1] EncryptionKey,
+        s2kparams [2] OCTET STRING OPTIONAL,
+        ...
+    }
+    """
+
+    _fields = [
+        (KRB_KEY_SALT, KrbSaltAsn1, {"tag_type": EXPLICIT, "tag": 0, "optional": True}),
+        (KRB_KEY_KEY, EncryptionKeyAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (
+            KRB_KEY_S2KPARAMS,
+            core.OctetString,
+            {"tag_type": EXPLICIT, "tag": 2, "optional": True},
+        ),
+    ]
+
+
+# wrapped to handle sequence of KrbKey
+class KrbKeysAsn1(core.SequenceOf):
+    _child_spec = KrbKeyAsn1
+
+
+class UInt16Asn1(core.Integer):
+    """
+    UInt16          ::= INTEGER (0..65536) -- unsigned 16 bit values
+    """
+
+    def set(self, value):
+        """
+        Validate that value in specified range
+        """
+        if value not in range(MIN_UINT16, MAX_UINT16 + 1):
+            raise Asn1ConstrainedViolation(
+                "Invalid value {} for UInt16 ASN1 type".format(value)
+            )
+        return super().set(value)
+
+
+# https://github.com/freeipa/freeipa/blob/master/util/ipa_krb5.c#L343C4-L350C5
+class KrbKeySetAsn1(core.Sequence):
+    """
+    KrbKeySet ::= SEQUENCE {
+        attribute-major-vno       [0] UInt16,
+        attribute-minor-vno       [1] UInt16,
+        kvno                      [2] UInt32,
+        mkvno                     [3] UInt32 OPTIONAL,
+        keys                      [4] SEQUENCE OF KrbKey,
+        ...
+    }
+    """
+
+    _fields = [
+        (KRB_KEY_SET_ATTRIBUTE_MAJOR_VNO, UInt16Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (KRB_KEY_SET_ATTRIBUTE_MINOR_VNO, UInt16Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (KRB_KEY_SET_KVNO, UInt32Asn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (
+            KRB_KEY_SET_MKVNO,
+            UInt32Asn1,
+            {"tag_type": EXPLICIT, "tag": 3, "optional": True},
+        ),
+        (KRB_KEY_SET_KEYS, KrbKeysAsn1, {"tag_type": EXPLICIT, "tag": 4}),
+    ]
+
+
+class MasterKeyAsn1(core.Sequence):
+    """
+    MasterKey ::= SEQUENCE {
+        keytype         [0] Int32,
+        keyvalue        [1] OCTET STRING
+    }
+    """
+
+    _fields = [
+        (MASTER_KEY_KEYTYPE, Int32Asn1),
+        (MASTER_KEY_KEYVALUE, core.OctetString),
+    ]
+
+
+# https://github.com/freeipa/freeipa/blob/58c1fdd41681c15f39b59bbb5e39b2e1cf245c6c/install/share/60kerberos.ldif#L236
+class KrbMKeyAsn1(core.Sequence):
+    """
+    KrbMKey ::= SEQUENCE {
+        kvno    [0] UInt32,
+        key     [1] MasterKey
+    }
+    """
+
+    _fields = [
+        (KRB_MKEY_KVNO, UInt32Asn1),
+        (KRB_MKEY_KEY, MasterKeyAsn1),
     ]

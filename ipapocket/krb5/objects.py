@@ -94,6 +94,30 @@ from ipapocket.krb5.types.krb_error import KrbError
 # KdcRep
 from ipapocket.krb5.types.kdc_rep import KdcRep
 
+# UInt16
+from ipapocket.krb5.types.uint16 import UInt16
+
+# KrbSalt
+from ipapocket.krb5.types.krb_salt import KrbSalt
+
+# EncryptionKey
+from ipapocket.krb5.types.encryption_key import EncryptionKey
+
+# KrbKey
+from ipapocket.krb5.types.krb_key import KrbKey
+
+# KrbKeys
+from ipapocket.krb5.types.krb_keys import KrbKeys
+
+# KrbKeySet
+from ipapocket.krb5.types.krb_key_set import KrbKeySet
+
+# MasterKey
+from ipapocket.krb5.types.master_key import MasterKey
+
+# KrbMKey
+from ipapocket.krb5.types.krb_mkey import KrbMKey
+
 
 class AsRep:
     _kdc_rep: KdcRep = None
@@ -215,57 +239,6 @@ class KerberosResponse:
         else:
             # unexpected response type
             raise UnexpectedResponseType(response.name)
-
-    def dump(self) -> bytes:
-        """
-        Dump object to bytes (with ASN1 structure)
-        """
-        return self.to_asn1().dump()
-
-
-class EncryptionKey:
-    _keytype: EncryptionTypes = None
-    _keyvalue: str = None
-
-    def __init__(self):
-        pass
-
-    @property
-    def keytype(self) -> EncryptionTypes:
-        return self._keytype
-
-    @keytype.setter
-    def keytype(self, value) -> None:
-        self._keytype = value
-
-    @property
-    def keyvalue(self) -> str:
-        return self._keyvalue
-
-    @keyvalue.setter
-    def keyvalue(self, value) -> None:
-        self._keyvalue = value
-
-    @classmethod
-    def load(cls, data: asn1.EncryptionKeyAsn1):
-        if isinstance(data, EncryptionKey):
-            data = data.to_asn1()
-        tmp = cls()
-        if ENCRYPTION_KEY_KEYTYPE in data:
-            if data[ENCRYPTION_KEY_KEYTYPE].native is not None:
-                tmp.keytype = EncryptionTypes(data[ENCRYPTION_KEY_KEYTYPE].native)
-        if ENCRYPTION_KEY_KEYVALUE in data:
-            if data[ENCRYPTION_KEY_KEYVALUE].native is not None:
-                tmp.keyvalue = data[ENCRYPTION_KEY_KEYVALUE].native
-        return tmp
-
-    def to_asn1(self) -> asn1.EncryptionKeyAsn1:
-        enc_key = asn1.EncryptionKeyAsn1()
-        if self._keytype is not None:
-            enc_key[ENCRYPTION_KEY_KEYTYPE] = self._keytype.value
-        if self._keyvalue is not None:
-            enc_key[ENCRYPTION_KEY_KEYVALUE] = self._keyvalue
-        return enc_key
 
     def dump(self) -> bytes:
         """

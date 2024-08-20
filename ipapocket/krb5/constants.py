@@ -5,10 +5,23 @@ KRB5_VERSION = 5
 # limits for nested types of objects
 MIN_INT32 = -2147483648
 MAX_INT32 = 2147483647
+MIN_UINT16 = 0
+MAX_UINT16 = 65536
 MIN_UINT32 = 0
 MAX_UINT32 = 4294967295
 MIN_MICROSECONDS = 0
 MAX_MICROSECONDS = 999999
+
+
+# https://github.com/freeipa/freeipa/blob/master/util/ipa_krb5.h#L90
+class KdbSaltTypes(enum.Enum):
+    NO_SALT = -1
+    NORMAL = 0
+    V4 = 1
+    NOREALM = 2
+    ONLYREALM = 3
+    SPECIAL = 4
+    AFS3 = 5
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.10
@@ -49,6 +62,7 @@ class PrincipalType(enum.Enum):
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.1
 # https://github.com/krb5/krb5/blob/bcc0dda256b184f8d87a4587f3f3997770020c87/src/include/krb5/krb5.hin#L935
 class KeyUsageTypes(enum.Enum):
+    MASTER_KEY = 0  # for encryption/decryption keyblocks using MK (https://github.com/krb5/krb5/blob/5495454583261ab5567b9916cbcfd41a3d5bd75d/src/lib/kdb/decrypt_key.c#L88)
     AS_REQ_PA_ENC_TIMESTAMP = 1
     KDC_REP_TICKET = 2
     AS_REP_ENCPART = 3

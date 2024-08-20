@@ -13,6 +13,24 @@ class InvalidInt32Value(Exception):
         )
 
 
+class InvalidSaltType(Exception):
+    pass
+
+
+class InvalidMasterKeyTypeAlgo(Exception):
+    pass
+
+
+class InvalidUInt16Value(Exception):
+    def __init__(self, value: int):
+        super(Exception, self).__init__(
+            "Invalid UInt16 value {} ({}). Must be in range 0:65535".format(
+                value,
+                type(value).__name__,
+            )
+        )
+
+
 class InvalidUInt32Value(Exception):
     def __init__(self, value: int):
         super(Exception, self).__init__(

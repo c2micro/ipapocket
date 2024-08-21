@@ -897,12 +897,12 @@ class EncTgsRepPartAsn1(EncKdcRepPartAsn1):
 class EncRepPartAsn1(core.Choice):
     _alternatives = [
         (
-            ENC_PART_REP_AS_REP,
+            ENC_REP_PART_AS_REP,
             EncAsRepPartAsn1,
             {"implicit": (APPLICATION, ApplicationTagNumbers.ENC_AS_REP_PART.value)},
         ),
         (
-            ENC_PART_REP_TGS_REP,
+            ENC_REP_PART_TGS_REP,
             EncTgsRepPartAsn1,
             {"implicit": (APPLICATION, ApplicationTagNumbers.ENC_TGS_REP_PART.value)},
         ),

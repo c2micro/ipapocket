@@ -7,8 +7,7 @@ import sys
 from pyparsing import Suppress, Word, nums, Group, alphas, OneOrMore, printables, Dict
 import base64
 from ipapocket.krb5.crypto.crypto import decrypt
-from ipapocket.krb5.types.krb_key_set import KrbKeySet
-from ipapocket.krb5.types.krb_mkey import KrbMKey
+from ipapocket.krb5.types import KrbKeySet, KrbMKey
 from ipapocket.krb5.crypto.backend import Key
 from ipapocket.krb5.constants import KeyUsageTypes
 from binascii import hexlify

@@ -11,7 +11,7 @@ from ipapocket.krb5.crypto import crypto
 from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger
-from ipapocket.krb5.objects import (
+from ipapocket.krb5.types import (
     KerberosResponse,
     AsRep,
     EncRepPart,

@@ -1,10 +1,5 @@
 import unittest
-import sys
-
-# hack to import from ipapocket
-sys.path.append(".")
-
-from ipapocket.krb5.objects import *
+from ipapocket.krb5.types import *
 from ipapocket.krb5.constants import *
 from ipapocket.exceptions.krb5 import *
 

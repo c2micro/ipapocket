@@ -1,6 +1,8 @@
 import unittest
-from ipapocket.krb5.objects import *
+from ipapocket.krb5.types import *
 from ipapocket.krb5.constants import *
+from ipapocket.exceptions.krb5 import *
+from ipapocket.krb5.fields import *
 
 
 class TestPrincipalNameObject(unittest.TestCase):

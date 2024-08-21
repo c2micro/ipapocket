@@ -14,17 +14,18 @@ from ipapocket.krb5.constants import (
 )
 from ipapocket.krb5.fields import *
 
-# explicit tag for ASN1
+# tagging for ASN1
 EXPLICIT = "explicit"
 IMPLICIT = "implicit"
 
+# types of ASN1 classes
 UNIVERSAL = 0
 APPLICATION = 1
 CONTEXT = 2
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
-# wrapped by ipapocket.krb5.objects.Int32
+# wrapped by ipapocket.krb5.types.Int32
 class Int32Asn1(core.Integer):
     """
     Int32           ::= INTEGER (-2147483648..2147483647) -- signed values representable in 32 bits
@@ -42,7 +43,7 @@ class Int32Asn1(core.Integer):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
-# wrapped by ipapocket.krb5.objects.UInt32
+# wrapped by ipapocket.krb5.types.UInt32
 class UInt32Asn1(core.Integer):
     """
     UInt32          ::= INTEGER (0..4294967295) -- unsigned 32 bit values
@@ -60,7 +61,7 @@ class UInt32Asn1(core.Integer):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.4
-# wrapped by ipapocket.krb5.objects.Microseconds
+# wrapped by ipapocket.krb5.types.Microseconds
 class MicrosecondsAsn1(core.Integer):
     """
     Microseconds    ::= INTEGER (0..999999) -- microseconds
@@ -78,7 +79,7 @@ class MicrosecondsAsn1(core.Integer):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.KerberosString
+# wrapped by ipapocket.krb5.types.KerberosString
 class KerberosStringAsn1(core.GeneralString):
     """
     KerberosString  ::= GeneralString (IA5String)
@@ -88,7 +89,7 @@ class KerberosStringAsn1(core.GeneralString):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.Realm
+# wrapped by ipapocket.krb5.types.Realm
 class RealmAsn1(KerberosStringAsn1):
     """
     Realm           ::= KerberosString
@@ -98,13 +99,13 @@ class RealmAsn1(KerberosStringAsn1):
 
 
 # type to store sequence of strings
-# wrapped by ipapocket.krb5.objects.KerberosStrings
+# wrapped by ipapocket.krb5.types.KerberosStrings
 class KerberosStringsAsn1(core.SequenceOf):
     _child_spec = KerberosStringAsn1
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.2
-# wrapped by ipapocket.krb5.objects.Principalname
+# wrapped by ipapocket.krb5.types.Principalname
 class PrincipalNameAsn1(core.Sequence):
     """
     Realm           ::= KerberosString
@@ -126,7 +127,7 @@ class PrincipalNameAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.8
-# wrapped by ipapocket.krb5.objects.KerberosFlags
+# wrapped by ipapocket.krb5.types.KerberosFlags
 class KerberosFlagsAsn1(core.BitString):
     """
     KerberosFlags   ::= BIT STRING (SIZE (32..MAX))
@@ -138,7 +139,7 @@ class KerberosFlagsAsn1(core.BitString):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.1
-# wrapped by ipapocket.krb5.objects.KdcOptions
+# wrapped by ipapocket.krb5.types.KdcOptions
 class KdcOptionsAsn1(KerberosFlagsAsn1):
     """
     KDCOptions      ::= KerberosFlags
@@ -170,7 +171,7 @@ class KdcOptionsAsn1(KerberosFlagsAsn1):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.TicketFlags
+# wrapped by ipapocket.krb5.types.TicketFlags
 class TicketFlagsAsn1(core.BitString):
     """
     TicketFlags     ::= KerberosFlags
@@ -195,7 +196,7 @@ class TicketFlagsAsn1(core.BitString):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.Realm
+# wrapped by ipapocket.krb5.types.Realm
 class RealmAsn1(KerberosStringAsn1):
     """
     Realm           ::= KerberosString
@@ -205,7 +206,7 @@ class RealmAsn1(KerberosStringAsn1):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.3
-# wrapped by ipapocket.krb5.objects.KerberosTime
+# wrapped by ipapocket.krb5.types.KerberosTime
 class KerberosTimeAsn1(core.GeneralizedTime):
     """
     KerberosTime ::= GeneralizedTime -- with no fractional seconds
@@ -215,13 +216,13 @@ class KerberosTimeAsn1(core.GeneralizedTime):
 
 
 # sequence of integers to store types of encryption algos
-# wrapped by ipapocket.krb5.objects.EncTypes
+# wrapped by ipapocket.krb5.types.EncTypes
 class EncTypesAsn1(core.SequenceOf):
     _child_spec = core.Integer
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.5
-# wrapped by ipapocket.krb5.objects.HostAddress
+# wrapped by ipapocket.krb5.types.HostAddress
 class HostAddressAsn1(core.Sequence):
     """
     HostAddress     ::= SEQUENCE  {
@@ -237,7 +238,7 @@ class HostAddressAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.5
-# wrapped by ipapocket.krb5.objects.HostAddresses
+# wrapped by ipapocket.krb5.types.HostAddresses
 class HostAddressesAsn1(core.SequenceOf):
     """
     -- NOTE: HostAddresses is always used as an OPTIONAL field and
@@ -251,7 +252,7 @@ class HostAddressesAsn1(core.SequenceOf):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.9
-# wrapped by ipapocket.krb5.objects.EncryptedData
+# wrapped by ipapocket.krb5.types.EncryptedData
 class EncryptedDataAsn1(core.Sequence):
     """
     EncryptedData   ::= SEQUENCE {
@@ -273,7 +274,7 @@ class EncryptedDataAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.kdb5.objects.Ticket
+# wrapped by ipapocket.kdb5.types.Ticket
 class TicketAsn1(core.Sequence):
     """
     Ticket          ::= [APPLICATION 1] SEQUENCE {
@@ -295,13 +296,13 @@ class TicketAsn1(core.Sequence):
 
 
 # sequence of tickets
-# wrapped by ipapocket.krb5.objects.Tickets
+# wrapped by ipapocket.krb5.types.Tickets
 class TicketsAsn1(core.SequenceOf):
     _child_spec = TicketAsn1
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.KdcReqBody
+# wrapped by ipapocket.krb5.types.KdcReqBody
 class KdcReqBodyAsn1(core.Sequence):
     """
     KDC-REQ-BODY    ::= SEQUENCE {
@@ -370,7 +371,7 @@ class KdcReqBodyAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.PaData
+# wrapped by ipapocket.krb5.types.PaData
 class PaDataAsn1(core.Sequence):
     """
     PA-DATA         ::= SEQUENCE {
@@ -387,7 +388,7 @@ class PaDataAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.MethodData
+# wrapped by ipapocket.krb5.types.MethodData
 class MethodDataAsn1(core.SequenceOf):
     """
     METHOD-DATA     ::= SEQUENCE OF PA-DATA
@@ -397,7 +398,7 @@ class MethodDataAsn1(core.SequenceOf):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.KdcReq
+# wrapped by ipapocket.krb5.types.KdcReq
 class KdcReqAsn1(core.Sequence):
     """
     KDC-REQ         ::= SEQUENCE {
@@ -423,19 +424,19 @@ class KdcReqAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.AsReq
+# wrapped by ipapocket.krb5.types.AsReq
 class AsReqAsn1(KdcReqAsn1):
     explicit = (APPLICATION, ApplicationTagNumbers.AS_REQ.value)
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.AsReq
+# wrapped by ipapocket.krb5.types.AsReq
 class TgsReqAsn1(KdcReqAsn1):
     explicit = (APPLICATION, ApplicationTagNumbers.TGS_REQ.value)
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.5.1
-# wrapped by ipapocket.krb5.objects.ApOptions
+# wrapped by ipapocket.krb5.types.ApOptions
 class ApOptionsAsn1(KerberosFlagsAsn1):
     """
     APOptions       ::= KerberosFlags
@@ -448,7 +449,7 @@ class ApOptionsAsn1(KerberosFlagsAsn1):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.5.1
-# wrapped by ipapocket.krb5.objects.ApReq
+# wrapped by ipapocket.krb5.types.ApReq
 class ApReqAsn1(core.Sequence):
     """
     AP-REQ          ::= [APPLICATION 14] SEQUENCE {
@@ -472,7 +473,7 @@ class ApReqAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.2.9
-# wrapped by ipapocket.krb5.objects.EncryptionKey
+# wrapped by ipapocket.krb5.types.EncryptionKey
 class EncryptionKeyAsn1(core.Sequence):
     """
     EncryptionKey   ::= SEQUENCE {
@@ -488,7 +489,7 @@ class EncryptionKeyAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.AuthorizationDataElement
+# wrapped by ipapocket.krb5.types.AuthorizationDataElement
 class AuthorizationDataElementAsn1(core.Sequence):
     """
     AuthorizationData       ::= SEQUENCE OF SEQUENCE {
@@ -508,13 +509,13 @@ class AuthorizationDataElementAsn1(core.Sequence):
 
 
 # sequence of authorization data
-# wrapped by ipapocket.krb5.objects.AuthorizationData
+# wrapped by ipapocket.krb5.types.AuthorizationData
 class AuthorizationDataAsn1(core.SequenceOf):
     _child_spec = AuthorizationDataElementAsn1
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.Checksum
+# wrapped by ipapocket.krb5.types.Checksum
 class ChecksumAsn1(core.Sequence):
     """
     Checksum        ::= SEQUENCE {
@@ -530,7 +531,7 @@ class ChecksumAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.5.1
-# wrapped by ipapocket.krb5.objects.Authenticator
+# wrapped by ipapocket.krb5.types.Authenticator
 class AuthenticatorAsn1(core.Sequence):
     """
     Authenticator   ::= [APPLICATION 2] SEQUENCE  {
@@ -578,7 +579,7 @@ class AuthenticatorAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.LastReq
+# wrapped by ipapocket.krb5.types.LastReq
 class LastReqAsn1(core.Sequence):
     """
     LastReq         ::=     SEQUENCE OF SEQUENCE {
@@ -594,13 +595,13 @@ class LastReqAsn1(core.Sequence):
 
 
 # type to hold sequences of LastReq
-# wrapped by ipapocket.krb5.objects.LastReqs
+# wrapped by ipapocket.krb5.types.LastReqs
 class LastReqsAsn1(core.SequenceOf):
     _child_spec = LastReqAsn1
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.EncKdcRepPart
+# wrapped by ipapocket.krb5.types.EncKdcRepPart
 class EncKdcRepPartAsn1(core.Sequence):
     """
     EncKDCRepPart   ::= SEQUENCE {
@@ -653,7 +654,7 @@ class EncKdcRepPartAsn1(core.Sequence):
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
-# wrapped by ipapocket.krb5.objects.KdcRep
+# wrapped by ipapocket.krb5.types.KdcRep
 class KdcRepAsn1(core.Sequence):
     """
     KDC-REP         ::= SEQUENCE {
@@ -686,7 +687,7 @@ class KdcRepAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.9.1
-# wrapped by ipapocket.krb5.objects.KrbError
+# wrapped by ipapocket.krb5.types.KrbError
 class KrbErrorAsn1(core.Sequence):
     """
     KRB-ERROR       ::= [APPLICATION 30] SEQUENCE {
@@ -750,7 +751,7 @@ class KrbErrorAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
-# wrapped by ipapocket.krb5.objects.AsRep
+# wrapped by ipapocket.krb5.types.AsRep
 class AsRepAsn1(KdcRepAsn1):
     """
     AS-REP          ::= [APPLICATION 11] KDC-REP
@@ -760,6 +761,7 @@ class AsRepAsn1(KdcRepAsn1):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-5.4.2
+# wrapped by ipapocket.krb5.types.TgsRep
 class TgsRepAsn1(KdcRepAsn1):
     """
     TGS-REP         ::= [APPLICATION 13] KDC-REP
@@ -769,7 +771,7 @@ class TgsRepAsn1(KdcRepAsn1):
 
 
 # class to handle different types of returned response
-# wrapped by ipopacket.krb5.objects.KerberosResponse
+# wrapped by ipopacket.krb5.types.KerberosResponse
 class KerberosResponseAsn1(core.Choice):
     _alternatives = [
         (
@@ -791,7 +793,7 @@ class KerberosResponseAsn1(core.Choice):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.EtypeInfoEntry
+# wrapped by ipapocket.krb5.types.EtypeInfoEntry
 class EtypeInfoEntryAsn1(core.Sequence):
     """
     ETYPE-INFO-ENTRY        ::= SEQUENCE {
@@ -811,7 +813,7 @@ class EtypeInfoEntryAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.EtypeInfo
+# wrapped by ipapocket.krb5.types.EtypeInfo
 class EtypeInfoAsn1(core.SequenceOf):
     """
     ETYPE-INFO              ::= SEQUENCE OF ETYPE-INFO-ENTRY
@@ -821,7 +823,7 @@ class EtypeInfoAsn1(core.SequenceOf):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.EtypeInfo2Entry
+# wrapped by ipapocket.krb5.types.EtypeInfo2Entry
 class EtypeInfo2EntryAsn1(core.Sequence):
     """
     ETYPE-INFO2-ENTRY       ::= SEQUENCE {
@@ -847,7 +849,7 @@ class EtypeInfo2EntryAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.EtypeInfo2
+# wrapped by ipapocket.krb5.types.EtypeInfo2
 class EtypeInfo2Asn1(core.SequenceOf):
     """
     ETYPE-INFO2             ::= SEQUENCE SIZE (1..MAX) OF ETYPE-INFO2-ENTRY
@@ -857,7 +859,7 @@ class EtypeInfo2Asn1(core.SequenceOf):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.PaEncTsEnc
+# wrapped by ipapocket.krb5.types.PaEncTsEnc
 class PaEncTsEncAsn1(core.Sequence):
     """
     PA-ENC-TS-ENC           ::= SEQUENCE {
@@ -881,19 +883,19 @@ class PaEncTsEncAsn1(core.Sequence):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.EncAsRepPart
+# wrapped by ipapocket.krb5.types.EncAsRepPart
 class EncAsRepPartAsn1(EncKdcRepPartAsn1):
     explicit = (APPLICATION, ApplicationTagNumbers.ENC_AS_REP_PART.value)
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#appendix-A
-# wrapped by ipapocket.krb5.objects.EncTgsRepPart
+# wrapped by ipapocket.krb5.types.EncTgsRepPart
 class EncTgsRepPartAsn1(EncKdcRepPartAsn1):
     explicit = (APPLICATION, ApplicationTagNumbers.ENC_TGS_REP_PART.value)
 
 
 # class to handle different type of response's encrypted part
-# wrapped by ipapocket.krb5.objects.EncRepPart
+# wrapped by ipapocket.krb5.types.EncRepPart
 class EncRepPartAsn1(core.Choice):
     _alternatives = [
         (
@@ -910,6 +912,7 @@ class EncRepPartAsn1(core.Choice):
 
 
 # https://github.com/freeipa/freeipa/blob/master/util/ipa_krb5.c#L359
+# wrapped by ipapocket.krb5.types.KrbSalt
 class KrbSaltAsn1(core.Sequence):
     """
     KrbSalt ::= SEQUENCE {
@@ -929,6 +932,7 @@ class KrbSaltAsn1(core.Sequence):
 
 
 # https://github.com/freeipa/freeipa/blob/master/util/ipa_krb5.c#L352
+# wrapped by ipapocket.krb5.types.KrbKey
 class KrbKeyAsn1(core.Sequence):
     """
     KrbKey ::= SEQUENCE {
@@ -951,10 +955,12 @@ class KrbKeyAsn1(core.Sequence):
 
 
 # wrapped to handle sequence of KrbKey
+# wrapped by ipapocket.krb5.types.KrbKeys
 class KrbKeysAsn1(core.SequenceOf):
     _child_spec = KrbKeyAsn1
 
 
+# wrapped by ipapocket.krb5.types.UInt16
 class UInt16Asn1(core.Integer):
     """
     UInt16          ::= INTEGER (0..65536) -- unsigned 16 bit values
@@ -972,6 +978,7 @@ class UInt16Asn1(core.Integer):
 
 
 # https://github.com/freeipa/freeipa/blob/master/util/ipa_krb5.c#L343C4-L350C5
+# wrapped by ipapocket.krb5.types.KrbKeySet
 class KrbKeySetAsn1(core.Sequence):
     """
     KrbKeySet ::= SEQUENCE {
@@ -997,6 +1004,8 @@ class KrbKeySetAsn1(core.Sequence):
     ]
 
 
+# https://github.com/freeipa/freeipa/blob/b56d434953b93a0cecd2ee57194862e36b2ae3b2/install/share/60kerberos.ldif#L236
+# wrapped by ipapocket.krb5.types.MasterKey
 class MasterKeyAsn1(core.Sequence):
     """
     MasterKey ::= SEQUENCE {
@@ -1012,6 +1021,7 @@ class MasterKeyAsn1(core.Sequence):
 
 
 # https://github.com/freeipa/freeipa/blob/58c1fdd41681c15f39b59bbb5e39b2e1cf245c6c/install/share/60kerberos.ldif#L236
+# wrapped by ipapocket.krb5.types.KrbMKey
 class KrbMKeyAsn1(core.Sequence):
     """
     KrbMKey ::= SEQUENCE {

@@ -8,7 +8,7 @@ from ipapocket.network.krb5 import Krb5Client
 from ipapocket.krb5.operations import BaseKrb5Operations
 from ipapocket.krb5.constants import ErrorCodes
 from ipapocket.utils import logger
-from ipapocket.krb5.objects import KerberosResponse
+from ipapocket.krb5.types import KerberosResponse
 
 
 class UserEnum:

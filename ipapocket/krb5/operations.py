@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 import secrets
 import logging
-from ipapocket.krb5.objects import *
+from ipapocket.krb5.types import *
 from ipapocket.krb5.constants import *
 from ipapocket.krb5.crypto import crypto
 from ipapocket.krb5.crypto.backend import (

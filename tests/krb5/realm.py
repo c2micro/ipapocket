@@ -1,5 +1,7 @@
 import unittest
-from ipapocket.krb5.objects import *
+from ipapocket.krb5.types import *
+from ipapocket.krb5.constants import *
+from ipapocket.exceptions.krb5 import *
 
 
 class TestRealmObject(unittest.TestCase):

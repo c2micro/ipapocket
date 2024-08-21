@@ -1,10 +1,7 @@
 from ipapocket.krb5.types import *
 from ipapocket.exceptions.ccache import *
 from ipapocket.krb5.constants import *
-from datetime import datetime
 from asn1crypto import core
-import base64
-import logging
 import io
 
 # we support only version 4 right now
@@ -722,96 +719,6 @@ class Ccache:
         # read credentials
         tmp._credentials = Credentials.parse(reader)
         return tmp
-
-    def pprint(self) -> None:
-        """
-        Print content of CCACHE in pretty human way
-        """
-        logging.info("%-30s: 0x%04x" % ("CCACHE version", self.file_format_version))
-        logging.info(
-            "%-30s: %d" % ("Credentials number", len(self.credentials.credentials))
-        )
-        for i in range(len(self.credentials.credentials)):
-            cred = self.credentials.credentials[i]
-            # format user principal
-            user_name = ""
-            for j in range(cred.client.num_components):
-                if j == cred.client.num_components - 1:
-                    user_name += cred.client.components[j].data.decode("utf-8")
-                else:
-                    user_name += cred.client.components[j].data.decode("utf-8") + "/"
-            user_realm = cred.client.realm.data.decode("utf-8")
-            # format service principal
-            service_name = ""
-            for j in range(cred.server.num_components):
-                if j == cred.server.num_components - 1:
-                    service_name += cred.server.components[j].data.decode("utf-8")
-                else:
-                    service_name += cred.server.components[j].data.decode("utf-8") + "/"
-            service_realm = cred.server.realm.data.decode("utf-8")
-            # format authtime
-            auth_time = datetime.fromtimestamp(cred.time.authtime).strftime(
-                "%d/%m/%Y %H:%M:%S %p"
-            )
-            # format starttime
-            start_time = datetime.fromtimestamp(cred.time.starttime).strftime(
-                "%d/%m/%Y %H:%M:%S %p"
-            )
-            # format endtime
-            end_time = datetime.fromtimestamp(cred.time.endtime).strftime(
-                "%d/%m/%Y %H:%M:%S %p"
-            )
-            if datetime.fromtimestamp(cred.time.endtime) < datetime.now():
-                end_time += " [expired]"
-            # format renew till
-            renew_till = datetime.fromtimestamp(cred.time.renew_till).strftime(
-                "%d/%m/%Y %H:%M:%S %p"
-            )
-            if datetime.fromtimestamp(cred.time.renew_till) < datetime.now():
-                renew_till += " [expired]"
-            # format ticket flags
-            tkt_flags = ""
-            for j in TicketFlagsTypes:
-                if (cred.tktflags >> (31 - j.value)) & 1 == 1:
-                    tkt_flags += j.name + ","
-            tkt_flags = tkt_flags.strip(",")
-            # format key_type
-            key_type = EncryptionTypes(cred.key.keytype).name
-            # format key_value
-            key_value = base64.b64encode(cred.key.keyvalue).decode("utf-8")
-            tkt = Ticket.load(cred.ticket.data)
-            # format tkt_kvno
-            tkt_kvno = tkt.tkt_vno.value
-            # format tkt_sname
-            tkt_sname = ""
-            for j in range(len(tkt.sname.name_value.value)):
-                if j == len(tkt.sname.name_value.value) - 1:
-                    tkt_sname += str(tkt.sname.name_value.value[j])
-                else:
-                    tkt_sname += str(tkt.sname.name_value.value[j]) + "/"
-            # format tkt_realm
-            tkt_realm = tkt.realm.realm
-            # format tkt_etype
-            tkt_etype = tkt.enc_part.etype.name
-            # format tkt_enc
-            tkt_enc = base64.b64encode(tkt.enc_part.cipher).decode("utf-8")
-            logging.info("[#%d] %-25s: %s" % (i, "User name", user_name))
-            logging.info("[#%d] %-25s: %s" % (i, "User realm", user_realm))
-            logging.info("[#%d] %-25s: %s" % (i, "Service name", service_name))
-            logging.info("[#%d] %-25s: %s" % (i, "Service realm", service_realm))
-            logging.info("[#%d] %-25s: %s" % (i, "Auth time", auth_time))
-            logging.info("[#%d] %-25s: %s" % (i, "Start time", start_time))
-            logging.info("[#%d] %-25s: %s" % (i, "End time", end_time))
-            logging.info("[#%d] %-25s: %s" % (i, "Renew till time", renew_till))
-            logging.info("[#%d] %-25s: %s" % (i, "Flags", tkt_flags))
-            logging.info("[#%d] %-25s: %s" % (i, "Key type", key_type))
-            logging.info("[#%d] %-25s: %s" % (i, "Key value", key_value))
-            logging.info("[#%d]   %-23s: %d" % (i, "Ticket serivce kvno", tkt_kvno))
-            logging.info("[#%d]   %-23s: %s" % (i, "Ticket service name", tkt_sname))
-            logging.info("[#%d]   %-23s: %s" % (i, "Ticket service realm", tkt_realm))
-            logging.info("[#%d]   %-23s: %s" % (i, "Ticket encryption type", tkt_etype))
-            logging.info("[#%d]   %-23s: %s" % (i, "Ticket encrypted part", tkt_enc))
-        pass
 
     @classmethod
     def from_bytes(cls, data: bytes):

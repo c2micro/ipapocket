@@ -1,4 +1,6 @@
 from ipapocket.krb5.constants import AuthorizationDataTypes
+from ipapocket.krb5.asn1 import AuthorizationDataElementAsn1
+from ipapocket.krb5.fields import AUTHORIZATION_DATA_AD_TYPE, AUTHORIZATION_DATA_AD_DATA
 
 
 class AuthorizationDataElement:
@@ -29,3 +31,26 @@ class AuthorizationDataElement:
         Dump object to bytes (with ASN1 structure)
         """
         return self.to_asn1().dump()
+
+    @classmethod
+    def load(cls, data: AuthorizationDataElementAsn1):
+        if isinstance(data, AuthorizationDataElement):
+            data = data.to_asn1()
+        tmp = cls()
+        if AUTHORIZATION_DATA_AD_TYPE in data:
+            if data[AUTHORIZATION_DATA_AD_TYPE].native is not None:
+                tmp.ad_type = AuthorizationDataTypes(
+                    data[AUTHORIZATION_DATA_AD_TYPE].native
+                )
+        if AUTHORIZATION_DATA_AD_DATA in data:
+            if data[AUTHORIZATION_DATA_AD_DATA].native is not None:
+                tmp.ad_data = data[AUTHORIZATION_DATA_AD_DATA].native
+        return tmp
+
+    def to_asn1(self) -> AuthorizationDataElementAsn1:
+        auth_data_element = AuthorizationDataElementAsn1()
+        if self.ad_type is not None:
+            auth_data_element[AUTHORIZATION_DATA_AD_TYPE] = self.ad_type.value
+        if self.ad_data is not None:
+            auth_data_element[AUTHORIZATION_DATA_AD_DATA] = self.ad_data
+        return auth_data_element

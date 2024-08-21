@@ -56,6 +56,15 @@ class KerberosStrings:
             return self.value == obj
         else:
             return False
+    
+    def __str__(self) -> str:
+        tmp = ""
+        for i in range(len(self.value)):
+            if i == len(self.value) - 1:
+                tmp += self.value[i].value
+            else:
+                tmp += self.value[i].value + "/"
+        return tmp
 
     def to_asn1(self) -> KerberosStringsAsn1:
         """

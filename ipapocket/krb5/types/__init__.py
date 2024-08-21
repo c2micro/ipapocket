@@ -156,3 +156,9 @@ from ipapocket.krb5.types.authenticator import Authenticator
 
 # ApReq
 from ipapocket.krb5.types.ap_req import ApReq
+
+# TransitedEncoding
+from ipapocket.krb5.types.transited_encoding import TransitedEncoding
+
+# EncTicketPart
+from ipapocket.krb5.types.enc_ticket_part import EncTicketPart

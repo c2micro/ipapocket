@@ -1034,3 +1034,80 @@ class KrbMKeyAsn1(core.Sequence):
         (KRB_MKEY_KVNO, UInt32Asn1),
         (KRB_MKEY_KEY, MasterKeyAsn1),
     ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.3
+# wrapped by ipapocket.krb5.types.TransitedEncoding
+class TransitedEncodingAsn1(core.Sequence):
+    """
+    -- encoded Transited field
+    TransitedEncoding       ::= SEQUENCE {
+        tr-type         [0] Int32 -- must be registered --,
+        contents        [1] OCTET STRING
+    }
+    """
+
+    _fields = [
+        (TRANSITED_ENCODING_TR_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            TRANSITED_ENCODING_CONTENTS,
+            core.OctetString,
+            {"tag_type": EXPLICIT, "tag": 1},
+        ),
+    ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.3
+# wrapped by ipapocket.krb5.types.EncTicketPart
+class EncTicketPartAsn1(core.Sequence):
+    """
+    EncTicketPart   ::= [APPLICATION 3] SEQUENCE {
+           flags                   [0] TicketFlags,
+           key                     [1] EncryptionKey,
+           crealm                  [2] Realm,
+           cname                   [3] PrincipalName,
+           transited               [4] TransitedEncoding,
+           authtime                [5] KerberosTime,
+           starttime               [6] KerberosTime OPTIONAL,
+           endtime                 [7] KerberosTime,
+           renew-till              [8] KerberosTime OPTIONAL,
+           caddr                   [9] HostAddresses OPTIONAL,
+           authorization-data      [10] AuthorizationData OPTIONAL
+    }
+    """
+
+    explicit = (APPLICATION, ApplicationTagNumbers.ENC_TICKET_PART.value)
+
+    _fields = [
+        (ENC_TICKET_PART_FLAGS, TicketFlagsAsn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (ENC_TICKET_PART_KEY, EncryptionKeyAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (ENC_TICKET_PART_CREALM, RealmAsn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (ENC_TICKET_PART_CNAME, PrincipalNameAsn1, {"tag_type": EXPLICIT, "tag": 3}),
+        (
+            ENC_TICKET_PART_TRANSITED,
+            TransitedEncodingAsn1,
+            {"tag_type": EXPLICIT, "tag": 4},
+        ),
+        (ENC_TICKET_PART_AUTHTIME, KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 5}),
+        (
+            ENC_TICKET_PART_STARTTIME,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 6, "optional": True},
+        ),
+        (ENC_TICKET_PART_ENDTIME, KerberosTimeAsn1, {"tag_type": EXPLICIT, "tag": 7}),
+        (
+            ENC_TICKET_PART_RENEW_TILL,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 8, "optional": True},
+        ),
+        (
+            ENC_TICKET_PART_CADDR,
+            HostAddressesAsn1,
+            {"tag_type": EXPLICIT, "tag": 9, "optional": True},
+        ),
+        (
+            ENC_TICKET_PART_AUTHORIZATION_DATA,
+            AuthorizationDataAsn1,
+            {"tag_type": EXPLICIT, "tag": 10, "optional": True},
+        ),
+    ]

@@ -267,7 +267,10 @@ class BaseKrb5Operations:
         """
         current_timestamp = datetime.now(timezone.utc)
         # we need uppercase domain
-        domain = self._domain.upper()
+        if self._domain is None:
+            domain = kdc_rep.crealm.realm.value.upper()
+        else:
+            domain = self._domain.upper()
         if service is None or service == "":
             service = "krbtgt/" + domain
         if etype is None:

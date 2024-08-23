@@ -194,7 +194,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-d",
         "--domain",
-        required=True,
+        required=False,
         action="store",
         help="Domain name, e.g. ipa.test",
     )

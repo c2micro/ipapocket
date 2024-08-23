@@ -47,6 +47,7 @@ class ApplicationTagNumbers(enum.Enum):
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-6.2
+# https://github.com/krb5/krb5/blob/b9b654e5b469140d5603f27af5bf83ee9a826349/src/include/krb5/krb5.hin#L232
 class PrincipalType(enum.Enum):
     NT_UNKNOWN = 0
     NT_PRINCIPAL = 1
@@ -56,7 +57,8 @@ class PrincipalType(enum.Enum):
     NT_UID = 5
     NT_X500_PRINCIPAL = 6
     NT_SMTP_NAME = 7
-    NT_ENTERPRISE = 10
+    NT_ENTERPRISE_PRINCIPAL = 10
+    NT_WELLKNOWN = 11
 
 
 # https://www.rfc-editor.org/rfc/rfc4120#section-7.5.1

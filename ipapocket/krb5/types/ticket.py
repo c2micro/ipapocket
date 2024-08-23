@@ -3,7 +3,7 @@ from ipapocket.krb5.types.realm import Realm
 from ipapocket.krb5.types.principal_name import PrincipalName
 from ipapocket.krb5.types.encrypted_data import EncryptedData
 from ipapocket.krb5.asn1 import TicketAsn1
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     TICKET_TKT_VNO,
     TICKET_SNAME,
     TICKET_ENC_PART,

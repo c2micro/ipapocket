@@ -3,11 +3,7 @@ import secrets
 import logging
 from ipapocket.krb5.types import *
 from ipapocket.krb5.constants import *
-from ipapocket.krb5.crypto import crypto
-from ipapocket.krb5.crypto.backend import (
-    _cksum_for_etype,
-    Key,
-)
+from ipapocket.krb5.crypto import *
 from ipapocket.exceptions.exceptions import NoSupportedEtypes
 
 
@@ -15,7 +11,7 @@ class BaseKrb5Operations:
     _domain: str = None
     _username: str = None
     _password: str = None
-    _etype: EncryptionTypes = None  # preferred type of etype
+    _etype: EncryptionType = None  # preferred type of etype
     _salt: str = None  # salt from PA
     _key: Key = None  # kerberos key
 
@@ -49,7 +45,7 @@ class BaseKrb5Operations:
         self._password = value
 
     @property
-    def etype(self) -> EncryptionTypes:
+    def etype(self) -> EncryptionType:
         return self._etype
 
     @etype.setter
@@ -83,7 +79,7 @@ class BaseKrb5Operations:
             username = self.username
         # type
         if etype is None:
-            etype = crypto.supported_etypes()
+            etype = supported_etypes()
         # sname
         if service is None or service == "":
             service = "krbtgt/" + domain
@@ -95,18 +91,18 @@ class BaseKrb5Operations:
 
         # KDC options (flags)
         kdc_options = KdcOptions()
-        kdc_options.add(KdcOptionsTypes.FORWARDABLE)
-        kdc_options.add(KdcOptionsTypes.CANONICALIZE)
-        kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
+        kdc_options.add(KdcOptionsType.FORWARDABLE)
+        kdc_options.add(KdcOptionsType.CANONICALIZE)
+        kdc_options.add(KdcOptionsType.RENEWABLE_OK)
 
         # set kdc options in body
         kdc_req_body.kdc_options = kdc_options
         # set cname (upn) in body
-        kdc_req_body.cname = PrincipalName(PrincipalType.NT_PRINCIPAL, username)
+        kdc_req_body.cname = PrincipalName(NameType.NT_PRINCIPAL, username)
         # set realm in body
         kdc_req_body.realm = Realm(domain)
         # set sname (spn) in body
-        kdc_req_body.sname = PrincipalName(PrincipalType.NT_SRV_INST, service)
+        kdc_req_body.sname = PrincipalName(NameType.NT_SRV_INST, service)
         # set till timestamp in body
         kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
         # set rtime timestamp in body
@@ -124,7 +120,7 @@ class BaseKrb5Operations:
         # add request body
         kdc_req.req_body = kdc_req_body
         # add message type
-        kdc_req.msg_type = MessageTypes.KRB_AS_REQ
+        kdc_req.msg_type = MessageType.KRB_AS_REQ
 
         # create AS-REQ
         as_req = AsReq(kdc_req)
@@ -135,7 +131,7 @@ class BaseKrb5Operations:
         """
         Generate user secret (kerberos key) based on algorithm, password and salt
         """
-        self.key = crypto.string_to_key(self.etype, self.password, self.salt)
+        self.key = string_to_key(self.etype, self.password, self.salt)
 
     def as_req_with_pa(
         self, username=None, etype=None, service=None, key=None, renewable=False
@@ -165,20 +161,20 @@ class BaseKrb5Operations:
 
         # create KDC options
         kdc_options = KdcOptions()
-        kdc_options.add(KdcOptionsTypes.FORWARDABLE)
-        kdc_options.add(KdcOptionsTypes.CANONICALIZE)
-        kdc_options.add(KdcOptionsTypes.RENEWABLE_OK)
+        kdc_options.add(KdcOptionsType.FORWARDABLE)
+        kdc_options.add(KdcOptionsType.CANONICALIZE)
+        kdc_options.add(KdcOptionsType.RENEWABLE_OK)
         if renewable:
-            kdc_options.add(KdcOptionsTypes.RENEWABLE)
+            kdc_options.add(KdcOptionsType.RENEWABLE)
 
         # set options in request
         kdc_req_body.kdc_options = kdc_options
         # set cname (upn) in request
-        kdc_req_body.cname = PrincipalName(PrincipalType.NT_PRINCIPAL, username)
+        kdc_req_body.cname = PrincipalName(NameType.NT_PRINCIPAL, username)
         # set realm in request
         kdc_req_body.realm = Realm(domain)
         # set sname (spn) in request
-        kdc_req_body.sname = PrincipalName(PrincipalType.NT_SRV_INST, service)
+        kdc_req_body.sname = PrincipalName(NameType.NT_SRV_INST, service)
         # set till in request
         kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
         # set rtime in request (renewable time)
@@ -192,16 +188,16 @@ class BaseKrb5Operations:
         kdc_req = KdcReq()
 
         # encrypt timestamp
-        enc_ts = crypto.encrypt(
+        enc_ts = encrypt(
             key,
-            KeyUsageTypes.AS_REQ_PA_ENC_TIMESTAMP,
+            KeyUsageType.AS_REQ_PA_ENC_TIMESTAMP,
             PaEncTsEnc(current_timestamp, current_timestamp.microsecond).dump(),
         )
 
         # create encrypted METHOD-DATA
         method_data = MethodData()
         pa_data = PaData()
-        pa_data.type = PreAuthenticationDataTypes.PA_ENC_TIMESTAMP
+        pa_data.type = PreAuthenticationDataType.PA_ENC_TIMESTAMP
         pa_data.value = EncryptedData(etype, KRB5_VERSION, enc_ts)
         # add PA-DATA in METHOD-DATA
         method_data.add(pa_data)
@@ -211,7 +207,7 @@ class BaseKrb5Operations:
         # add KDC requst body
         kdc_req.req_body = kdc_req_body
         # add message type
-        kdc_req.msg_type = MessageTypes.KRB_AS_REQ
+        kdc_req.msg_type = MessageType.KRB_AS_REQ
         # add pa data
         kdc_req.padata = method_data
 
@@ -225,10 +221,10 @@ class BaseKrb5Operations:
         """
         for padata in MethodData.load(error.e_data).padatas:
             # from https://www.rfc-editor.org/rfc/rfc4120#section-5.2.7.5 - might be ONLY ONE ETYPE-ENTRY in sequence of each
-            if padata.type == PreAuthenticationDataTypes.PA_ETYPE_INFO:
+            if padata.type == PreAuthenticationDataType.PA_ETYPE_INFO:
                 etypes = EtypeInfo.load(padata.value)
                 for etype in etypes._entries:
-                    if etype.etype in crypto.supported_etypes():
+                    if etype.etype in supported_etypes():
                         logging.debug(
                             "server support ETYPE-INFO with etype {} and salt {}".format(
                                 etype.etype.name, etype.salt
@@ -238,10 +234,10 @@ class BaseKrb5Operations:
                         self.etype = etype.etype
                         self.salt = etype.salt
                         return
-            if padata.type == PreAuthenticationDataTypes.PA_ETYPE_INFO2:
+            if padata.type == PreAuthenticationDataType.PA_ETYPE_INFO2:
                 etypes2 = EtypeInfo2.load(padata.value)
                 for etype2 in etypes2._entries:
-                    if etype2.etype in crypto.supported_etypes():
+                    if etype2.etype in supported_etypes():
                         logging.debug(
                             "server support ETYPE-INFO2 with etype {} and salt {}".format(
                                 etype2.etype.name, etype2.salt.to_asn1().native
@@ -252,108 +248,3 @@ class BaseKrb5Operations:
                         self.salt = etype2.salt.to_asn1().native.encode()
                         return
         raise NoSupportedEtypes("no supported server PA etypes exists in this client")
-
-    def tgs_req(
-        self,
-        kdc_rep: KdcRep,
-        ticket: Ticket,
-        session_key: Key,
-        service=None,
-        renewable=False,
-        etype=None,
-    ):
-        """
-        Construct TGS-REQ packet
-        """
-        current_timestamp = datetime.now(timezone.utc)
-        # we need uppercase domain
-        if self._domain is None:
-            domain = kdc_rep.crealm.realm.value.upper()
-        else:
-            domain = self._domain.upper()
-        if service is None or service == "":
-            service = "krbtgt/" + domain
-        if etype is None:
-            etype = self._etype
-
-        # create KDC request body
-        kdc_req_body = KdcReqBody()
-
-        # create KDC options
-        kdc_options = KdcOptions()
-        kdc_options.add(KdcOptionsTypes.FORWARDABLE)
-        kdc_options.add(KdcOptionsTypes.CANONICALIZE)
-        if renewable:
-            kdc_options.add(KdcOptionsTypes.RENEWABLE)
-
-        # set kdc options in request body
-        kdc_req_body.kdc_options = kdc_options
-        # set realm in request body
-        kdc_req_body.realm = Realm(domain)
-        # set service name (for which we want get ST)
-        kdc_req_body.sname = PrincipalName(PrincipalType.NT_PRINCIPAL, service)
-        # set till timestamp in request body
-        kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
-        # set nonce in request body
-        kdc_req_body.nonce = UInt32(secrets.randbits(31))
-        # set etype in request body
-        kdc_req_body.etype = EncTypes(etype)
-
-        # create KDC request
-        kdc_req = KdcReq()
-
-        # calculate checksum for KDC request body
-        checksum = Checksum()
-        checksum.cksumtype = _cksum_for_etype(session_key.enctype)
-        checksum.checksum = crypto.checksum(
-            session_key,
-            KeyUsageTypes.TGS_REQ_AUTH_CKSUM,
-            kdc_req_body.dump(),
-        )
-
-        # create authenticator
-        authenticator = Authenticator()
-        authenticator.authenticator_vno = KRB5_VERSION
-        authenticator.crealm = kdc_rep.crealm
-        authenticator.cname = kdc_rep.cname
-        authenticator.cusec = Microseconds(current_timestamp.microsecond)
-        authenticator.ctime = KerberosTime(current_timestamp)
-        authenticator.cksum = checksum
-        authenticator.seq_number = 0
-
-        # encrypt authenticator
-        enc_authenticator = EncryptedData()
-        enc_authenticator.etype = kdc_rep.enc_part.etype
-        enc_authenticator.cipher = crypto.encrypt(
-            session_key, KeyUsageTypes.TGS_REQ_AUTH, authenticator.dump()
-        )
-
-        # create ap-req
-        ap_req = ApReq()
-        ap_req.pvno = KRB5_VERSION
-        ap_req.msg_type = MessageTypes.KRB_AP_REQ
-        ap_req.ap_options = ApOptions()
-        ap_req.ticket = ticket
-        ap_req.authenticator = enc_authenticator
-
-        # creation of AP-REQ with authenticator
-        method_data = MethodData()
-        # create PaData entry
-        pa_data = PaData(PreAuthenticationDataTypes.PA_TGS_REQ, ap_req.dump())
-
-        # add PaData in PaDatas
-        method_data.add(pa_data)
-
-        # add version of kerberos
-        kdc_req.pvno = KRB5_VERSION
-        # add KDC requst body
-        kdc_req.req_body = kdc_req_body
-        # add message type
-        kdc_req.msg_type = MessageTypes.KRB_TGS_REQ
-        # add pa data (ap-req with authenticator)
-        kdc_req.padata = method_data
-
-        # create TGS-REQ
-        tgs_req = TgsReq(kdc_req)
-
-        return tgs_req

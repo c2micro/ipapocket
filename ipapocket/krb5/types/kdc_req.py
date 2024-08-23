@@ -1,9 +1,9 @@
 from ipapocket.krb5.types.int32 import Int32
-from ipapocket.krb5.constants import MessageTypes
+from ipapocket.krb5.constants import MessageType
 from ipapocket.krb5.types.method_data import MethodData
 from ipapocket.krb5.types.kdc_req_body import KdcReqBody
 from ipapocket.exceptions.krb5 import InvalidTypeInKdcReq, InvalidEncTypesValueType
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     KDC_REQ,
     KDC_REQ_PVNO,
     KDC_REQ_MSG_TYPE,
@@ -15,7 +15,7 @@ from ipapocket.krb5.asn1 import KdcReqAsn1
 
 class KdcReq:
     _pvno: Int32 = None
-    _msg_type: MessageTypes = None
+    _msg_type: MessageType = None
     _padata: MethodData = None
     _req_body: KdcReqBody = None
 
@@ -41,10 +41,10 @@ class KdcReq:
 
     @msg_type.setter
     def msg_type(self, value) -> None:
-        if isinstance(value, MessageTypes):
+        if isinstance(value, MessageType):
             self._msg_type = value
         elif isinstance(value, int):
-            self._msg_type = MessageTypes(value)
+            self._msg_type = MessageType(value)
         else:
             raise InvalidTypeInKdcReq(KDC_REQ_MSG_TYPE, value)
 
@@ -78,7 +78,7 @@ class KdcReq:
                 tmp.pvno = Int32.load(data[KDC_REQ_PVNO])
         if KDC_REQ_MSG_TYPE in data:
             if data[KDC_REQ_MSG_TYPE].native is not None:
-                tmp.msg_type = MessageTypes(data[KDC_REQ_MSG_TYPE].native)
+                tmp.msg_type = MessageType(data[KDC_REQ_MSG_TYPE].native)
         if KDC_REQ_PADATA in data:
             if data[KDC_REQ_PADATA].native is not None:
                 tmp.padata = MethodData.load(data[KDC_REQ_PADATA])

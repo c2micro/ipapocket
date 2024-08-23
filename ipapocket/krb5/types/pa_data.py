@@ -1,12 +1,12 @@
-from ipapocket.krb5.constants import PreAuthenticationDataTypes
+from ipapocket.krb5.constants import PreAuthenticationDataType
 from ipapocket.exceptions.krb5 import InvalidPaDataType
 from ipapocket.krb5.types.encrypted_data import EncryptedData
 from ipapocket.krb5.asn1 import PaDataAsn1
-from ipapocket.krb5.fields import PADATA_PADATA_TYPE, PADATA_PADATA_VALUE
+from ipapocket.krb5.constants.fields import PADATA_PADATA_TYPE, PADATA_PADATA_VALUE
 
 
 class PaData:
-    _type: PreAuthenticationDataTypes = None
+    _type: PreAuthenticationDataType = None
     _value = None
 
     def __init__(self, type=None, value=None):
@@ -14,12 +14,12 @@ class PaData:
         self._value = self._validate_value(value)
 
     @property
-    def type(self) -> PreAuthenticationDataTypes:
+    def type(self) -> PreAuthenticationDataType:
         return self._type
 
     @type.setter
     def type(self, value) -> None:
-        if not isinstance(value, PreAuthenticationDataTypes):
+        if not isinstance(value, PreAuthenticationDataType):
             raise InvalidPaDataType()
         self._type = value
 
@@ -44,7 +44,7 @@ class PaData:
         tmp = cls()
         if PADATA_PADATA_TYPE in data:
             if data[PADATA_PADATA_TYPE] is not None:
-                tmp.type = PreAuthenticationDataTypes(data[PADATA_PADATA_TYPE])
+                tmp.type = PreAuthenticationDataType(data[PADATA_PADATA_TYPE])
         if PADATA_PADATA_VALUE in data:
             if data[PADATA_PADATA_VALUE] is not None:
                 tmp.value = data[PADATA_PADATA_VALUE]

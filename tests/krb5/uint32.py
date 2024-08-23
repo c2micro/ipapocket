@@ -17,7 +17,7 @@ class TestUInt32Object(unittest.TestCase):
 
     def test_enum_value(self):
         self.assertEqual(
-            UInt32(MessageTypes.KRB_AP_REP).value, MessageTypes.KRB_AP_REP.value
+            UInt32(MessageType.KRB_AP_REP).value, MessageType.KRB_AP_REP.value
         )
 
     def test_min_value(self):

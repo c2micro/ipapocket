@@ -2,8 +2,8 @@ from ipapocket.krb5.types.int32 import Int32
 from ipapocket.krb5.types.ap_options import ApOptions
 from ipapocket.krb5.types.ticket import Ticket
 from ipapocket.krb5.types.encrypted_data import EncryptedData
-from ipapocket.krb5.constants import MessageTypes
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants import MessageType
+from ipapocket.krb5.constants.fields import (
     AP_REQ_AP_OPTIONS,
     AP_REQ_AUTHENTICATOR,
     AP_REQ_MSG_TYPE,
@@ -15,7 +15,7 @@ from ipapocket.krb5.asn1 import ApReqAsn1
 
 class ApReq:
     _pvno: Int32 = None
-    _msg_type: MessageTypes = None
+    _msg_type: MessageType = None
     _ap_options: ApOptions = None
     _ticket: Ticket = None
     _authenticator: EncryptedData = None
@@ -35,7 +35,7 @@ class ApReq:
             self._pvno = value
 
     @property
-    def msg_type(self) -> MessageTypes:
+    def msg_type(self) -> MessageType:
         return self._msg_type
 
     @msg_type.setter
@@ -76,7 +76,7 @@ class ApReq:
                 tmp.pvno = Int32.load(data[AP_REQ_PVNO])
         if AP_REQ_MSG_TYPE in data:
             if data[AP_REQ_MSG_TYPE].native is not None:
-                tmp.msg_type = MessageTypes(data[AP_REQ_MSG_TYPE].native)
+                tmp.msg_type = MessageType(data[AP_REQ_MSG_TYPE].native)
         if AP_REQ_AP_OPTIONS in data:
             if data[AP_REQ_AP_OPTIONS].native is not None:
                 tmp.ap_options = ApOptions.load(data[AP_REQ_AP_OPTIONS])

@@ -5,9 +5,9 @@ from ipapocket.krb5.types.principal_name import PrincipalName
 from ipapocket.krb5.types.ticket import Ticket
 from ipapocket.krb5.types.encrypted_data import EncryptedData
 from ipapocket.krb5.types.kerberos_string import KerberosString
-from ipapocket.krb5.constants import MessageTypes
+from ipapocket.krb5.constants import MessageType
 from ipapocket.krb5.asn1 import KdcRepAsn1
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     KDC_REP_CNAME,
     KDC_REP_CREALM,
     KDC_REP_ENC_PART,
@@ -20,7 +20,7 @@ from ipapocket.krb5.fields import (
 
 class KdcRep:
     _pvno: Int32 = None
-    _msg_type: MessageTypes = None
+    _msg_type: MessageType = None
     _pdata: MethodData = None
     _crealm: Realm = None
     _cname: PrincipalName = None
@@ -39,7 +39,7 @@ class KdcRep:
         self._pvno = value
 
     @property
-    def msg_type(self) -> MessageTypes:
+    def msg_type(self) -> MessageType:
         return self._msg_type
 
     @msg_type.setter
@@ -101,7 +101,7 @@ class KdcRep:
                 tmp.pvno = Int32.load(data[KDC_REP_PVNO])
         if KDC_REP_MSG_TYPE in data:
             if data[KDC_REP_MSG_TYPE].native is not None:
-                tmp.msg_type = MessageTypes(data[KDC_REP_MSG_TYPE].native)
+                tmp.msg_type = MessageType(data[KDC_REP_MSG_TYPE].native)
         if KDC_REP_PADATA in data:
             if data[KDC_REP_PADATA].native is not None:
                 tmp.padata = MethodData.load(data[KDC_REP_PADATA])

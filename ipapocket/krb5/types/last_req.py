@@ -1,7 +1,7 @@
 from ipapocket.krb5.types.int32 import Int32
 from ipapocket.krb5.types.kerberos_time import KerberosTime
 from ipapocket.krb5.asn1 import LastReqAsn1
-from ipapocket.krb5.fields import LAST_REQ_LR_TYPE, LAST_REQ_LR_VALUE
+from ipapocket.krb5.constants.fields import LAST_REQ_LR_TYPE, LAST_REQ_LR_VALUE
 
 
 class LastReq:

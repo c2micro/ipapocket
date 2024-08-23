@@ -1,6 +1,6 @@
 from ipapocket.krb5.types.int32 import Int32
 from ipapocket.krb5.asn1 import TransitedEncodingAsn1
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     TRANSITED_ENCODING_CONTENTS,
     TRANSITED_ENCODING_TR_TYPE,
 )

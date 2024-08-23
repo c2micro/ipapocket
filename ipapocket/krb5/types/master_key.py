@@ -1,22 +1,22 @@
 from ipapocket.krb5.asn1 import MasterKeyAsn1
-from ipapocket.krb5.constants import EncryptionTypes
+from ipapocket.krb5.constants import EncryptionType
 from ipapocket.exceptions.krb5 import InvalidMasterKeyTypeAlgo
-from ipapocket.krb5.fields import MASTER_KEY_KEYTYPE, MASTER_KEY_KEYVALUE
+from ipapocket.krb5.constants.fields import MASTER_KEY_KEYTYPE, MASTER_KEY_KEYVALUE
 
 
 class MasterKey:
-    _keytype: EncryptionTypes = None
+    _keytype: EncryptionType = None
     _keyvalue: str = None
 
     @property
-    def keytype(self) -> EncryptionTypes:
+    def keytype(self) -> EncryptionType:
         return self._keytype
 
     @keytype.setter
     def keytype(self, value) -> None:
         if isinstance(value, int):
-            self._keytype = EncryptionTypes(value)
-        elif isinstance(value, EncryptionTypes):
+            self._keytype = EncryptionType(value)
+        elif isinstance(value, EncryptionType):
             self._keytype = value
         else:
             raise InvalidMasterKeyTypeAlgo()
@@ -36,7 +36,7 @@ class MasterKey:
         tmp = cls()
         if MASTER_KEY_KEYTYPE in data:
             if data[MASTER_KEY_KEYTYPE].native is not None:
-                tmp.keytype = EncryptionTypes(data[MASTER_KEY_KEYTYPE].native)
+                tmp.keytype = EncryptionType(data[MASTER_KEY_KEYTYPE].native)
         if MASTER_KEY_KEYVALUE in data:
             if data[MASTER_KEY_KEYVALUE].native is not None:
                 tmp.keyvalue = data[MASTER_KEY_KEYVALUE].native

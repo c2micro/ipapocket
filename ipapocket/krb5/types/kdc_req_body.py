@@ -8,7 +8,7 @@ from ipapocket.krb5.types.host_addresses import HostAddresses
 from ipapocket.krb5.types.encrypted_data import EncryptedData
 from ipapocket.krb5.types.tickets import Tickets
 from ipapocket.exceptions.krb5 import InvalidTypeInKdcReqBody
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     KDC_REQ_BODY_ETYPE,
     KDC_REQ_BODY_ADDITIONAL_TICKETS,
     KDC_REQ_BODY_ADDRESSES,

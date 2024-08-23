@@ -1,15 +1,15 @@
 from ipapocket.krb5.asn1 import PrincipalNameAsn1
 from ipapocket.exceptions.krb5 import InvalidPrincipalNameType
 from ipapocket.krb5.types.kerberos_strings import KerberosStrings
-from ipapocket.krb5.fields import PRINCIPAL_NAME_NAME_TYPE, PRINCIPAL_NAME_NAME_STRING
-from ipapocket.krb5.constants import PrincipalType
+from ipapocket.krb5.constants.fields import PRINCIPAL_NAME_NAME_TYPE, PRINCIPAL_NAME_NAME_STRING
+from ipapocket.krb5.constants import NameType
 
 
 class PrincipalName:
-    _type: PrincipalType = None
+    _type: NameType = None
     _value: KerberosStrings = None
 
-    def __init__(self, type: PrincipalType = None, value=None):
+    def __init__(self, type: NameType = None, value=None):
         self.name_type = type
         self.name_value = value
 
@@ -23,14 +23,14 @@ class PrincipalName:
         tmp = cls()
         if PRINCIPAL_NAME_NAME_TYPE in data:
             if data[PRINCIPAL_NAME_NAME_TYPE].native is not None:
-                tmp.name_type = PrincipalType(data[PRINCIPAL_NAME_NAME_TYPE].native)
+                tmp.name_type = NameType(data[PRINCIPAL_NAME_NAME_TYPE].native)
         if PRINCIPAL_NAME_NAME_STRING in data:
             if data[PRINCIPAL_NAME_NAME_STRING].native is not None:
                 tmp.name_value = KerberosStrings.load(data[PRINCIPAL_NAME_NAME_STRING])
         return tmp
 
     @property
-    def name_type(self) -> PrincipalType:
+    def name_type(self) -> NameType:
         return self._type
 
     @property
@@ -38,17 +38,17 @@ class PrincipalName:
         return self._value
 
     @name_type.setter
-    def name_type(self, type: PrincipalType) -> None:
+    def name_type(self, type: NameType) -> None:
         self._type = self._validate_type(type)
 
     @name_value.setter
     def name_value(self, value) -> None:
         self._value = self._validate_value(value)
 
-    def _validate_type(self, value) -> PrincipalType:
+    def _validate_type(self, value) -> NameType:
         if value is None:
             return None
-        if not isinstance(value, PrincipalType):
+        if not isinstance(value, NameType):
             raise InvalidPrincipalNameType(value)
         return value
 

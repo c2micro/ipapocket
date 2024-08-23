@@ -416,7 +416,7 @@ class Principal:
         for i in range(num_components):
             components.append(OctetString.parse(reader).data.decode())
         return cls(
-            PrincipalName(PrincipalType(principal_type), components), Realm(realm)
+            PrincipalName(NameType(principal_type), components), Realm(realm)
         )
 
     def to_principal_name(self, type=None) -> PrincipalName:
@@ -424,7 +424,7 @@ class Principal:
         Convert CCACHE principal to ASN1 principal
         """
         if type is None:
-            type = PrincipalType.NT_PRINCIPAL
+            type = NameType.NT_PRINCIPAL
         tmp = list[KerberosString]()
         for v in self._components:
             tmp.append(v.to_kerberos_string())
@@ -600,7 +600,7 @@ class Credential:
         tgt = Tgt()
         kdc_rep = KdcRep()
         kdc_rep.pvno = 5
-        kdc_rep.msg_type = MessageTypes.KRB_AS_REP
+        kdc_rep.msg_type = MessageType.KRB_AS_REP
         kdc_rep.crealm = self.server.realm.to_kerberos_string()
         kdc_rep.cname = self.client.to_principal_name()
         kdc_rep.ticket = self.ticket.to_ticket()

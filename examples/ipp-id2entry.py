@@ -9,7 +9,7 @@ import base64
 from ipapocket.krb5.crypto.crypto import decrypt
 from ipapocket.krb5.types import KrbKeySet, KrbMKey
 from ipapocket.krb5.crypto.backend import Key
-from ipapocket.krb5.constants import KeyUsageTypes
+from ipapocket.krb5.constants import KeyUsageType
 from binascii import hexlify
 
 
@@ -134,7 +134,7 @@ class Id2Entry:
                     # https://github.com/krb5/krb5/blob/5495454583261ab5567b9916cbcfd41a3d5bd75d/src/lib/kdb/decrypt_key.c#L77
                     key = hexlify(
                         decrypt(
-                            self._mkey_key, KeyUsageTypes.MASTER_KEY, i.key.keyvalue[2:]
+                            self._mkey_key, KeyUsageType.MASTER_KEY, i.key.keyvalue[2:]
                         )
                     ).decode()
                     print("%s:%s:%s:%s:%s" % (principal, etype, stype, salt, key))

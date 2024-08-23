@@ -1,17 +1,17 @@
-from ipapocket.krb5.constants import ChecksumTypes
+from ipapocket.krb5.constants import ChecksumType
 from ipapocket.krb5.asn1 import ChecksumAsn1
-from ipapocket.krb5.fields import CHECKSUM_CHECKSUM, CHECKSUM_CKSUMTYPE
+from ipapocket.krb5.constants.fields import CHECKSUM_CHECKSUM, CHECKSUM_CKSUMTYPE
 
 
 class Checksum:
-    _cksumtype: ChecksumTypes = None
+    _cksumtype: ChecksumType = None
     _checksum: str = None
 
     def __init__(self):
         pass
 
     @property
-    def cksumtype(self) -> ChecksumTypes:
+    def cksumtype(self) -> ChecksumType:
         return self._cksumtype
 
     @cksumtype.setter

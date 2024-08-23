@@ -1,7 +1,7 @@
 from ipapocket.krb5.types.uint32 import UInt32
 from ipapocket.krb5.types.master_key import MasterKey
 from ipapocket.krb5.asn1 import KrbMKeyAsn1
-from ipapocket.krb5.fields import KRB_MKEY_KEY, KRB_MKEY_KVNO
+from ipapocket.krb5.constants.fields import KRB_MKEY_KEY, KRB_MKEY_KVNO
 
 
 class KrbMKey:

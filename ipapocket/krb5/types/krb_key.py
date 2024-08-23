@@ -1,7 +1,7 @@
 from ipapocket.krb5.types.krb_salt import KrbSalt
 from ipapocket.krb5.types.encryption_key import EncryptionKey
 from ipapocket.krb5.asn1 import KrbKeyAsn1
-from ipapocket.krb5.fields import KRB_KEY_KEY, KRB_KEY_S2KPARAMS, KRB_KEY_SALT
+from ipapocket.krb5.constants.fields import KRB_KEY_KEY, KRB_KEY_S2KPARAMS, KRB_KEY_SALT
 
 
 class KrbKey:

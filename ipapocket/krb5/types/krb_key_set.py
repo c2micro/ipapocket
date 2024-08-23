@@ -2,7 +2,7 @@ from ipapocket.krb5.types.uint16 import UInt16
 from ipapocket.krb5.types.uint32 import UInt32
 from ipapocket.krb5.types.krb_keys import KrbKeys
 from ipapocket.krb5.asn1 import KrbKeySetAsn1
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     KRB_KEY_SET_ATTRIBUTE_MAJOR_VNO,
     KRB_KEY_SET_ATTRIBUTE_MINOR_VNO,
     KRB_KEY_SET_KEYS,

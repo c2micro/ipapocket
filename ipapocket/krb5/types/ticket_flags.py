@@ -1,7 +1,7 @@
 from ipapocket.krb5.asn1 import TicketFlagsAsn1
 from ipapocket.exceptions.krb5 import InvalidTicketFlagsValueType
 from ipapocket.krb5.types.kerberos_flags import KerberosFlags
-from ipapocket.krb5.constants import TicketFlagsTypes
+from ipapocket.krb5.constants import TicketFlagsType
 
 
 class TicketFlags:
@@ -27,11 +27,11 @@ class TicketFlags:
         tmp = cls()
         for i in range(len(value.native)):
             if value.native[i] == 1:
-                tmp.add(TicketFlagsTypes(i))
+                tmp.add(TicketFlagsType(i))
         return tmp
 
-    def _validate_option(self, value) -> TicketFlagsTypes:
-        if not isinstance(value, TicketFlagsTypes):
+    def _validate_option(self, value) -> TicketFlagsType:
+        if not isinstance(value, TicketFlagsType):
             raise InvalidTicketFlagsValueType(value)
         return value
 

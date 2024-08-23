@@ -7,7 +7,7 @@ from ipapocket.krb5.asn1 import (
     AsRepAsn1,
     TgsRepAsn1,
 )
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     KERBEROS_RESPONSE_AS_REP,
     KERBEROS_RESPONSE_KRB_ERROR,
     KERBEROS_RESPONSE_TGS_REP,

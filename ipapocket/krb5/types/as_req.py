@@ -1,7 +1,7 @@
 from ipapocket.krb5.types.kdc_req import KdcReq
 from ipapocket.krb5.asn1 import AsReqAsn1
 from ipapocket.exceptions.krb5 import InvalidAsReqRequest
-from ipapocket.krb5.fields import AS_REQ
+from ipapocket.krb5.constants.fields import AS_REQ
 
 
 class AsReq:

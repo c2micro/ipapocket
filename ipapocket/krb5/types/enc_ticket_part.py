@@ -7,7 +7,7 @@ from ipapocket.krb5.types.encryption_key import EncryptionKey
 from ipapocket.krb5.types.host_addresses import HostAddresses
 from ipapocket.krb5.types.authorization_data import AuthorizationData
 from ipapocket.krb5.asn1 import EncTicketPartAsn1
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     ENC_TICKET_PART_AUTHORIZATION_DATA,
     ENC_TICKET_PART_AUTHTIME,
     ENC_TICKET_PART_CADDR,

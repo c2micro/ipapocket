@@ -4,9 +4,9 @@ import argparse
 import sys
 import logging
 
-from ipapocket.network.krb5 import Krb5Client
+from ipapocket.network.krb5 import Krb5Network
 from ipapocket.krb5.operations import BaseKrb5Operations
-from ipapocket.krb5.constants import ErrorCodes
+from ipapocket.krb5.constants import ErrorCode
 from ipapocket.utils import logger
 from ipapocket.krb5.types import KerberosResponse
 
@@ -18,7 +18,7 @@ class UserEnum:
         self._usernames = usernames
         self._domain = domain
         self._ipa_host = ipa_host
-        self._krb5_client = Krb5Client(ipa_host)
+        self._krb5_client = Krb5Network(ipa_host)
 
     def printer(self, username: str, options: str):
         temp = username
@@ -30,19 +30,18 @@ class UserEnum:
         for username in self._usernames:
             logging.debug("try username: {}".format(username))
             as_req = self._base.as_req_without_pa(username)
-            data = self._krb5_client.sendrcv(as_req.dump())
             # convert to response type
-            response = KerberosResponse.load(data)
+            response = self._krb5_client.sendrcv(as_req)
             if response.is_krb_error:
                 rep = response.krb_error
-                if rep.error_code == ErrorCodes.KDC_ERR_PREAUTH_REQUIRED:
+                if rep.error_code == ErrorCode.KDC_ERR_PREAUTH_REQUIRED:
                     self.printer(username, "need password")
-                if rep.error_code == ErrorCodes.KDC_ERR_KEY_EXPIRED:
+                if rep.error_code == ErrorCode.KDC_ERR_KEY_EXPIRED:
                     # we can't determine this via kerberos
                     self.printer(
                         username, "password expired or client disabled in LDAP"
                     )
-                if rep.error_code == ErrorCodes.KDC_ERR_CLIENT_REVOKED:
+                if rep.error_code == ErrorCode.KDC_ERR_CLIENT_REVOKED:
                     self.printer(username, "client locked out")
             else:
                 # client doesn't need preauth

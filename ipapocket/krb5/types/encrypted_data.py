@@ -1,8 +1,8 @@
 from ipapocket.krb5.types.uint32 import UInt32
 from ipapocket.krb5.types.int32 import Int32
-from ipapocket.krb5.constants import EncryptionTypes
+from ipapocket.krb5.constants import EncryptionType
 from ipapocket.krb5.asn1 import EncryptedDataAsn1
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     ENCRYPTED_DATA_CIPHER,
     ENCRYPTED_DATA_ETYPE,
     ENCRYPTED_DATA_KVNO,
@@ -10,7 +10,7 @@ from ipapocket.krb5.fields import (
 
 
 class EncryptedData:
-    _etype: EncryptionTypes = None
+    _etype: EncryptionType = None
     _kvno: UInt32 = None
     _cipher = None
 
@@ -23,11 +23,11 @@ class EncryptedData:
         if value is None:
             return None
         if isinstance(value, int):
-            return EncryptionTypes(value)
-        elif isinstance(value, EncryptionTypes):
+            return EncryptionType(value)
+        elif isinstance(value, EncryptionType):
             return value
         elif isinstance(value, Int32):
-            return EncryptionTypes(value.value)
+            return EncryptionType(value.value)
         else:
             raise
 
@@ -41,7 +41,7 @@ class EncryptedData:
         tmp = cls()
         if ENCRYPTED_DATA_ETYPE in data:
             if data[ENCRYPTED_DATA_ETYPE].native is not None:
-                tmp.etype = EncryptionTypes(
+                tmp.etype = EncryptionType(
                     Int32.load(data[ENCRYPTED_DATA_ETYPE]).value
                 )
         if ENCRYPTED_DATA_KVNO in data:
@@ -52,7 +52,7 @@ class EncryptedData:
         return tmp
 
     @property
-    def etype(self) -> EncryptionTypes:
+    def etype(self) -> EncryptionType:
         return self._etype
 
     @etype.setter

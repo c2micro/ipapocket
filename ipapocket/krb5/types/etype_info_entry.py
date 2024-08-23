@@ -1,17 +1,17 @@
-from ipapocket.krb5.constants import EncryptionTypes
+from ipapocket.krb5.constants import EncryptionType
 from ipapocket.krb5.asn1 import EtypeInfoEntryAsn1
-from ipapocket.krb5.fields import ETYPE_INFO_ETYPE, ETYPE_INFO_SALT
+from ipapocket.krb5.constants.fields import ETYPE_INFO_ETYPE, ETYPE_INFO_SALT
 
 
 class EtypeInfoEntry:
-    _etype: EncryptionTypes = None
+    _etype: EncryptionType = None
     _salt: str = None
 
     def __init__(self):
         pass
 
     @property
-    def etype(self) -> EncryptionTypes:
+    def etype(self) -> EncryptionType:
         return self._etype
 
     @etype.setter
@@ -35,7 +35,7 @@ class EtypeInfoEntry:
         tmp = cls()
         if ETYPE_INFO_ETYPE in data:
             if data[ETYPE_INFO_ETYPE].native is not None:
-                tmp.etype = EncryptionTypes(data[ETYPE_INFO_ETYPE].native)
+                tmp.etype = EncryptionType(data[ETYPE_INFO_ETYPE].native)
         if ETYPE_INFO_SALT in data:
             if data[ETYPE_INFO_SALT].native is not None:
                 tmp.salt = data[ETYPE_INFO_SALT].native

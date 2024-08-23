@@ -1,7 +1,7 @@
-from ipapocket.krb5.constants import EncryptionTypes
+from ipapocket.krb5.constants import EncryptionType
 from ipapocket.krb5.types.kerberos_string import KerberosString
 from ipapocket.krb5.asn1 import EtypeInfo2EntryAsn1
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     ETYPE_INFO2_ETYPE,
     ETYPE_INFO2_S2KPARAMS,
     ETYPE_INFO2_SALT,
@@ -9,7 +9,7 @@ from ipapocket.krb5.fields import (
 
 
 class EtypeInfo2Entry:
-    _etype: EncryptionTypes = None
+    _etype: EncryptionType = None
     _salt: KerberosString = None
     _s2kparams: str = None
 
@@ -17,7 +17,7 @@ class EtypeInfo2Entry:
         pass
 
     @property
-    def etype(self) -> EncryptionTypes:
+    def etype(self) -> EncryptionType:
         return self._etype
 
     @etype.setter
@@ -49,7 +49,7 @@ class EtypeInfo2Entry:
         tmp = cls()
         if ETYPE_INFO2_ETYPE in data:
             if data[ETYPE_INFO2_ETYPE].native is not None:
-                tmp.etype = EncryptionTypes(data[ETYPE_INFO2_ETYPE].native)
+                tmp.etype = EncryptionType(data[ETYPE_INFO2_ETYPE].native)
         if ETYPE_INFO2_SALT in data:
             if data[ETYPE_INFO2_SALT].native is not None:
                 tmp.salt = KerberosString.load(data[ETYPE_INFO2_SALT])

@@ -6,7 +6,7 @@ from ipapocket.exceptions.krb5 import (
     InvalidPaEncTsEncPausec,
 )
 from ipapocket.krb5.asn1 import PaEncTsEncAsn1
-from ipapocket.krb5.fields import PA_ENC_TS_ENC_PA_TIMESTAMP, PA_ENC_TS_ENC_PA_USEC
+from ipapocket.krb5.constants.fields import PA_ENC_TS_ENC_PA_TIMESTAMP, PA_ENC_TS_ENC_PA_USEC
 
 
 class PaEncTsEnc:

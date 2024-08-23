@@ -1,5 +1,5 @@
 from ipapocket.krb5.types.kerberos_flags import KerberosFlags
-from ipapocket.krb5.constants import ApOptionsTypes
+from ipapocket.krb5.constants import ApOptionsType
 from ipapocket.krb5.asn1 import ApOptionsAsn1
 from ipapocket.exceptions.krb5 import InvalidApOptionsValueType
 
@@ -27,11 +27,11 @@ class ApOptions:
         tmp = cls()
         for v in value.native:
             if v == 1:
-                tmp.add(ApOptionsTypes(v))
+                tmp.add(ApOptionsType(v))
         return tmp
 
-    def _validate_option(self, value) -> ApOptionsTypes:
-        if not isinstance(value, ApOptionsTypes):
+    def _validate_option(self, value) -> ApOptionsType:
+        if not isinstance(value, ApOptionsType):
             raise InvalidApOptionsValueType(value)
         return value
 

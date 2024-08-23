@@ -1,7 +1,7 @@
 from ipapocket.krb5.types.enc_as_rep_part import EncAsRepPart
 from ipapocket.krb5.types.enc_tgs_rep_part import EncTgsRepPart
 from ipapocket.krb5.asn1 import EncRepPartAsn1
-from ipapocket.krb5.fields import ENC_REP_PART_AS_REP, ENC_REP_PART_TGS_REP
+from ipapocket.krb5.constants.fields import ENC_REP_PART_AS_REP, ENC_REP_PART_TGS_REP
 from ipapocket.exceptions.krb5 import UnexpectedEncRepPartType
 
 

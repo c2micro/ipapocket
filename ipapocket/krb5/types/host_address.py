@@ -1,6 +1,6 @@
 from ipapocket.krb5.types.int32 import Int32
 from ipapocket.krb5.asn1 import HostAddressAsn1
-from ipapocket.krb5.fields import HOST_ADDRESS_ADDR_TYPE, HOST_ADDRESS_ADDRESS
+from ipapocket.krb5.constants.fields import HOST_ADDRESS_ADDR_TYPE, HOST_ADDRESS_ADDRESS
 
 
 class HostAddress:

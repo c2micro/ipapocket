@@ -2,8 +2,8 @@ from ipapocket.krb5.types.int32 import Int32
 from ipapocket.krb5.types.kerberos_time import KerberosTime
 from ipapocket.krb5.types.realm import Realm
 from ipapocket.krb5.types.principal_name import PrincipalName
-from ipapocket.krb5.constants import ErrorCodes
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants import ErrorCode
+from ipapocket.krb5.constants.fields import (
     KRB_ERROR_CNAME,
     KRB_ERROR_CREALM,
     KRB_ERROR_CTIME,
@@ -28,7 +28,7 @@ class KrbError:
     _cusec: Int32 = None
     _stime: KerberosTime = None
     _susec: Int32 = None
-    _error_code: ErrorCodes = None
+    _error_code: ErrorCode = None
     _crealm: Realm = None
     _cname: PrincipalName = None
     _realm: Realm = None
@@ -88,7 +88,7 @@ class KrbError:
         self._susec = value
 
     @property
-    def error_code(self) -> ErrorCodes:
+    def error_code(self) -> ErrorCode:
         return self._error_code
 
     @error_code.setter
@@ -168,7 +168,7 @@ class KrbError:
                 tmp.susec = Int32.load(data[KRB_ERROR_SUSEC])
         if KRB_ERROR_ERROR_CODE in data:
             if data[KRB_ERROR_ERROR_CODE].native is not None:
-                tmp.error_code = ErrorCodes(data[KRB_ERROR_ERROR_CODE].native)
+                tmp.error_code = ErrorCode(data[KRB_ERROR_ERROR_CODE].native)
         if KRB_ERROR_CREALM in data:
             if data[KRB_ERROR_CREALM].native is not None:
                 tmp.crealm = Realm.load(data[KRB_ERROR_CREALM])

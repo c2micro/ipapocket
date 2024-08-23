@@ -1,17 +1,17 @@
-from ipapocket.krb5.constants import EncryptionTypes
+from ipapocket.krb5.constants import EncryptionType
 from ipapocket.krb5.asn1 import EncryptionKeyAsn1
-from ipapocket.krb5.fields import ENCRYPTION_KEY_KEYTYPE, ENCRYPTION_KEY_KEYVALUE
+from ipapocket.krb5.constants.fields import ENCRYPTION_KEY_KEYTYPE, ENCRYPTION_KEY_KEYVALUE
 
 
 class EncryptionKey:
-    _keytype: EncryptionTypes = None
+    _keytype: EncryptionType = None
     _keyvalue: str = None
 
     def __init__(self):
         pass
 
     @property
-    def keytype(self) -> EncryptionTypes:
+    def keytype(self) -> EncryptionType:
         return self._keytype
 
     @keytype.setter
@@ -33,7 +33,7 @@ class EncryptionKey:
         tmp = cls()
         if ENCRYPTION_KEY_KEYTYPE in data:
             if data[ENCRYPTION_KEY_KEYTYPE].native is not None:
-                tmp.keytype = EncryptionTypes(data[ENCRYPTION_KEY_KEYTYPE].native)
+                tmp.keytype = EncryptionType(data[ENCRYPTION_KEY_KEYTYPE].native)
         if ENCRYPTION_KEY_KEYVALUE in data:
             if data[ENCRYPTION_KEY_KEYVALUE].native is not None:
                 tmp.keyvalue = data[ENCRYPTION_KEY_KEYVALUE].native

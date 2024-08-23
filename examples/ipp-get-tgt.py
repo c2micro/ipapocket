@@ -4,23 +4,26 @@ import argparse
 import sys
 import logging
 
-from ipapocket.network.krb5 import Krb5Client
+from ipapocket.network.krb5 import Krb5Network
 from ipapocket.krb5.operations import BaseKrb5Operations
 from ipapocket.krb5.crypto.backend import Key
 from ipapocket.krb5.crypto import crypto
-from ipapocket.krb5.constants import ErrorCodes, KeyUsageTypes
+from ipapocket.krb5.constants import ErrorCode, KeyUsageType
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger
-from ipapocket.krb5.types import KerberosResponse, AsRep, EncRepPart
-from ipapocket.krb5.ccache import Ccache
+from ipapocket.krb5.types import AsRep, EncRepPart
+from ipapocket.krb5.credentials.ccache import Ccache
+from binascii import unhexlify
 
 
 class GetTgt:
-    def __init__(self, username, password, domain, ipa_host, service, renewable, ccache_file=None):
+    def __init__(
+        self, username, password, domain, ipa_host, service, renewable, ccache_file=None
+    ):
         self._base = BaseKrb5Operations(
             domain=domain, username=username, password=password
         )
-        self._krb5_client = Krb5Client(ipa_host)
+        self._krb5_client = Krb5Network(ipa_host)
 
         self._username = username
         self._password = password
@@ -40,7 +43,7 @@ class GetTgt:
         enc_part = EncRepPart.load(
             crypto.decrypt(
                 key,
-                KeyUsageTypes.AS_REP_ENCPART,
+                KeyUsageType.AS_REP_ENCPART,
                 rep.kdc_rep.enc_part.cipher,
             )
         )
@@ -61,13 +64,12 @@ class GetTgt:
         logging.debug("construct AS-REQ wihtout PA")
         as_req = self._base.as_req_without_pa(service=self._service_name)
         logging.debug("send AS-REQ without PA")
-        data = self._krb5_client.sendrcv(as_req.dump())
         # convert to response type
-        response = KerberosResponse.load(data)
+        response = self._krb5_client.sendrcv(as_req)
         if response.is_krb_error():
             krb_rep = response.krb_error
             # if error is not NEEDED_PREAUTH
-            if krb_rep.error_code != ErrorCodes.KDC_ERR_PREAUTH_REQUIRED:
+            if krb_rep.error_code != ErrorCode.KDC_ERR_PREAUTH_REQUIRED:
                 raise UnexpectedKerberosError(krb_rep.error_code.name)
             else:
                 # get preferred etypes + salt
@@ -77,10 +79,11 @@ class GetTgt:
                 self._base.gen_key()
                 # construct as-req with PA
                 logging.debug("construct AS-REQ with encrypted PA")
-                as_req = self._base.as_req_with_pa(service=self._service_name, renewable=self._renewable)
+                as_req = self._base.as_req_with_pa(
+                    service=self._service_name, renewable=self._renewable
+                )
                 logging.debug("send AS-REQ with encrypted PA")
-                data = self._krb5_client.sendrcv(as_req.dump())
-                response = KerberosResponse.load(data)
+                response = self._krb5_client.sendrcv(as_req)
                 if response.is_krb_error():
                     raise UnexpectedKerberosError(response.krb_error.error_code.name)
                 else:

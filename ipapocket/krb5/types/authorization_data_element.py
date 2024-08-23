@@ -1,17 +1,17 @@
-from ipapocket.krb5.constants import AuthorizationDataTypes
+from ipapocket.krb5.constants import AuthorizationDataType
 from ipapocket.krb5.asn1 import AuthorizationDataElementAsn1
-from ipapocket.krb5.fields import AUTHORIZATION_DATA_AD_TYPE, AUTHORIZATION_DATA_AD_DATA
+from ipapocket.krb5.constants.fields import AUTHORIZATION_DATA_AD_TYPE, AUTHORIZATION_DATA_AD_DATA
 
 
 class AuthorizationDataElement:
-    _ad_type: AuthorizationDataTypes = None
+    _ad_type: AuthorizationDataType = None
     _ad_data: str = None
 
     def __init__(self):
         pass
 
     @property
-    def ad_type(self) -> AuthorizationDataTypes:
+    def ad_type(self) -> AuthorizationDataType:
         return self._ad_type
 
     @ad_type.setter
@@ -39,7 +39,7 @@ class AuthorizationDataElement:
         tmp = cls()
         if AUTHORIZATION_DATA_AD_TYPE in data:
             if data[AUTHORIZATION_DATA_AD_TYPE].native is not None:
-                tmp.ad_type = AuthorizationDataTypes(
+                tmp.ad_type = AuthorizationDataType(
                     data[AUTHORIZATION_DATA_AD_TYPE].native
                 )
         if AUTHORIZATION_DATA_AD_DATA in data:

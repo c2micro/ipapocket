@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 from ipapocket.utils import logger
-from ipapocket.krb5.ccache import Ccache
+from ipapocket.krb5.credentials.ccache import Ccache
 import argparse
 import os
 import logging
 from datetime import datetime, UTC
 import base64
-from ipapocket.krb5.constants import EncryptionTypes, TicketFlagsTypes, KeyUsageTypes
+from ipapocket.krb5.constants import EncryptionType, TicketFlagsType, KeyUsageType
 from ipapocket.krb5.types.ticket import Ticket
 from ipapocket.krb5.types.enc_ticket_part import EncTicketPart
 from ipapocket.krb5.crypto.backend import Key
@@ -94,12 +94,12 @@ class ShowCcache:
                 renew_till += " [expired]"
             # format ticket flags
             tkt_flags = ""
-            for j in TicketFlagsTypes:
+            for j in TicketFlagsType:
                 if (cred.tktflags >> (31 - j.value)) & 1 == 1:
                     tkt_flags += j.name + ","
             tkt_flags = tkt_flags.strip(",")
             # format key_type
-            key_type = EncryptionTypes(cred.key.keytype).name
+            key_type = EncryptionType(cred.key.keytype).name
             # format key_value
             key_value = base64.b64encode(cred.key.keyvalue).decode("utf-8")
             tkt = Ticket.load(cred.ticket.data)
@@ -148,7 +148,7 @@ class ShowCcache:
                     # create key
                     key = Key(tkt.enc_part.etype, unhexlify(self._raw_key))
                     enc_tkt_part = EncTicketPart.load(
-                        decrypt(key, KeyUsageTypes.KDC_REP_TICKET, tkt.enc_part.cipher)
+                        decrypt(key, KeyUsageType.KDC_REP_TICKET, tkt.enc_part.cipher)
                     )
                     # format ticket flags
                     enc_tkt_flags = ""
@@ -156,7 +156,7 @@ class ShowCcache:
                         enc_tkt_flags += j.name + ","
                     enc_tkt_flags = enc_tkt_flags.strip(",")
                     # format enc_tkt_key_type
-                    enc_tkt_key_type = EncryptionTypes(enc_tkt_part.key.keytype).name
+                    enc_tkt_key_type = EncryptionType(enc_tkt_part.key.keytype).name
                     # format enc_tkt_key_value
                     enc_tkt_key_value = base64.b64encode(
                         enc_tkt_part.key.keyvalue
@@ -206,41 +206,32 @@ class ShowCcache:
                         enc_tkt_renew_till = datetime.fromtimestamp(0).strftime(
                             "%d/%m/%Y %H:%M:%S %p"
                         )
-                    logging.info(
-                        "[#%d]  %s" % (i, "Info from decrypted ticket:")
-                    )
-                    logging.info(
-                        "[#%d]   %-23s: %s" % (i, "Flags", enc_tkt_flags)
-                    )
+                    logging.info("[#%d]  %s" % (i, "Info from decrypted ticket:"))
+                    logging.info("[#%d]   %-23s: %s" % (i, "Flags", enc_tkt_flags))
                     logging.info(
                         "[#%d]   %-23s: %s" % (i, "Key etype", enc_tkt_key_type)
                     )
                     logging.info(
-                        "[#%d]   %-23s: %s"
-                        % (i, "Key value", enc_tkt_key_value)
+                        "[#%d]   %-23s: %s" % (i, "Key value", enc_tkt_key_value)
                     )
                     logging.info(
-                        "[#%d]   %-23s: %s"
-                        % (i, "Client realm", enc_tkt_crealm)
+                        "[#%d]   %-23s: %s" % (i, "Client realm", enc_tkt_crealm)
                     )
                     logging.info(
                         "[#%d]   %-23s: %s" % (i, "Client name", enc_tkt_cname)
                     )
                     # TODO - print transition
                     logging.info(
-                        "[#%d]   %-23s: %s"
-                        % (i, "Auth time", enc_tkt_auth_time)
+                        "[#%d]   %-23s: %s" % (i, "Auth time", enc_tkt_auth_time)
                     )
                     logging.info(
-                        "[#%d]   %-23s: %s"
-                        % (i, "Start time", enc_tkt_start_time)
+                        "[#%d]   %-23s: %s" % (i, "Start time", enc_tkt_start_time)
                     )
                     logging.info(
                         "[#%d]   %-23s: %s" % (i, "End time", enc_tkt_end_time)
                     )
                     logging.info(
-                        "[#%d]   %-23s: %s"
-                        % (i, "Renew till time", enc_tkt_renew_till)
+                        "[#%d]   %-23s: %s" % (i, "Renew till time", enc_tkt_renew_till)
                     )
                     # TODO - parse PAC
                 except Exception as e:
@@ -249,14 +240,10 @@ class ShowCcache:
                         base64.b64encode(tkt.enc_part.cipher).decode("utf-8")
                         + " [DECRYPTION FAILED]"
                     )
-                    logging.info(
-                        "[#%d]  %-24s: %s" % (i, "Encrypted part", tkt_enc)
-                    )
+                    logging.info("[#%d]  %-24s: %s" % (i, "Encrypted part", tkt_enc))
             else:
                 tkt_enc = base64.b64encode(tkt.enc_part.cipher).decode("utf-8")
-                logging.info(
-                    "[#%d]  %-24s: %s" % (i, "Encrypted part", tkt_enc)
-                )
+                logging.info("[#%d]  %-24s: %s" % (i, "Encrypted part", tkt_enc))
 
 
 if __name__ == "__main__":
@@ -272,6 +259,7 @@ if __name__ == "__main__":
         help="Verbose mode",
     )
     parser.add_argument(
+        "-c",
         "--ccache",
         required=False,
         action="store",

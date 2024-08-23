@@ -7,7 +7,7 @@ from ipapocket.krb5.types.realm import Realm
 from ipapocket.krb5.types.principal_name import PrincipalName
 from ipapocket.krb5.types.host_addresses import HostAddresses
 from ipapocket.krb5.asn1 import EncKdcRepPartAsn1
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     ENC_KDC_REP_PART_AUTHTIME,
     ENC_KDC_REP_PART_CADDR,
     ENC_KDC_REP_PART_ENDTIME,

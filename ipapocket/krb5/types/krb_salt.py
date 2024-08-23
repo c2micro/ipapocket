@@ -1,22 +1,22 @@
-from ipapocket.krb5.constants import KdbSaltTypes
+from ipapocket.krb5.constants import KdbSaltType
 from ipapocket.exceptions.krb5 import InvalidSaltType
 from ipapocket.krb5.asn1 import KrbSaltAsn1
-from ipapocket.krb5.fields import KRB_SALT_TYPE, KRB_SALT_SALT
+from ipapocket.krb5.constants.fields import KRB_SALT_TYPE, KRB_SALT_SALT
 
 
 class KrbSalt:
-    _type: KdbSaltTypes = None
+    _type: KdbSaltType = None
     _salt: str = None
 
     @property
-    def type(self) -> KdbSaltTypes:
+    def type(self) -> KdbSaltType:
         return self._type
 
     @type.setter
     def type(self, value) -> None:
         if isinstance(value, int):
-            self._type = KdbSaltTypes(value)
-        elif isinstance(value, KdbSaltTypes):
+            self._type = KdbSaltType(value)
+        elif isinstance(value, KdbSaltType):
             self._type = value
         else:
             raise InvalidSaltType()
@@ -36,7 +36,7 @@ class KrbSalt:
         tmp = cls()
         if KRB_SALT_TYPE in data:
             if data[KRB_SALT_TYPE].native is not None:
-                tmp.type = KdbSaltTypes(data[KRB_SALT_TYPE].native)
+                tmp.type = KdbSaltType(data[KRB_SALT_TYPE].native)
         if KRB_SALT_SALT in data:
             if data[KRB_SALT_SALT].native is not None:
                 tmp.salt = data[KRB_SALT_SALT].native

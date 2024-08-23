@@ -7,7 +7,7 @@ from ipapocket.krb5.types.kerberos_time import KerberosTime
 from ipapocket.krb5.types.encryption_key import EncryptionKey
 from ipapocket.krb5.types.uint32 import UInt32
 from ipapocket.krb5.types.authorization_data import AuthorizationData
-from ipapocket.krb5.fields import (
+from ipapocket.krb5.constants.fields import (
     AUTHENTICATOR_AUTHENTICATOR_VNO,
     AUTHENTICATOR_AUTHORIZATION_DATA,
     AUTHENTICATOR_CKSUM,

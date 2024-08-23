@@ -28,14 +28,14 @@ pipx install git+https://github.com/c2micro/ipapocket
 
 ## Examples AKA the pentest tools
 
-`ipp-cve-2024-3183.py` - PoC for CVE-2024-3183. To crack hashes with AES256-SHA1 (etype 18) you can use this [fork of hashcat](https://github.com/c2micro/hashcat) with mode `32900`
+`ipp-cve-2024-3183.py`: PoC for CVE-2024-3183. To crack hashes with AES256-SHA1 (etype 18) you can use this [fork of hashcat](https://github.com/c2micro/hashcat) with mode `32900`
 
-`ipp-id2entry.py` - parse output of `dbscan -f id2entry.db` and decrypt principals keys (can be used for creation of tickets)
+`ipp-id2entry.py`: parse output of `dbscan -f id2entry.db` and decrypt principals keys (can be used for creation of tickets)
 
-`ipp-get-tgs.py` - get TGS-REP and save TGS to CCACHE
+`ipp-get-tgt.py`: get AS-REP and save TGT to CCACHE (normal authentication flow with PASSWORD)
 
-`ipp-get-tgt.py` - get AS-REP and save TGT to CCACHE
+`ipp-get-tgs.py`: get TGS-REP and save TGS to CCACHE (only use TGT from KRB5CCNAME)
 
-`ipp-user-enum.py` - enumarate users via Kerberos
+`ipp-user-enum.py`: enumarate users via Kerberos
 
-`ipp-show-ccache.py` - describe credentials in CCACHE
+`ipp-show-ccache.py`: describe credentials in CCACHE

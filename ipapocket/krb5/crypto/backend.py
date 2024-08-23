@@ -22,6 +22,8 @@ from ipapocket.krb5.constants import EncryptionTypes, ChecksumTypes
 
 class Key(object):
     def __init__(self, enctype: EncryptionTypes, data):
+        if isinstance(enctype, int):
+            enctype = EncryptionTypes(enctype)
         e = _get_etype_profile(enctype)
         if len(data) != e.keysize and len(data) != e.macsize:
             raise InvalidKeyLength(len(data))
@@ -325,6 +327,8 @@ def _get_etype_profile(etype: EncryptionTypes):
     """
     Get encryption class (profile)
     """
+    if isinstance(etype, int):
+        etype = EncryptionTypes(etype)
     if etype not in _etype_table:
         raise UnknownEtype(etype)
     return _etype_table[etype]
@@ -334,6 +338,8 @@ def _get_cksum_profile(cksumtype: ChecksumTypes):
     """
     Get checksum class (profile)
     """
+    if isinstance(cksumtype, int):
+        cksumtype = ChecksumTypes(cksumtype)
     if cksumtype not in _cksum_table:
         raise UnknownChecksumType(cksumtype)
     return _cksum_table[cksumtype]

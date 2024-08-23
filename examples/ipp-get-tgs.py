@@ -15,14 +15,18 @@ from ipapocket.krb5.types import (
     KerberosResponse,
     AsRep,
     EncRepPart,
-    KdcRep,
-    Ticket,
     TgsRep,
+    Tgt,
 )
 from ipapocket.krb5.ccache import Ccache
+import os
 
 
 class GetTgs:
+    _use_ccache: bool = None
+    _ccache: Ccache = None
+    _ccache_cred_idx: int = None
+
     def __init__(
         self,
         username,
@@ -30,6 +34,7 @@ class GetTgs:
         domain,
         ipa_host,
         use_ccache,
+        ccache_id,
         service_name,
         renewable,
         ccache_file=None,
@@ -43,8 +48,16 @@ class GetTgs:
         self._ipa_host = ipa_host
         self._session_key: Key = None
         self._service_name = service_name
+        self._use_ccache = use_ccache
         self._ccache_path = ccache_file
         self._renewable = renewable
+        if ccache_id is None:
+            self._ccache_cred_idx = 0
+        else:
+            self._ccache_cred_idx = int(ccache_id)
+
+        if self._use_ccache:
+            self._ccache = Ccache.from_file(os.getenv("KRB5CCNAME"))
 
     def _save_ccache(self, kdc_rep, kdc_enc_part):
         ccache = Ccache()
@@ -74,20 +87,23 @@ class GetTgs:
         logging.info("got AS-REP successfully")
 
         # save session key
-        self._session_key = Key(kdc_enc_data.key.keytype, kdc_enc_data.key.keyvalue)
-        self._tgsReq(rep.kdc_rep.ticket, rep.kdc_rep)
+        tgt = Tgt()
+        tgt.session_key = Key(kdc_enc_data.key.keytype, kdc_enc_data.key.keyvalue)
+        tgt.kdc_rep = rep.kdc_rep
+        self._tgsReq(tgt)
 
-    def _tgsReq(self, ticket: Ticket, kdc_rep: KdcRep):
+    def _tgsReq(self, tgt: Tgt):
         """
         Process TGS-REQ
         """
         logging.debug("construct TGS-REQ")
         tgs_req = self._base.tgs_req(
-            kdc_rep=kdc_rep,
-            ticket=ticket,
-            session_key=self._session_key,
+            kdc_rep=tgt.kdc_rep,
+            ticket=tgt.kdc_rep.ticket,
+            session_key=tgt.session_key,
             service=self._service_name,
             renewable=self._renewable,
+            etype=tgt.session_key.enctype,
         )
         logging.debug("send TGS-REQ")
         data = self._krb5_client.sendrcv(tgs_req.dump())
@@ -120,50 +136,60 @@ class GetTgs:
             logging.info("got TGS-REP successfully")
 
     def get_tgs(self):
-        logging.debug("construct AS-REQ wihtout PA")
-        as_req = self._base.as_req_without_pa()
-        logging.debug("send AS-REQ without PA")
-        data = self._krb5_client.sendrcv(as_req.dump())
-        # convert to response type
-        response = KerberosResponse.load(data)
-        if response.is_krb_error():
-            krb_rep = response.krb_error
-            # if error is not NEEDED_PREAUTH
-            if krb_rep.error_code != ErrorCodes.KDC_ERR_PREAUTH_REQUIRED:
-                raise UnexpectedKerberosError(krb_rep.error_code.name)
-            else:
-                # get preferred etypes + salt
-                self._base.as_req_preffered_etype(krb_rep)
-                # generate user secret
-                logging.debug("generate user secret based on etype, password and salt")
-                self._base.gen_key()
-                # construct as-req with PA
-                logging.debug("construct AS-REQ with encrypted PA")
-                # tgt must have renewable flag to make renewable TGS
-                as_req = self._base.as_req_with_pa(renewable=self._renewable)
-                logging.debug("send AS-REQ with encrypted PA")
-                data = self._krb5_client.sendrcv(as_req.dump())
-                response = KerberosResponse.load(data)
-                if response.is_krb_error():
-                    raise UnexpectedKerberosError(response.krb_error.error_code.name)
-                else:
-                    self._asRep(response.as_rep, self._base.key)
+        if self._use_ccache:
+            logging.debug("get TGT from KRB5CCNAME path")
+            tgt = self._ccache.get_tgt(self._ccache_cred_idx)
+            self._session_key = tgt.session_key
+            self._tgsReq(tgt)
         else:
-            # client doesn't need preauth, so we get TGT right now
-            logging.debug("recieved AS-REP for user without PA needing")
-            self._asRep(response.as_rep, self._base.key)
+            logging.debug("construct AS-REQ wihtout PA")
+            as_req = self._base.as_req_without_pa()
+            logging.debug("send AS-REQ without PA")
+            data = self._krb5_client.sendrcv(as_req.dump())
+            # convert to response type
+            response = KerberosResponse.load(data)
+            if response.is_krb_error():
+                krb_rep = response.krb_error
+                # if error is not NEEDED_PREAUTH
+                if krb_rep.error_code != ErrorCodes.KDC_ERR_PREAUTH_REQUIRED:
+                    raise UnexpectedKerberosError(krb_rep.error_code.name)
+                else:
+                    # get preferred etypes + salt
+                    self._base.as_req_preffered_etype(krb_rep)
+                    # generate user secret
+                    logging.debug(
+                        "generate user secret based on etype, password and salt"
+                    )
+                    self._base.gen_key()
+                    # construct as-req with PA
+                    logging.debug("construct AS-REQ with encrypted PA")
+                    # tgt must have renewable flag to make renewable TGS
+                    as_req = self._base.as_req_with_pa(renewable=self._renewable)
+                    logging.debug("send AS-REQ with encrypted PA")
+                    data = self._krb5_client.sendrcv(as_req.dump())
+                    response = KerberosResponse.load(data)
+                    if response.is_krb_error():
+                        raise UnexpectedKerberosError(
+                            response.krb_error.error_code.name
+                        )
+                    else:
+                        self._asRep(response.as_rep, self._base.key)
+            else:
+                # client doesn't need preauth, so we get TGT right now
+                logging.debug("recieved AS-REP for user without PA needing")
+                self._asRep(response.as_rep, self._base.key)
 
 
 if __name__ == "__main__":
     logger.init()
     parser = argparse.ArgumentParser(
-        add_help=True, description="Get TGT from FreeIPA server"
+        add_help=True, description="Get TGS from FreeIPA server"
     )
     parser.add_argument(
-        "-u", "--username", required=True, action="store", help="username"
+        "-u", "--username", required=False, action="store", help="username"
     )
     parser.add_argument(
-        "-p", "--password", required=True, action="store", help="password"
+        "-p", "--password", required=False, action="store", help="password"
     )
     parser.add_argument(
         "-d",
@@ -191,6 +217,12 @@ if __name__ == "__main__":
         required=False,
         action="store_true",
         help="Use KRB5CCNAME for TGT CCACHE path",
+    )
+    parser.add_argument(
+        "-i",
+        required=False,
+        action="store",
+        help="Specify ID of credentials in CCACHE (by default will take first one)",
     )
     parser.add_argument(
         "-s",
@@ -227,6 +259,7 @@ if __name__ == "__main__":
         options.domain,
         options.ipa_host,
         options.k,
+        options.i,
         options.service,
         options.renewable,
         options.ccache,

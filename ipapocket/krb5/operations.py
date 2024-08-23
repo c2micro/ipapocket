@@ -128,7 +128,7 @@ class BaseKrb5Operations:
 
         # create AS-REQ
         as_req = AsReq(kdc_req)
-        
+
         return as_req
 
     def gen_key(self):
@@ -182,7 +182,7 @@ class BaseKrb5Operations:
         # set till in request
         kdc_req_body.till = KerberosTime(current_timestamp + timedelta(days=1))
         # set rtime in request (renewable time)
-        #kdc_req_body.rtime = KerberosTime(current_timestamp + timedelta(days=1))
+        # kdc_req_body.rtime = KerberosTime(current_timestamp + timedelta(days=1))
         # set nonce in request
         kdc_req_body.nonce = UInt32(secrets.randbits(31))
         # set etype in request
@@ -253,7 +253,15 @@ class BaseKrb5Operations:
                         return
         raise NoSupportedEtypes("no supported server PA etypes exists in this client")
 
-    def tgs_req(self, kdc_rep: KdcRep, ticket: Ticket, session_key: Key, service=None, renewable=False):
+    def tgs_req(
+        self,
+        kdc_rep: KdcRep,
+        ticket: Ticket,
+        session_key: Key,
+        service=None,
+        renewable=False,
+        etype=None,
+    ):
         """
         Construct TGS-REQ packet
         """
@@ -262,6 +270,8 @@ class BaseKrb5Operations:
         domain = self._domain.upper()
         if service is None or service == "":
             service = "krbtgt/" + domain
+        if etype is None:
+            etype = self._etype
 
         # create KDC request body
         kdc_req_body = KdcReqBody()
@@ -284,7 +294,7 @@ class BaseKrb5Operations:
         # set nonce in request body
         kdc_req_body.nonce = UInt32(secrets.randbits(31))
         # set etype in request body
-        kdc_req_body.etype = EncTypes(self._etype)
+        kdc_req_body.etype = EncTypes(etype)
 
         # create KDC request
         kdc_req = KdcReq()

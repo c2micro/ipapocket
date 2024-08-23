@@ -12,7 +12,7 @@ from ipapocket.krb5.types.ticket import Ticket
 from ipapocket.krb5.types.enc_ticket_part import EncTicketPart
 from ipapocket.krb5.crypto.backend import Key
 from ipapocket.krb5.crypto.crypto import decrypt
-from binascii import unhexlify, hexlify
+from binascii import unhexlify
 
 
 class ShowCcache:

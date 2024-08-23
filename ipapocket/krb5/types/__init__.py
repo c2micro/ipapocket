@@ -162,3 +162,6 @@ from ipapocket.krb5.types.transited_encoding import TransitedEncoding
 
 # EncTicketPart
 from ipapocket.krb5.types.enc_ticket_part import EncTicketPart
+
+# Tgt
+from ipapocket.krb5.types.tgt import Tgt

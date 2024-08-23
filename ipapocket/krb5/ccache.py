@@ -1,6 +1,7 @@
 from ipapocket.krb5.types import *
 from ipapocket.exceptions.ccache import *
 from ipapocket.krb5.constants import *
+from ipapocket.krb5.crypto.backend import Key
 from asn1crypto import core
 import io
 
@@ -55,9 +56,15 @@ class OctetString:
 
     def to_kerberos_string(self) -> KerberosString:
         """
-        Convert CCACHE OctetString to ASN1 KerberosStirng
+        Convert object to KerberosString
         """
         return KerberosString(self.data.decode("utf-8"))
+
+    def to_ticket(self) -> Ticket:
+        """
+        Convert object to Ticket
+        """
+        return Ticket.load(self.data)
 
 
 class Header:
@@ -257,6 +264,12 @@ class Keyblock:
         tmp.keylen = int.from_bytes(reader.read(2), byteorder="big", signed=True)
         tmp.keyvalue = reader.read(tmp.keylen)
         return tmp
+
+    def to_key(self) -> Key:
+        """
+        Convert keyblock to crypto Key
+        """
+        return Key(self.keytype, self.keyvalue)
 
 
 class Times:
@@ -580,6 +593,26 @@ class Credential:
         tmp.second_ticket = OctetString.parse(reader)
         return tmp
 
+    def to_tgt(self) -> Tgt:
+        """
+        Convert credential to special structure aka TGT
+        """
+        tgt = Tgt()
+        kdc_rep = KdcRep()
+        kdc_rep.pvno = 5
+        kdc_rep.msg_type = MessageTypes.KRB_AS_REP
+        kdc_rep.crealm = self.server.realm.to_kerberos_string()
+        kdc_rep.cname = self.client.to_principal_name()
+        kdc_rep.ticket = self.ticket.to_ticket()
+        enc_data = EncryptedData()
+        enc_data.etype = self.key.keytype
+        kdc_rep.enc_part = enc_data
+        # set session key to tgt
+        tgt.session_key = self.key.to_key()
+        # set kdc rep
+        tgt.kdc_rep = kdc_rep
+        return tgt
+
 
 class Credentials:
     _credentials: list[Credential] = None
@@ -629,6 +662,10 @@ class Credentials:
         """
         return cls.parse(io.BytesIO(data))
 
+    def get_tgt(self, idx=0) -> Tgt:
+        # TODO - validate idx
+        return self.credentials[idx].to_tgt()
+
 
 # https://repo.or.cz/w/krb5dissect.git/blob_plain/HEAD:/ccache.txt
 # https://github.com/krb5/krb5/blob/master/doc/formats/ccache_file_format.rst
@@ -659,6 +696,12 @@ class Ccache:
     @property
     def credentials(self) -> Credentials:
         return self._credentials
+
+    def get_tgt(self, idx=0):
+        """
+        Get TGT from credentials (specified by ID)
+        """
+        return self.credentials.get_tgt(idx)
 
     def set_tgt(self, kdc_rep: KdcRep, kdc_enc_part: EncKdcRepPart):
         """

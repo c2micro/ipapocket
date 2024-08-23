@@ -4,6 +4,7 @@ from ipapocket.krb5.types.realm import Realm
 from ipapocket.krb5.types.principal_name import PrincipalName
 from ipapocket.krb5.types.ticket import Ticket
 from ipapocket.krb5.types.encrypted_data import EncryptedData
+from ipapocket.krb5.types.kerberos_string import KerberosString
 from ipapocket.krb5.constants import MessageTypes
 from ipapocket.krb5.asn1 import KdcRepAsn1
 from ipapocket.krb5.fields import (
@@ -59,7 +60,12 @@ class KdcRep:
 
     @crealm.setter
     def crealm(self, value) -> None:
-        self._crealm = value
+        if isinstance(value, KerberosString | str):
+            self._crealm = Realm(value)
+        elif isinstance(value, Realm):
+            self._crealm = value
+        else:
+            raise
 
     @property
     def cname(self) -> PrincipalName:

@@ -7,7 +7,7 @@ class KerberosTime:
     _time: datetime = None
 
     def __init__(self, ktime: datetime):
-        self._time = self._validate_time(ktime)
+        self.time = ktime
 
     def _validate_time(self, ktime):
         if not isinstance(ktime, datetime):

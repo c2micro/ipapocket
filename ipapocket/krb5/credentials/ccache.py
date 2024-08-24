@@ -415,9 +415,7 @@ class Principal:
         components = list[str]()
         for i in range(num_components):
             components.append(OctetString.parse(reader).data.decode())
-        return cls(
-            PrincipalName(NameType(principal_type), components), Realm(realm)
-        )
+        return cls(PrincipalName(NameType(principal_type), components), Realm(realm))
 
     def to_principal_name(self, type=None) -> PrincipalName:
         """
@@ -703,31 +701,55 @@ class Ccache:
         """
         return self.credentials.get_tgt(idx)
 
-    def set_tgt(self, kdc_rep: KdcRep, kdc_enc_part: EncKdcRepPart):
+    def add_tgt(self, tgt: Tgt):
         """
-        Set TGT as main credentials in CCACHE structure
+        Add TGT to credentials of CCACHE
         """
-        self._credentiparseals = Credentials()
         # set primary principal
-        self._primary_principal = Principal(kdc_rep.cname, kdc_rep.crealm)
+        self._primary_principal = Principal(tgt.kdc_rep.cname, tgt.kdc_rep.crealm)
         # create credential
         c = Credential()
-        c.client = Principal(kdc_rep.cname, kdc_rep.crealm)
-        c.server = Principal(kdc_enc_part.sname, kdc_enc_part.srealm)
+        c.client = Principal(tgt.kdc_rep.cname, tgt.kdc_rep.crealm)
+        c.server = Principal(tgt.epart.sname, tgt.epart.srealm)
         c.time = Times(
-            kdc_enc_part.authtime,
-            kdc_enc_part.starttime,
-            kdc_enc_part.endtime,
-            kdc_enc_part.renew_till,
+            tgt.epart.authtime,
+            tgt.epart.starttime,
+            tgt.epart.endtime,
+            tgt.epart.renew_till,
         )
-        c.key = Keyblock(kdc_enc_part.key)
+        c.key = Keyblock(tgt.epart.key)
         c.is_skey = 0  # TODO - research
-        c.tktflags = kdc_enc_part.flags
+        c.tktflags = tgt.epart.flags
         c.num_address = 0
         c.num_authdata = 0
-        c.ticket = OctetString(kdc_rep.ticket.dump())
+        c.ticket = OctetString(tgt.kdc_rep.ticket.dump())
         c.second_ticket = OctetString()
-        self._credentials.add(c)
+        self.credentials.add(c)
+
+    def add_tgs(self, tgs: Tgs):
+        """
+        Add TGS to credentials of CCACHE
+        """
+        # set primary principal
+        self._primary_principal = Principal(tgs.kdc_rep.cname, tgs.kdc_rep.crealm)
+        # create credential
+        c = Credential()
+        c.client = Principal(tgs.kdc_rep.cname, tgs.kdc_rep.crealm)
+        c.server = Principal(tgs.epart.sname, tgs.epart.srealm)
+        c.time = Times(
+            tgs.epart.authtime,
+            tgs.epart.starttime,
+            tgs.epart.endtime,
+            tgs.epart.renew_till,
+        )
+        c.key = Keyblock(tgs.epart.key)
+        c.is_skey = 0  # TODO - research
+        c.tktflags = tgs.epart.flags
+        c.num_address = 0
+        c.num_authdata = 0
+        c.ticket = OctetString(tgs.kdc_rep.ticket.dump())
+        c.second_ticket = OctetString()
+        self.credentials.add(c)
 
     def to_bytes(self) -> bytes:
         """

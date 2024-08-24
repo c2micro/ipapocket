@@ -112,8 +112,10 @@ class KdcReqBody:
 
     @rtime.setter
     def rtime(self, value) -> None:
-        if not isinstance(value, KerberosTime):
-            raise InvalidTypeInKdcReqBody("cname", value)
+        if value is None:
+            self._rtime = None
+        elif not isinstance(value, KerberosTime):
+            raise InvalidTypeInKdcReqBody("rtime", value)
         self._rtime = value
 
     @property

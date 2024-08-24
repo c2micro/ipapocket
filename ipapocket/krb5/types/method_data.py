@@ -4,10 +4,10 @@ from ipapocket.krb5.asn1 import MethodDataAsn1
 
 
 class MethodData:
-    _padatas: list = None
+    _padatas: list[PaData] = list[PaData]()
 
     def __init__(self):
-        self._padatas = list()
+        self.clear()
 
     def add(self, padata):
         if not isinstance(padata, PaData):
@@ -15,10 +15,10 @@ class MethodData:
         self._padatas.append(padata)
 
     def clear(self):
-        self._padatas = list()
+        self._padatas = list[PaData]()
 
     @property
-    def padatas(self) -> list:
+    def padatas(self) -> list[PaData]:
         return self._padatas
 
     @classmethod
@@ -28,7 +28,7 @@ class MethodData:
         if isinstance(data, MethodData):
             data = data.to_asn1()
         tmp = cls()
-        for v in data.native:
+        for v in data:
             tmp.add(PaData.load(v))
         return tmp
 

@@ -1111,3 +1111,154 @@ class EncTicketPartAsn1(core.Sequence):
             {"tag_type": EXPLICIT, "tag": 10, "optional": True},
         ),
     ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.8.1
+# wrapped by ipapocket.krb5.types.KrbCredInfo
+class KrbCredInfoAsn1(core.Sequence):
+    """
+    KrbCredInfo     ::= SEQUENCE {
+           key             [0] EncryptionKey,
+           prealm          [1] Realm OPTIONAL,
+           pname           [2] PrincipalName OPTIONAL,
+           flags           [3] TicketFlags OPTIONAL,
+           authtime        [4] KerberosTime OPTIONAL,
+           starttime       [5] KerberosTime OPTIONAL,
+           endtime         [6] KerberosTime OPTIONAL,
+           renew-till      [7] KerberosTime OPTIONAL,
+           srealm          [8] Realm OPTIONAL,
+           sname           [9] PrincipalName OPTIONAL,
+           caddr           [10] HostAddresses OPTIONAL
+    }
+    """
+
+    _fields = [
+        (KRB_CRED_INFO_KEY, EncryptionKeyAsn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            KRB_CRED_INFO_PREALM,
+            RealmAsn1,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_PNAME,
+            PrincipalNameAsn1,
+            {"tag_type": EXPLICIT, "tag": 2, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_FLAGS,
+            TicketFlagsAsn1,
+            {"tag_type": EXPLICIT, "tag": 3, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_AUTHTIME,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 4, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_STARTTIME,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 5, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_ENDTIME,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 6, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_RENEW_TILL,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 7, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_SREALM,
+            RealmAsn1,
+            {"tag_type": EXPLICIT, "tag": 8, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_SNAME,
+            PrincipalNameAsn1,
+            {"tag_type": EXPLICIT, "tag": 9, "optional": True},
+        ),
+        (
+            KRB_CRED_INFO_CADDR,
+            HostAddressesAsn1,
+            {"tag_type": EXPLICIT, "tag": 10, "optional": True},
+        ),
+    ]
+
+
+# wrapped by ipapocket.krb5.types.KrbCredInfos
+class KrbCredInfosAsn1(core.SequenceOf):
+    _child_spec = KrbCredInfoAsn1
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.8.1
+# wrapped by ipapocket.krb5.types.EncKrbCredPart
+class EncKrbCredPartAsn1(core.Sequence):
+    """
+    EncKrbCredPart  ::= [APPLICATION 29] SEQUENCE {
+           ticket-info     [0] SEQUENCE OF KrbCredInfo,
+           nonce           [1] UInt32 OPTIONAL,
+           timestamp       [2] KerberosTime OPTIONAL,
+           usec            [3] Microseconds OPTIONAL,
+           s-address       [4] HostAddress OPTIONAL,
+           r-address       [5] HostAddress OPTIONAL
+    }
+    """
+
+    explicit = (APPLICATION, ApplicationTagNumber.ENC_KRB_CRED_PART.value)
+
+    _fields = [
+        (
+            ENC_KRB_CRED_PART_TICKET_INFO,
+            KrbCredInfosAsn1,
+            {"tag_type": EXPLICIT, "tag": 0},
+        ),
+        (
+            ENC_KRB_CRED_PART_NONCE,
+            UInt32Asn1,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+        (
+            ENC_KRB_CRED_PART_TIMESTAMP,
+            KerberosTimeAsn1,
+            {"tag_type": EXPLICIT, "tag": 2, "optional": True},
+        ),
+        (
+            ENC_KRB_CRED_PART_USEC,
+            MicrosecondsAsn1,
+            {"tag_type": EXPLICIT, "tag": 3, "optional": True},
+        ),
+        (
+            ENC_KRB_CRED_PART_S_ADDRESS,
+            HostAddressAsn1,
+            {"tag_type": EXPLICIT, "tag": 4, "optional": True},
+        ),
+        (
+            ENC_KRB_CRED_PART_R_ADDRESS,
+            HostAddressAsn1,
+            {"tag_type": EXPLICIT, "tag": 5, "optional": True},
+        ),
+    ]
+
+
+# https://www.rfc-editor.org/rfc/rfc4120#section-5.8.1
+# wrapped by ipapocket.krb5.types.KrbCred
+class KrbCredAsn1(core.Sequence):
+    """
+    KRB-CRED        ::= [APPLICATION 22] SEQUENCE {
+           pvno            [0] INTEGER (5),
+           msg-type        [1] INTEGER (22),
+           tickets         [2] SEQUENCE OF Ticket,
+           enc-part        [3] EncryptedData -- EncKrbCredPart
+    }
+    """
+
+    explicit = (APPLICATION, ApplicationTagNumber.KRB_CRED.value)
+
+    _fields = [
+        (KRB_CRED_PVNO, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (KRB_CRED_MSG_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
+        (KRB_CRED_TICKETS, TicketsAsn1, {"tag_type": EXPLICIT, "tag": 2}),
+        (KRB_CRED_ENC_PART, EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 3}),
+    ]

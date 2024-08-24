@@ -3,13 +3,20 @@ from ipapocket.krb5.asn1 import EtypeInfoAsn1
 
 
 class EtypeInfo:
-    _entries: list[EtypeInfoEntry] = None
+    _entries: list[EtypeInfoEntry] = list[EtypeInfoEntry]()
 
     def __init__(self):
-        self._entries = list()
+        self.clear()
 
     def add(self, value):
         self._entries.append(value)
+
+    def clear(self) -> None:
+        self._entries.clear()
+
+    @property
+    def entries(self) -> list[EtypeInfoEntry]:
+        return self._entries
 
     @classmethod
     def load(cls, data: EtypeInfoAsn1):

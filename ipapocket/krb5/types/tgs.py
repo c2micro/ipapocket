@@ -4,7 +4,7 @@ from ipapocket.krb5.types.enc_kdc_rep_part import EncKdcRepPart
 
 
 # special class wrapper to store prepared structures for further processing
-class Tgt:
+class Tgs:
     _kdc_rep: KdcRep = None
     _epart: EncKdcRepPart = None
     _session_key: Key = None

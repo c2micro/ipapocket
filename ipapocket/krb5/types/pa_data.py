@@ -43,11 +43,11 @@ class PaData:
             data = data.to_asn1()
         tmp = cls()
         if PADATA_PADATA_TYPE in data:
-            if data[PADATA_PADATA_TYPE] is not None:
-                tmp.type = PreAuthenticationDataType(data[PADATA_PADATA_TYPE])
+            if data[PADATA_PADATA_TYPE].native is not None:
+                tmp.type = PreAuthenticationDataType(data[PADATA_PADATA_TYPE].native)
         if PADATA_PADATA_VALUE in data:
-            if data[PADATA_PADATA_VALUE] is not None:
-                tmp.value = data[PADATA_PADATA_VALUE]
+            if data[PADATA_PADATA_VALUE].native is not None:
+                tmp.value = data[PADATA_PADATA_VALUE].native
         return tmp
 
     def to_asn1(self) -> PaDataAsn1:

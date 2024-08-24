@@ -165,3 +165,18 @@ from ipapocket.krb5.types.enc_ticket_part import EncTicketPart
 
 # Tgt
 from ipapocket.krb5.types.tgt import Tgt
+
+# Tgs
+from ipapocket.krb5.types.tgs import Tgs
+
+# KrbCredInfo
+from ipapocket.krb5.types.krb_cred_info import KrbCredInfo
+
+# KrbCredInfos
+from ipapocket.krb5.types.krb_cred_infos import KrbCredInfos
+
+# EncKrbCredPart
+from ipapocket.krb5.types.enc_krb_cred_part import EncKrbCredPart
+
+# KrbCred
+from ipapocket.krb5.types.krb_cred import KrbCred

@@ -1,5 +1,5 @@
 from ipapocket.krb5.types.int32 import Int32
-from ipapocket.krb5.constants import MessageType
+from ipapocket.krb5.constants import MessageType, KRB5_VERSION
 from ipapocket.krb5.types.method_data import MethodData
 from ipapocket.krb5.types.kdc_req_body import KdcReqBody
 from ipapocket.exceptions.krb5 import InvalidTypeInKdcReq, InvalidEncTypesValueType
@@ -14,7 +14,7 @@ from ipapocket.krb5.asn1 import KdcReqAsn1
 
 
 class KdcReq:
-    _pvno: Int32 = None
+    _pvno: Int32 = Int32(KRB5_VERSION)
     _msg_type: MessageType = None
     _padata: MethodData = None
     _req_body: KdcReqBody = None

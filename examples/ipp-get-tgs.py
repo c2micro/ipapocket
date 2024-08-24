@@ -6,16 +6,18 @@ import logging
 import os
 from datetime import datetime, timedelta, timezone
 import secrets
+import base64
 
-from ipapocket.krb5.credentials import Ccache
+from ipapocket.krb5.credentials import Ccache, Kirbi
 from ipapocket.network.krb5 import Krb5Network
-from ipapocket.krb5.crypto import *
+from ipapocket.krb5.crypto import cksum_for_etype, checksum, decrypt, encrypt
 from ipapocket.krb5.constants import (
     KdcOptionsType,
     NameType,
     KRB5_VERSION,
     PreAuthenticationDataType,
     MessageType,
+    KeyUsageType,
 )
 from ipapocket.exceptions.exceptions import UnexpectedKerberosError, UnknownEncPartType
 from ipapocket.utils import logger
@@ -37,17 +39,19 @@ from ipapocket.krb5.types import (
     PaData,
     TgsReq,
     EncRepPart,
+    Tgs,
 )
 
 
 class GetTgs:
-    _tgt_ccache: Ccache = None # ccache object with TGT
-    _tgt_ccache_id: int = None # ID of credential in CCACHE with TGT
-    _socket: Krb5Network = None # socket object
+    _tgt_ccache: Ccache = None  # ccache object with TGT
+    _tgt_ccache_id: int = None  # ID of credential in CCACHE with TGT
+    _socket: Krb5Network = None  # socket object
     _domain: str = None
     _spn: str = None
-    _tgs_ccache_path: str = None # ccache path to save TGS
-    _tgs_renewable: bool = False # set RENEWABLE KDC option to TGS-REQ
+    _tgs_ccache_path: str = None  # ccache path to save TGS
+    _tgs_kirbi_path: str = None  # kirbi path to save TGS
+    _tgs_renewable: bool = False  # set RENEWABLE KDC option to TGS-REQ
 
     def __init__(
         self,
@@ -57,11 +61,13 @@ class GetTgs:
         spn,
         renewable,
         ccache_file=None,
+        kirbi_file=None,
     ):
         self._socket = Krb5Network(ipa_host)
         self._domain = domain
         self._spn = spn
         self._tgs_ccache_path = ccache_file
+        self._tgs_kirbi_path = kirbi_file
         self._tgs_renewable = renewable
         self._tgt_ccache = Ccache.from_file(os.getenv("KRB5CCNAME"))
         if ccache_id is None:
@@ -172,7 +178,9 @@ class GetTgs:
         logging.debug("send TGS-REQ packet")
         rep = self._socket.sendrcv(tgs_req)
         if rep.is_krb_error():
-            raise UnexpectedKerberosError(rep.krb_error.error_code.name, rep.krb_error.e_text)
+            raise UnexpectedKerberosError(
+                rep.krb_error.error_code.name, rep.krb_error.e_text
+            )
         else:
             epart = EncRepPart.load(
                 decrypt(
@@ -191,17 +199,31 @@ class GetTgs:
             else:
                 raise UnknownEncPartType("something go wrong")
 
-            # save to ccache
-            if self._tgs_ccache_path is not None or self._tgs_ccache_path != "":
-                self
+        # create tgs for further processing
+        tgs = Tgs()
+        tgs.session_key = kdc_edata.key
+        tgs.kdc_rep = rep.tgs_rep.kdc_rep
+        tgs.epart = kdc_edata
 
-        if self._tgs_ccache_path is not None:
+        # do we need print TGS in kirbi to stdout
+        need_output = True
+
+        if self._tgs_ccache_path is not None and self._tgs_kirbi_path != "":
             ccache = Ccache()
-            ccache.set_tgt(rep.tgs_rep.kdc_rep, kdc_edata)
+            ccache.add_tgs(tgs)
             ccache.to_file(self._tgs_ccache_path)
-            logging.info("TGS saved to {}".format(self._tgs_ccache_path))
-        else:
-            logging.info("got TGS-REP successfully")
+            logging.info("[CCACHE] TGS saved to {}".format(self._tgs_ccache_path))
+            need_output = False
+
+        if self._tgs_kirbi_path is not None and self._tgs_kirbi_path != "":
+            kirbi = Kirbi.from_tgs(tgs)
+            kirbi.to_file(self._tgs_kirbi_path)
+            logging.info("[KIRBI] TGS saved to {}".format(self._tgs_kirbi_path))
+            need_output = False
+
+        if need_output:
+            kirbi = Kirbi.from_tgs(tgs)
+            logging.info("TGS in KIRBI base64: {}".format(kirbi.to_b64()))
 
 
 if __name__ == "__main__":
@@ -238,7 +260,7 @@ if __name__ == "__main__":
         "-i",
         required=False,
         action="store",
-        help="Specify ID of credentials in CCACHE (by default will take first one)",
+        help="Specify ID of credentials in CCACHE (by default will take first one - 0)",
     )
     parser.add_argument(
         "-s",
@@ -251,7 +273,7 @@ if __name__ == "__main__":
         "--renewable",
         required=False,
         action="store_true",
-        help="Make TGS renewable (set KDC option in TGS-REQ)",
+        help="Make TGS renewable (set KDC option RENEWABLE in TGS-REQ)",
     )
     parser.add_argument(
         "-c",
@@ -259,6 +281,13 @@ if __name__ == "__main__":
         required=False,
         action="store",
         help="Path for CCACHE file to save TGS",
+    )
+    parser.add_argument(
+        "-k",
+        "--kirbi",
+        required=False,
+        action="store",
+        help="Path for KIRBI file to save TGS",
     )
 
     options = parser.parse_args()
@@ -278,6 +307,7 @@ if __name__ == "__main__":
             options.service,
             options.renewable,
             options.ccache,
+            options.kirbi,
         ).get_tgs()
     except UnexpectedKerberosError as e:
         print(e)

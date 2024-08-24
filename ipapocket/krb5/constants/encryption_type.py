@@ -7,6 +7,7 @@ import enum
 # https://www.freeipa.org/page/Releases/4.8.2#enhancements (default AES 256/384 since 4.8.2)
 # Only types, that are used in FreeIPA (without deprecated)
 class EncryptionType(enum.Enum):
+    UNKNOWN = 0
     DES3_CBC_SHA1 = 16  # Triple DES cbc mode with HMAC/sha1
     AES128_CTS_HMAC_SHA1_96 = 17  # AES-128 CTS mode with 96-bit SHA-1 HMAC (https://www.rfc-editor.org/rfc/rfc3962)
     AES256_CTS_HMAC_SHA1_96 = 18  # AES-256 CTS mode with 96-bit SHA-1 HMAC (https://www.rfc-editor.org/rfc/rfc3962)

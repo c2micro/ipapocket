@@ -57,27 +57,19 @@ class KerberosResponse:
         self._tgs_rep = value
 
     @classmethod
-    def load(cls, data):
+    def load(cls, data: KerberosResponseAsn1):
         if isinstance(data, bytes):
-            response = KerberosResponseAsn1.load(data)
-        if response.name == KERBEROS_RESPONSE_KRB_ERROR:
-            tmp = cls()
-            tmp.krb_error = KrbError.load(KrbErrorAsn1.load(data))
+            data = KerberosResponseAsn1.load(data)
+        tmp = cls()
+        if data.name == KERBEROS_RESPONSE_KRB_ERROR:
+            tmp.krb_error = KrbError.load(data.chosen)
             return tmp
-        elif response.name == KERBEROS_RESPONSE_AS_REP:
-            tmp = cls()
-            tmp.as_rep = AsRep.load(AsRepAsn1.load(data))
+        elif data.name == KERBEROS_RESPONSE_AS_REP:
+            tmp.as_rep = AsRep.load(data.chosen)
             return tmp
-        elif response.name == KERBEROS_RESPONSE_TGS_REP:
-            tmp = cls()
-            tmp.tgs_rep = TgsRep.load(TgsRepAsn1.load(data))
+        elif data.name == KERBEROS_RESPONSE_TGS_REP:
+            tmp.tgs_rep = TgsRep.load(data.chosen)
             return tmp
         else:
             # unexpected response type
-            raise UnexpectedResponseType(response.name)
-
-    def dump(self) -> bytes:
-        """
-        Dump object to bytes (with ASN1 structure)
-        """
-        return self.to_asn1().dump()
+            raise UnexpectedResponseType(data.name)

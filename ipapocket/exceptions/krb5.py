@@ -115,6 +115,13 @@ class InvalidEncTypesValueType(Exception):
         )
 
 
+class InvalidSpakeSecondFactorsType(Exception):
+    def __init__(self, value):
+        super(Exception, self).__init__(
+            "Invalid SpakeSecondFactors value type {}".format(type(value).__name__)
+        )
+
+
 class InvalidTypeInKdcReqBody(Exception):
     def __init__(self, field, value):
         super(Exception, self).__init__(

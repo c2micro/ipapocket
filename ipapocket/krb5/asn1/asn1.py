@@ -11,6 +11,7 @@ from ipapocket.krb5.constants import (
     MAX_UINT32,
     MIN_MICROSECONDS,
     MAX_MICROSECONDS,
+    SpakeContextNumber,
 )
 from ipapocket.krb5.constants.fields import *
 
@@ -1261,4 +1262,103 @@ class KrbCredAsn1(core.Sequence):
         (KRB_CRED_MSG_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 1}),
         (KRB_CRED_TICKETS, TicketsAsn1, {"tag_type": EXPLICIT, "tag": 2}),
         (KRB_CRED_ENC_PART, EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 3}),
+    ]
+
+
+# https://datatracker.ietf.org/doc/draft-ietf-kitten-krb-spake-preauth/13/
+# wrapped by ipapocket.krb5.types.SpakeSecondFactor
+class SpakeSecondFactorAsn1(core.Sequence):
+    """
+    SPAKESecondFactor ::= SEQUENCE {
+       type        [0] Int32,
+       data        [1] OCTET STRING OPTIONAL
+    }
+    """
+
+    _fields = [
+        (SPAKE_SECOND_FACTOR_TYPE, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (
+            SPAKE_SECOND_FACTOR_DATA,
+            core.OctetString,
+            {"tag_type": EXPLICIT, "tag": 1, "optional": True},
+        ),
+    ]
+
+
+# wrapped by ipapocket.krb5.types.SpakeSecondFactors
+class SpakeSecondFactorsAsn1(core.SequenceOf):
+    _child_spec = SpakeSecondFactorAsn1
+
+
+# https://datatracker.ietf.org/doc/draft-ietf-kitten-krb-spake-preauth/13/
+# wrapped by ipapocket.krb5.types.SpakeChallenge
+class SpakeChallengeAsn1(core.Sequence):
+    """
+    SPAKEChallenge ::= SEQUENCE {
+       group       [0] Int32,
+       pubkey      [1] OCTET STRING,
+       factors     [2] SEQUENCE (SIZE(1..MAX)) OF SPAKESecondFactor,
+    }
+    """
+
+    # what of fuck is going on
+    explicit = (CONTEXT, SpakeContextNumber.CHALLENGE.value)
+
+    _fields = [
+        (SPAKE_CHALLENGE_GROUP, Int32Asn1, {"tag_type": EXPLICIT, "tag": 0}),
+        (SPAKE_CHALLENGE_PUBKEY, core.OctetString, {"tag_type": EXPLICIT, "tag": 1}),
+        (
+            SPAKE_CHALLENGE_FACTORS,
+            SpakeSecondFactorsAsn1,
+            {"tag_type": EXPLICIT, "tag": 2},
+        ),
+    ]
+
+
+# https://www.ietf.org/archive/id/draft-ietf-kitten-krb-spake-preauth-12.html#appendix-A
+# wrapped by ipapocket.krb5.types.SpakeResponse
+class SpakeResponseAsn1(core.Sequence):
+    """
+    SPAKEResponse ::= SEQUENCE {
+    pubkey      [0] OCTET STRING,
+    factor      [1] EncryptedData, -- SPAKESecondFactor
+    ...
+    }
+    """
+
+    # what of fuck is going on
+    explicit = (CONTEXT, SpakeContextNumber.RESPONSE.value)
+
+    _fields = [
+        (SPAKE_RESPONSE_PUBKEY, core.OctetString, {"tag_type": EXPLICIT, "tag": 0}),
+        (SPAKE_RESPONSE_FACTOR, EncryptedDataAsn1, {"tag_type": EXPLICIT, "tag": 1}),
+    ]
+
+
+# https://www.ietf.org/archive/id/draft-ietf-kitten-krb-spake-preauth-12.html#appendix-A
+# wrapped by ipapocket.krb5.types.PaSpake
+class PaSpakeAsn1(core.Choice):
+    """
+    PA-SPAKE ::= CHOICE {
+    support     [0] SPAKESupport,
+    challenge   [1] SPAKEChallenge,
+    response    [2] SPAKEResponse,
+    encdata     [3] EncryptedData,
+    ...
+    }
+    """
+
+    _alternatives = [
+        # (PA_SPAKE_SUPPORT),
+        (
+            PA_SPAKE_CHALLENGE,
+            SpakeChallengeAsn1,
+            {"implicit": (CONTEXT, SpakeContextNumber.CHALLENGE.value)},
+        ),
+        (
+            PA_SPAKE_RESPONSE,
+            SpakeResponseAsn1,
+            {"implicit": (CONTEXT, SpakeContextNumber.RESPONSE.value)},
+        ),
+        # (PA_SPAKE_ENCDATA),
     ]

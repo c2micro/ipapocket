@@ -38,6 +38,7 @@ setup(
         "ipapocket.krb5.asn1",
         "ipapocket.krb5.types",
         "ipapocket.krb5.crypto",
+        "ipapocket.krb5.crypto.ed25519",
         "ipapocket.network",
         "ipapocket.utils",
     ],

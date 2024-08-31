@@ -35,3 +35,4 @@ class KeyUsageType(enum.Enum):
     KEY_USAGE_ENC_CHALLENGE_KDC = (
         55  # https://www.rfc-editor.org/rfc/rfc6113.html#section-6.2
     )
+    KEY_USAGE_SPAKE = 65  # https://github.com/krb5/krb5/blob/b9b654e5b469140d5603f27af5bf83ee9a826349/src/include/krb5/krb5.hin#L993

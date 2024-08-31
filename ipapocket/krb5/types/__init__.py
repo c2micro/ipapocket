@@ -180,3 +180,18 @@ from ipapocket.krb5.types.enc_krb_cred_part import EncKrbCredPart
 
 # KrbCred
 from ipapocket.krb5.types.krb_cred import KrbCred
+
+# SpakeSecondFactor
+from ipapocket.krb5.types.spake_second_factor import SpakeSecondFactor
+
+# SpakeSecondFactors
+from ipapocket.krb5.types.spake_second_factors import SpakeSecondFactors
+
+# SpakeChallenge
+from ipapocket.krb5.types.spake_challenge import SpakeChallenge
+
+# SpakeResponse
+from ipapocket.krb5.types.spake_response import SpakeResponse
+
+# PaSpake
+from ipapocket.krb5.types.pa_spake import PaSpake

@@ -1,4 +1,4 @@
-from ipapocket.krb5.constants import EncryptionType, KeyUsageType
+from ipapocket.krb5.constants import EncryptionType, KeyUsageType, SpakeGroupType
 from ipapocket.krb5.crypto.backend import (
     get_etype_profile,
     get_cksum_profile,
@@ -54,9 +54,20 @@ def supported_etypes() -> list[EncryptionType]:
     List of supported etypes (by client)
     """
     enctypes = list()
-    enctypes.append(EncryptionType.ARCFOUR_HMAC)
     enctypes.append(EncryptionType.AES128_CTS_HMAC_SHA1_96)
     enctypes.append(EncryptionType.AES256_CTS_HMAC_SHA1_96)
     enctypes.append(EncryptionType.AES128_CTS_HMAC_SHA256_128)
     enctypes.append(EncryptionType.AES256_CTS_HMAC_SHA384_192)
     return enctypes
+
+
+def supported_groups() -> list[SpakeGroupType]:
+    """
+    List of supported SPAKE groups (by client)
+    """
+    groups = list[SpakeGroupType]()
+    groups.append(SpakeGroupType.EDWARDS25519)
+    # groups.append(SpakeGroupType.P256)
+    # groups.append(SpakeGroupType.P384)
+    # groups.append(SpakeGroupType.P521)
+    return groups

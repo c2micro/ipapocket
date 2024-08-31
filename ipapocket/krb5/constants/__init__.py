@@ -2,7 +2,7 @@
 from ipapocket.krb5.constants.base import *
 
 # KdbSaltType
-from ipapocket.krb5.constants.kdb_salt_types import KdbSaltType
+from ipapocket.krb5.constants.kdb_salt_type import KdbSaltType
 
 # ApplicationTagNumber
 from ipapocket.krb5.constants.application_tag_numbers import ApplicationTagNumber
@@ -45,3 +45,12 @@ from ipapocket.krb5.constants.ap_options_type import ApOptionsType
 
 # TicketFlagsType
 from ipapocket.krb5.constants.ticket_flags_type import TicketFlagsType
+
+# SpakeGroup
+from ipapocket.krb5.constants.spake_group_type import SpakeGroupType
+
+# SpakeSecondFactorType
+from ipapocket.krb5.constants.spake_second_factor_type import SpakeSecondFactorType
+
+# SpakeContextNumber
+from ipapocket.krb5.constants.spake_context_number import SpakeContextNumber

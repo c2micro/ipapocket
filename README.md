@@ -34,6 +34,8 @@ pipx install git+https://github.com/c2micro/ipapocket
 
 `ipp-get-tgt.py`: get AS-REP and save TGT to CCACHE (normal authentication flow with PASSWORD)
 
+`ipp-get-tgt-spake.py`: get AS-REP and save TGT to CCACHE (SPAKE hardened password)
+
 `ipp-get-tgs.py`: get TGS-REP and save TGS to CCACHE (only use TGT from KRB5CCNAME)
 
 `ipp-user-enum.py`: enumarate users via Kerberos

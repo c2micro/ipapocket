@@ -59,7 +59,7 @@ class PreAuthenticationDataType(enum.Enum):
     PKINIT_KX = 147
     REQ_ENC_PA_REP = 149
     AS_FRESHNESS = 150
-    SPAKE = 151
+    SPAKE_CHALLENGE = 151
     REDHAT_IDP_OAUTH2 = 152
     REDHAT_PASSKEY = 153
     PAC_OPTIONS = 167

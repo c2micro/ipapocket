@@ -11,6 +11,8 @@ from ipapocket.exceptions.exceptions import (
     UnexpectedKerberosError,
     UnknownEncPartType,
     NoSupportedEtypes,
+    NoSpakeChallenge,
+    NoFxCookie,
 )
 from ipapocket.utils import logger
 from ipapocket.krb5.credentials import Ccache, Kirbi
@@ -25,13 +27,14 @@ from ipapocket.krb5.types import (
     EncTypes,
     AsReq,
     MethodData,
-    EtypeInfo,
+    SpakeResponse,
     EtypeInfo2,
-    PaEncTsEnc,
     PaData,
+    SpakeSecondFactor,
     EncryptedData,
     EncRepPart,
     Tgt,
+    PaSpake,
 )
 from ipapocket.krb5.constants import (
     KeyUsageType,
@@ -40,9 +43,20 @@ from ipapocket.krb5.constants import (
     NameType,
     ErrorCode,
     PreAuthenticationDataType,
-    KRB5_VERSION,
+    SpakeSecondFactorType,
 )
-from ipapocket.krb5.crypto import string_to_key, decrypt, supported_etypes, encrypt
+from ipapocket.krb5.crypto import (
+    string_to_key,
+    decrypt,
+    supported_etypes,
+    encrypt,
+    supported_groups,
+    get_group_profile,
+)
+
+from binascii import hexlify
+
+# TODO - AES128-SHA256/AES256-SHA384
 
 
 class GetTgt:
@@ -70,17 +84,16 @@ class GetTgt:
         self._username = username
         self._password = password
         self._domain = domain
-        self._spn = service
         self._tgt_renewable = renewable
         self._tgt_ccache_path = ccache_file
         self._tgt_kirbi_path = kirbi_file
+        self._spn = service
 
     def get_tgt(self):
         """
-        1. Send AS-REQ without preauth to get salt of user
-        2. Send AS-REQ with encrypted timestamp
-        3. Get salt from AS-REP (to handle case with no-preauth)
-        4. Save TGT
+        1. Send AS-REQ without preauth to get salt of user and SPAKE challenge
+        2. Send AS-REQ with encrypted SpakeSecondFactor
+        3. Decrypt with derived K'[0]
         """
         logging.debug("construct AS-REQ without PA")
         cur_ts = datetime.now(timezone.utc)
@@ -137,22 +150,11 @@ class GetTgt:
                     rep.krb_error.error_code.name, rep.krb_error.e_text
                 )
             else:
-                # get salt
                 salt_found = False
+                spake_challenge_found = False
+                cookie_found = False
                 for padata in MethodData.load(rep.krb_error.e_data).padatas:
-                    # from https://www.rfc-editor.org/rfc/rfc4120#section-5.2.7.5 - might be ONLY ONE ETYPE-ENTRY in sequence of each
-                    if padata.type == PreAuthenticationDataType.PA_ETYPE_INFO:
-                        value = EtypeInfo.load(padata.value).entries[0]
-                        if value.etype in supported_etypes():
-                            logging.debug(
-                                "ETYPE-INFO with etype '{}' and salt '{}'".format(
-                                    value.etype.name, value.salt
-                                )
-                            )
-                            etype = value.etype
-                            salt = value.salt
-                            salt_found = True
-                            break
+                    # from https://datatracker.ietf.org/doc/draft-ietf-kitten-krb-spake-preauth/13/ - might be ONLY ONE ETYPE-ENTRY in sequence of each
                     if padata.type == PreAuthenticationDataType.PA_ETYPE_INFO2:
                         value = EtypeInfo2.load(padata.value).entries[0]
                         if value.etype in supported_etypes():
@@ -164,42 +166,125 @@ class GetTgt:
                             etype = value.etype
                             salt = value.salt.value
                             salt_found = True
-                            break
+                    if padata.type == PreAuthenticationDataType.SPAKE_CHALLENGE:
+                        paspake = PaSpake.load(padata.value)
+                        # TODO - dirty
+                        spake_challenge = paspake.challenge
+                        if spake_challenge.group in supported_groups():
+                            logging.debug(
+                                "SPAKE challenge with group {}".format(
+                                    spake_challenge.group.name
+                                )
+                            )
+                            spake_challenge_found = True
+                    if padata.type == PreAuthenticationDataType.PA_FX_COOKIE:
+                        cookie = padata.value
+                        cookie_found = True
                 if not salt_found:
                     raise NoSupportedEtypes()
-
-                logging.debug("construct AS-REQ with PA")
+                if not spake_challenge_found:
+                    # TODO
+                    raise NoSpakeChallenge()
+                if not cookie_found:
+                    # TODO
+                    raise NoFxCookie()
+                # logic of next part (based on RFC draft and tests)
+                # 1. calculate client key
+                # 2. derive w bytes via PRF+ function
+                # 3. generate client public key based on ECC (S)
+                # 4. create shared K key (K)
+                # 5. calculate transcript hash (first iteration based on SpakeChallenge asn1 dump, second based on client public key)
+                # 6. create KDC request body (we can reuse previous one)
+                # 7. derive K'[n] key
+                # 8. ...
+                # calculate key for user with salt
+                client_key = string_to_key(etype, self._password, salt)
+                # derive w bytes
+                w = get_group_profile(spake_challenge.group).derive_wbytes(client_key)
+                # generate public key
+                S, y = get_group_profile(spake_challenge.group).calculate_public(w)
+                logging.debug("SPAKE client public key {}".format(hexlify(S).decode()))
+                # calculate group shared secret
+                K = get_group_profile(spake_challenge.group).calculate_shared(
+                    spake_challenge.pubkey, y, w
+                )
+                logging.debug(
+                    "SPAKE shared group secret {}".format(hexlify(K).decode())
+                )
+                # calculate transcript hash
+                thash = get_group_profile(spake_challenge.group).hashmod.new(
+                    32 * b"\x00"
+                )
+                thash.update(spake_challenge.dump())
+                thash = get_group_profile(spake_challenge.group).hashmod.new(
+                    thash.digest()
+                )
+                thash.update(S)
+                thash = thash.digest()
+                logging.debug(
+                    "SPAKE final transcript hash {}".format(hexlify(thash).decode())
+                )
+                # update kdc_rbody
                 cur_ts = datetime.now(timezone.utc)
-                # create client key
-                key = string_to_key(etype, self._password, salt)
-                # take previous kdc request body and modify some fields
                 kdc_rbody.till = KerberosTime(cur_ts + timedelta(days=1))
                 kdc_rbody.nonce = UInt32(secrets.randbits(31))
                 kdc_rbody.etype = EncTypes(etype)
-                # create new kdc request
-                kdc_r = KdcReq()
-                # encrypt timestamp
-                enc_ts = encrypt(
-                    key,
-                    KeyUsageType.AS_REQ_PA_ENC_TIMESTAMP,
-                    PaEncTsEnc(cur_ts, cur_ts.microsecond).dump(),
+                # get K'[N]
+                k_0 = get_group_profile(spake_challenge.group).derive_k0(
+                    client_key, kdc_rbody.dump(), w, K, thash
                 )
+                k_1 = get_group_profile(spake_challenge.group).derive_k1(
+                    client_key, kdc_rbody.dump(), w, K, thash
+                )
+                logging.debug("SPAKE K'[0]: {}".format(hexlify(k_0.contents).decode()))
+                logging.debug("SPAKE K'[1]: {}".format(hexlify(k_0.contents).decode()))
+                # create KDC request
+                kdc_r = KdcReq()
+
                 # create padata
                 mdata = MethodData()
-                padata = PaData()
-                padata.type = PreAuthenticationDataType.PA_ENC_TIMESTAMP
-                padata.value = EncryptedData(etype, KRB5_VERSION, enc_ts)
-                mdata.add(padata)
-                # set preauthentication data to kdc request
-                kdc_r.padata = mdata
-                # set message type
-                kdc_r.msg_type = MessageType.KRB_AS_REQ
+
+                # create PADATA FX-COOKIE
+                padata_cookie = PaData()
+                padata_cookie.type = PreAuthenticationDataType.PA_FX_COOKIE
+                padata_cookie.value = cookie
+                mdata.add(padata_cookie)
+
+                # create PADATA PA-SPAKE
+                # second factor
+                spake_factor = SpakeSecondFactor()
+                spake_factor.type = SpakeSecondFactorType.SF_NONE
+                # response
+                spake_rep = SpakeResponse()
+                spake_rep.pubkey = S
+                spake_rep.factor = EncryptedData(
+                    etype,
+                    None,
+                    encrypt(
+                        k_1,
+                        KeyUsageType.KEY_USAGE_SPAKE,
+                        spake_factor.dump(),
+                    ),
+                )
+                # pa spake
+                paspake = PaSpake()
+                paspake.response = spake_rep
+                padata_spake = PaData()
+                padata_spake.type = PreAuthenticationDataType.SPAKE_CHALLENGE
+                padata_spake.value = paspake.dump()
+                mdata.add(padata_spake)
+
                 # set body
                 kdc_r.req_body = kdc_rbody
+                # set message type
+                kdc_r.msg_type = MessageType.KRB_AS_REQ
+                # set preauthentication data to kdc request
+                kdc_r.padata = mdata
+
                 # create AS-REQ
                 as_req = AsReq(kdc_r)
 
-                logging.debug("send AS-REQ with PA")
+                logging.debug("send AS-REQ with PA-SPAKE and FX-COOKIE")
                 rep = self._socket.sendrcv(as_req)
                 if rep.is_krb_error():
                     raise UnexpectedKerberosError(
@@ -209,44 +294,15 @@ class GetTgt:
                     kdc_rep = rep.as_rep.kdc_rep
         else:
             logging.info("user {} doesn't need preauth!".format(self._username))
+            # TODO - can we use simple key to decrypt?
+            raise
             kdc_rep = rep.as_rep.kdc_rep
 
-        # to handle case with no-preauth -> get salt one more time
-        # get salt
-        salt_found = False
-        for padata in MethodData.load(kdc_rep.padata).padatas:
-            # from https://www.rfc-editor.org/rfc/rfc4120#section-5.2.7.5 - might be ONLY ONE ETYPE-ENTRY in sequence of each
-            if padata.type == PreAuthenticationDataType.PA_ETYPE_INFO:
-                value = EtypeInfo.load(padata.value).entries[0]
-                if value.etype in supported_etypes():
-                    logging.debug(
-                        "ETYPE-INFO with etype '{}' and salt '{}' in AS-REP".format(
-                            value.etype.name, value.salt
-                        )
-                    )
-                    etype = value.etype
-                    salt = value.salt
-                    salt_found = True
-                    break
-            if padata.type == PreAuthenticationDataType.PA_ETYPE_INFO2:
-                value = EtypeInfo2.load(padata.value).entries[0]
-                if value.etype in supported_etypes():
-                    logging.debug(
-                        "ETYPE-INFO2 with etype '{}' and salt '{}' in AS-REP".format(
-                            value.etype.name, value.salt
-                        )
-                    )
-                    etype = value.etype
-                    salt = value.salt.value
-                    salt_found = True
-                    break
-        if not salt_found:
-            raise NoSupportedEtypes("unable find salt in AS-REP")
-        # create key
-        key = string_to_key(etype, self._password, salt)
         # decrypt encrypted part of response
+        # (https://www.ietf.org/archive/id/draft-ietf-kitten-krb-spake-preauth-12.html#section-4.5)
+        # use K'[0]
         epart = EncRepPart.load(
-            decrypt(key, KeyUsageType.AS_REP_ENCPART, kdc_rep.enc_part.cipher)
+            decrypt(k_0, KeyUsageType.AS_REP_ENCPART, kdc_rep.enc_part.cipher)
         )
         if epart.is_enc_as_rep():
             logging.debug("encrypted part from AS-REP (microsoft way)")

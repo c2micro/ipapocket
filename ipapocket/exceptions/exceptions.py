@@ -25,6 +25,14 @@ class NoSupportedEtypes(Exception):
     pass
 
 
+class NoSpakeChallenge(Exception):
+    pass
+
+
+class NoFxCookie(Exception):
+    pass
+
+
 class UnknownEtype(Exception):
     """
     Searching for unknown etype
@@ -32,6 +40,15 @@ class UnknownEtype(Exception):
 
     def __init__(self, etype: str):
         super(Exception, self).__init__("Unknown etype {} for crypto".format(etype))
+
+
+class UnknownGroup(Exception):
+    """
+    Searching for unknown group
+    """
+
+    def __init__(self, etype: str):
+        super(Exception, self).__init__("Unknown group {} for crypto".format(etype))
 
 
 class UnknownChecksumType(Exception):

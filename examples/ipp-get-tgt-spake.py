@@ -5,6 +5,7 @@ import sys
 import logging
 from datetime import datetime, timedelta, timezone
 import secrets
+from binascii import hexlify
 
 from ipapocket.network.krb5 import Krb5Network
 from ipapocket.exceptions.exceptions import (
@@ -54,10 +55,6 @@ from ipapocket.krb5.crypto import (
     get_group_profile,
 )
 
-from binascii import hexlify
-
-# TODO - AES128-SHA256/AES256-SHA384
-
 
 class GetTgt:
     _username: str = None
@@ -79,7 +76,7 @@ class GetTgt:
         renewable,
         ccache_file,
         kirbi_file,
-    ):
+    ) -> None:
         self._socket = Krb5Network(ipa_host)
         self._username = username
         self._password = password
@@ -89,7 +86,7 @@ class GetTgt:
         self._tgt_kirbi_path = kirbi_file
         self._spn = service
 
-    def get_tgt(self):
+    def get_tgt(self) -> None:
         """
         1. Send AS-REQ without preauth to get salt of user and SPAKE challenge
         2. Send AS-REQ with encrypted SpakeSecondFactor

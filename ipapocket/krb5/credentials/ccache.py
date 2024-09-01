@@ -347,6 +347,34 @@ class Address:
     _addrtype: int = None  # uint16_t
     _addrdata: OctetString = None
 
+    @property
+    def addrtype(self) -> int:
+        return self._addrdata
+
+    @addrtype.setter
+    def addrtype(self, value) -> None:
+        self._addrtype = value
+
+    @property
+    def addrdata(self) -> OctetString:
+        return self._addrdata
+
+    @addrdata.setter
+    def addrdata(self, value) -> None:
+        self._addrdata = value
+
+    @classmethod
+    def parse(cls, reader: io.BytesIO):
+        tmp = cls()
+        tmp.addrtype = int.from_bytes(reader.read(2), byteorder="big", signed=True)
+        tmp.addrdata = OctetString.parse(reader)
+        return tmp
+
+    def to_bytes(self) -> bytes:
+        b = self.addrtype.to_bytes(2, byteorder="big", signed=True)
+        b += self.addrdata.to_bytes()
+        return b
+
 
 class Authdata:
     _authtype: int = None  # uint16_t

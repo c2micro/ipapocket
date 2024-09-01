@@ -176,7 +176,7 @@ class _EtypeRfc3962(_EtypeRfc3961Profile):
         w = b""
         for i in range(nblocks):
             w += cls.prf(key, (i + 1).to_bytes() + pepper)
-        return w
+        return w[:multiplier]
 
 
 class _EtypeRfc8009(_EtypeRfc3961Profile):
@@ -225,7 +225,7 @@ class _EtypeRfc8009(_EtypeRfc3961Profile):
         w = b""
         for i in range(nblocks):
             w += cls.prf(key, (i + 1).to_bytes() + pepper)
-        return w
+        return w[:multiplier]
 
     @classmethod
     def string_to_key(cls, string, salt, params):
@@ -345,7 +345,16 @@ class _SHA384_AES256(_SimplifiedChecksum):
 
 
 class _GroupBaseProfile:
-    g: SpakeGroupType
+    # type of group
+    g: SpakeGroupType = None
+    # length of multiplier
+    mlen: int = None
+    # hash function used for group
+    hashmod = None
+    # M (masking constant)
+    m: str = None
+    # N (masking constant)
+    n: str = None
 
     @classmethod
     def derive_wbytes(cls, key: Key):
@@ -358,12 +367,29 @@ class _GroupBaseProfile:
         return etype.prf_plus(key, pepper, cls.mlen)
 
     @classmethod
+    def calc_thash(cls, spake_support: str, spake_challenge: str, pubkey: str):
+        """
+        Calculate transcript hash
+        1. Initialization with all zeros with length of group hashmod digest
+        2. Update with SPAKESupport + SPAKEChallenge (dumped ASN1)
+        3. Initialize with digest of p.2
+        4. Update with client public key
+        """
+        thash = cls.hashmod.new(b"\x00" * cls.hashmod.digest_size)
+        # update with spake_support + spake_challenge
+        thash.update(spake_support + spake_challenge)
+        thash = cls.hashmod.new(thash.digest())
+        # update with client public key
+        thash.update(pubkey)
+        return thash.digest()
+
+    @classmethod
     def derive_ik(
         cls, etype: EncryptionType, n: int, blob: str, w: str, K: str, thash: str
     ):
         e = get_etype_profile(etype)
         nblock = int(
-            (e.seedsize + cls.hashmod.digest_size - 1) / cls.hashmod.digest_size
+            (e.keysize + cls.hashmod.digest_size - 1) / cls.hashmod.digest_size
         )
         ik = b""
         raw = (
@@ -378,58 +404,21 @@ class _GroupBaseProfile:
         )
         for i in range(nblock):
             ik += cls.hashmod.new(raw + (i + 1).to_bytes(1)).digest()
-        return e.random_to_key(ik[: e.seedsize])
+        return e.random_to_key(ik[: e.keysize])
 
     @classmethod
-    def derive_k0(cls, key: Key, kdc_rbody: str, w: str, K: str, thash: str) -> Key:
+    def derive_k(
+        cls, key: Key, n: int, kdc_rbody: str, w: str, K: str, thash: str
+    ) -> Key:
         """
         Derive K'[0]
         """
         # get intermediate key for future derivation
-        ik = cls.derive_ik(key.enctype, 0, kdc_rbody, w, K, thash)
+        ik = cls.derive_ik(key.enctype, n, kdc_rbody, w, K, thash)
         e = get_etype_profile(key.enctype)
-        # # krb_fx_cf2
-        k1 = e.prf_plus(key, b"SPAKE", e.seedsize)
-        k2 = e.prf_plus(ik, b"keyderiv", e.seedsize)
-        return get_etype_profile(key.enctype).random_to_key(bytes(_xorbytes(k1, k2)))
-
-    @classmethod
-    def derive_k1(cls, key: Key, kdc_rbody: str, w: str, K: str, thash: str) -> Key:
-        """
-        Derive K'[1]
-        """
-        # get intermediate key for future derivation
-        ik = cls.derive_ik(key.enctype, 1, kdc_rbody, w, K, thash)
-        e = get_etype_profile(key.enctype)
-        # # krb_fx_cf2
-        k1 = e.prf_plus(key, b"SPAKE", e.seedsize)
-        k2 = e.prf_plus(ik, b"keyderiv", e.seedsize)
-        return get_etype_profile(key.enctype).random_to_key(bytes(_xorbytes(k1, k2)))
-
-    @classmethod
-    def derive_k2(cls, key: Key, kdc_rbody: str, w: str, K: str, thash: str) -> Key:
-        """
-        Derive K'[2]
-        """
-        # get intermediate key for future derivation
-        ik = cls.derive_ik(key.enctype, 2, kdc_rbody, w, K, thash)
-        e = get_etype_profile(key.enctype)
-        # # krb_fx_cf2
-        k1 = e.prf_plus(key, b"SPAKE", e.seedsize)
-        k2 = e.prf_plus(ik, b"keyderiv", e.seedsize)
-        return get_etype_profile(key.enctype).random_to_key(bytes(_xorbytes(k1, k2)))
-
-    @classmethod
-    def derive_k3(cls, key: Key, kdc_rbody: str, w: str, K: str, thash: str) -> Key:
-        """
-        Derive K'[3]
-        """
-        # get intermediate key for future derivation
-        ik = cls.derive_ik(key.enctype, 3, kdc_rbody, w, K, thash)
-        e = get_etype_profile(key.enctype)
-        # # krb_fx_cf2
-        k1 = e.prf_plus(key, b"SPAKE", e.seedsize)
-        k2 = e.prf_plus(ik, b"keyderiv", e.seedsize)
+        # krb_fx_cf2
+        k1 = e.prf_plus(key, b"SPAKE", e.keysize)
+        k2 = e.prf_plus(ik, b"keyderiv", e.keysize)
         return get_etype_profile(key.enctype).random_to_key(bytes(_xorbytes(k1, k2)))
 
 
@@ -456,7 +445,6 @@ class _GroupRfc8032(_GroupBaseProfile):
 
 class _EDWARDS25519_SHA256(_GroupRfc8032):
     name = b"edwards25519"
-    base = 256
     mlen = 32  # multiplier length
     m = unhexlify("d048032c6ea0b6d697ddc2e86bda85a33adac920f1bf18e1b0c6d166a5cecdaf")
     n = unhexlify("d3bfb518f44f3430f29d0c92af503865a1ed3281dc69b35dd868ba85f886c4ab")

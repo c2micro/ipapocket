@@ -212,15 +212,9 @@ class GetTgt:
                     "SPAKE shared group secret {}".format(hexlify(K).decode())
                 )
                 # calculate transcript hash
-                thash = get_group_profile(spake_challenge.group).hashmod.new(
-                    32 * b"\x00"
+                thash = get_group_profile(spake_challenge.group).calc_thash(
+                    b"", spake_challenge.dump(), S
                 )
-                thash.update(spake_challenge.dump())
-                thash = get_group_profile(spake_challenge.group).hashmod.new(
-                    thash.digest()
-                )
-                thash.update(S)
-                thash = thash.digest()
                 logging.debug(
                     "SPAKE final transcript hash {}".format(hexlify(thash).decode())
                 )
@@ -230,14 +224,14 @@ class GetTgt:
                 kdc_rbody.nonce = UInt32(secrets.randbits(31))
                 kdc_rbody.etype = EncTypes(etype)
                 # get K'[N]
-                k_0 = get_group_profile(spake_challenge.group).derive_k0(
-                    client_key, kdc_rbody.dump(), w, K, thash
+                k_0 = get_group_profile(spake_challenge.group).derive_k(
+                    client_key, 0, kdc_rbody.dump(), w, K, thash
                 )
-                k_1 = get_group_profile(spake_challenge.group).derive_k1(
-                    client_key, kdc_rbody.dump(), w, K, thash
+                k_1 = get_group_profile(spake_challenge.group).derive_k(
+                    client_key, 1, kdc_rbody.dump(), w, K, thash
                 )
                 logging.debug("SPAKE K'[0]: {}".format(hexlify(k_0.contents).decode()))
-                logging.debug("SPAKE K'[1]: {}".format(hexlify(k_0.contents).decode()))
+                logging.debug("SPAKE K'[1]: {}".format(hexlify(k_1.contents).decode()))
                 # create KDC request
                 kdc_r = KdcReq()
 
@@ -254,21 +248,22 @@ class GetTgt:
                 # second factor
                 spake_factor = SpakeSecondFactor()
                 spake_factor.type = SpakeSecondFactorType.SF_NONE
-                # response
+                # encrypt second factor with K'[1]
+                enc_factor = EncryptedData()
+                enc_factor.etype = etype
+                enc_factor.cipher = encrypt(
+                    k_1,
+                    KeyUsageType.KEY_USAGE_SPAKE,
+                    spake_factor.dump(),
+                )
+                # spake response
                 spake_rep = SpakeResponse()
                 spake_rep.pubkey = S
-                spake_rep.factor = EncryptedData(
-                    etype,
-                    None,
-                    encrypt(
-                        k_1,
-                        KeyUsageType.KEY_USAGE_SPAKE,
-                        spake_factor.dump(),
-                    ),
-                )
+                spake_rep.factor = enc_factor
                 # pa spake
                 paspake = PaSpake()
                 paspake.response = spake_rep
+                # padata with paspake
                 padata_spake = PaData()
                 padata_spake.type = PreAuthenticationDataType.SPAKE_CHALLENGE
                 padata_spake.value = paspake.dump()

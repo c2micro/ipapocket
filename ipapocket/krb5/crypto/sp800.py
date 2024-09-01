@@ -38,8 +38,9 @@ def SP800_108_Counter(master, key_len, prf, num_keys=None, label=b"", context=b"
     if num_keys is None:
         num_keys = 1
 
-    if context.find(b"\x00") != -1:
-        raise ValueError("Null byte found in context")
+    # errors on prf_plus for aes128-sha256/aes256-sha384
+    # if context.find(b"\x00") != -1:
+    #    raise ValueError("Null byte found in context")
 
     key_len_enc = long_to_bytes(key_len * num_keys * 8, 4)
     output_len = key_len * num_keys
